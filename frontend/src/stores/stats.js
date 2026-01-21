@@ -14,10 +14,10 @@ export const useStatsStore = defineStore("stats", () => {
   const fetchStats = async () => {
     try {
       loading.value = true;
-      console.log("Stats store: 開始獲取統計資料");
+      console.log("Stats store: ?��??��?統�?資�?");
 
       const response = await fetch(
-        "http://localhost:3005/api/dashboard/stats",
+        "/api/dashboard/stats",
         {
           method: "GET",
           headers: {
@@ -27,17 +27,17 @@ export const useStatsStore = defineStore("stats", () => {
       );
 
       const data = await response.json();
-      console.log("Stats store: 收到統計資料", data);
+      console.log("Stats store: ?�到統�?資�?", data);
 
       if (data.success) {
         stats.value = data.data;
-        console.log("Stats store: 統計資料更新成功", stats.value);
+        console.log("Stats store: 統�?資�??�新?��?", stats.value);
       } else {
-        console.error("Stats store: 獲取統計資料失敗", data.message);
-        throw new Error(data.message || "獲取統計資料失敗");
+        console.error("Stats store: ?��?統�?資�?失�?", data.message);
+        throw new Error(data.message || "?��?統�?資�?失�?");
       }
     } catch (error) {
-      console.error("Stats store: 獲取統計資料失敗:", error);
+      console.error("Stats store: ?��?統�?資�?失�?:", error);
     } finally {
       loading.value = false;
     }

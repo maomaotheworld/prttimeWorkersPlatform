@@ -4,17 +4,17 @@
       <el-card class="welcome-card">
         <div class="welcome-content">
           <el-icon size="48" class="welcome-icon"><Management /></el-icon>
-          <h1 class="welcome-title">歡迎使用工讀生管理平台</h1>
-          <p class="welcome-desc">高效管理工讀生工時、薪資與組別的專業平台</p>
+          <h1 class="welcome-title">歡�?使用工�??�管?�平??/h1>
+          <p class="welcome-desc">高�?管�?工�??�工?�、薪資�?組別?��?業平??/p>
         </div>
       </el-card>
     </div>
 
     <div class="stats-section">
-      <h2 class="section-title">系統概況</h2>
+      <h2 class="section-title">系統概�?</h2>
       <div class="stats-grid">
         <el-card class="stat-card">
-          <el-statistic title="總工讀生數" :value="stats.totalWorkers">
+          <el-statistic title="總工讀?�數" :value="stats.totalWorkers">
             <template #prefix>
               <el-icon style="vertical-align: middle"><User /></el-icon>
             </template>
@@ -22,7 +22,7 @@
         </el-card>
 
         <el-card class="stat-card">
-          <el-statistic title="總組別數" :value="stats.totalGroups">
+          <el-statistic title="總�??�數" :value="stats.totalGroups">
             <template #prefix>
               <el-icon style="vertical-align: middle"><UserFilled /></el-icon>
             </template>
@@ -30,7 +30,7 @@
         </el-card>
 
         <el-card class="stat-card">
-          <el-statistic title="今日打卡" :value="stats.todayClockedIn">
+          <el-statistic title="今日?�卡" :value="stats.todayClockedIn">
             <template #prefix>
               <el-icon style="vertical-align: middle"><Clock /></el-icon>
             </template>
@@ -39,9 +39,9 @@
 
         <el-card class="stat-card">
           <el-statistic
-            title="本月總工時"
+            title="?��?總工??
             :value="stats.monthlyHours"
-            suffix="小時"
+            suffix="小�?"
           >
             <template #prefix>
               <el-icon style="vertical-align: middle"><Calendar /></el-icon>
@@ -52,7 +52,7 @@
     </div>
 
     <div class="quick-actions">
-      <h2 class="section-title">快速操作</h2>
+      <h2 class="section-title">快速�?�?/h2>
       <div class="actions-grid">
         <el-card
           v-for="action in quickActions"
@@ -73,7 +73,7 @@
     </div>
 
     <div class="recent-section" v-if="!isMobile">
-      <h2 class="section-title">最近動態</h2>
+      <h2 class="section-title">?�近�???/h2>
       <el-card>
         <el-timeline>
           <el-timeline-item
@@ -112,29 +112,29 @@ const stats = computed(() => statsStore.stats);
 
 const quickActions = [
   {
-    name: "工讀生管理",
-    desc: "新增、編輯工讀生資料",
+    name: "工�??�管??,
+    desc: "?��??�編輯工讀?��???,
     icon: "User",
     color: "#409EFF",
     path: "/workers",
   },
   {
-    name: "打卡系統",
-    desc: "工讀生打卡簽到簽退",
+    name: "?�卡系統",
+    desc: "工�??��??�簽?�簽?�",
     icon: "Clock",
     color: "#67C23A",
     path: "/attendance",
   },
   {
-    name: "工時記錄",
-    desc: "查看和管理工時記錄",
+    name: "工�?記�?",
+    desc: "?��??�管?�工?��???,
     icon: "Calendar",
     color: "#E6A23C",
     path: "/time-records",
   },
   {
-    name: "薪資管理",
-    desc: "計算和調整工讀生薪資",
+    name: "?��?管�?",
+    desc: "計�??�調?�工讀?�薪�?,
     icon: "Money",
     color: "#F56C6C",
     path: "/salary",
@@ -144,13 +144,13 @@ const quickActions = [
 const recentActivities = ref([
   {
     id: 1,
-    content: "系統初始化完成",
+    content: "系統?��??��???,
     timestamp: new Date().toLocaleString(),
     color: "#409EFF",
   },
   {
     id: 2,
-    content: "歡迎使用工讀生管理平台",
+    content: "歡�?使用工�??�管?�平??,
     timestamp: new Date().toLocaleString(),
     color: "#67C23A",
   },
@@ -265,7 +265,7 @@ onMounted(() => {
   margin-top: 32px;
 }
 
-/* 手機端適配 */
+/* ?��?端適??*/
 @media (max-width: 768px) {
   .home-container {
     padding: 12px;

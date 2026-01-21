@@ -1,19 +1,19 @@
 <template>
   <div id="app">
-    <!-- 如果在登入頁面，只顯示登入組件 -->
+    <!-- 如�??�登?��??��??�顯示登?��?�?-->
     <template v-if="$route.path === '/login'">
       <router-view />
     </template>
 
-    <!-- 主應用界面 -->
+    <!-- 主�??��???-->
     <template v-else>
       <el-container class="app-container">
-        <!-- 頂部導航 -->
+        <!-- ?�部導航 -->
         <el-header v-if="!isMobile" height="60px" class="app-header">
           <div class="header-content">
             <div class="logo">
               <el-icon size="24"><Management /></el-icon>
-              <span>工讀生管理平台</span>
+              <span>工�??�管?�平??/span>
             </div>
             <div class="header-actions">
               <div class="user-info">
@@ -28,11 +28,11 @@
               <div class="action-buttons">
                 <el-button type="primary" @click="showDashboard">
                   <el-icon><DataAnalysis /></el-icon>
-                  統計資訊
+                  統�?資�?
                 </el-button>
                 <el-button type="danger" @click="handleLogout" plain>
                   <el-icon><SwitchButton /></el-icon>
-                  登出
+                  ?�出
                 </el-button>
               </div>
             </div>
@@ -40,7 +40,7 @@
         </el-header>
 
         <el-container>
-          <!-- 側邊導航 -->
+          <!-- ?��?導航 -->
           <el-aside v-if="!isMobile" width="200px" class="app-aside">
             <el-menu
               :default-active="$route.path"
@@ -52,55 +52,55 @@
             >
               <el-menu-item index="/">
                 <el-icon><HomeFilled /></el-icon>
-                <span>首頁</span>
+                <span>首�?</span>
               </el-menu-item>
               <el-menu-item index="/workers">
                 <el-icon><User /></el-icon>
-                <span>工讀生管理</span>
+                <span>工�??�管??/span>
               </el-menu-item>
               <el-menu-item
                 v-if="authStore.canEditWorkers || authStore.isAdmin"
                 index="/groups"
               >
                 <el-icon><UserFilled /></el-icon>
-                <span>組別管理</span>
+                <span>組別管�?</span>
               </el-menu-item>
               <el-menu-item
                 v-if="authStore.hasPermission('canClockIn')"
                 index="/attendance"
               >
                 <el-icon><Clock /></el-icon>
-                <span>打卡系統</span>
+                <span>?�卡系統</span>
               </el-menu-item>
               <el-menu-item index="/time-records">
                 <el-icon><Calendar /></el-icon>
-                <span>工時記錄</span>
+                <span>工�?記�?</span>
               </el-menu-item>
               <el-menu-item index="/salary">
                 <el-icon><Money /></el-icon>
-                <span>薪資管理</span>
+                <span>?��?管�?</span>
               </el-menu-item>
               <el-menu-item
                 v-if="authStore.canViewReports || authStore.isAdmin"
                 index="/activity-logs"
               >
                 <el-icon><Document /></el-icon>
-                <span>活動日誌</span>
+                <span>活�??��?</span>
               </el-menu-item>
               <el-menu-item v-if="authStore.isAdmin" index="/user-management">
                 <el-icon><Setting /></el-icon>
-                <span>用戶管理</span>
+                <span>?�戶管�?</span>
               </el-menu-item>
             </el-menu>
           </el-aside>
 
-          <!-- 主內容區域 -->
+          <!-- 主內容�???-->
           <el-main class="app-main">
             <router-view />
           </el-main>
         </el-container>
 
-        <!-- 手機端頂部 -->
+        <!-- ?��?端�???-->
         <el-header v-if="isMobile" height="50px" class="mobile-header">
           <div class="mobile-header-content">
             <div class="mobile-user-info">
@@ -117,12 +117,12 @@
               plain
               :icon="SwitchButton"
             >
-              登出
+              ?�出
             </el-button>
           </div>
         </el-header>
 
-        <!-- 手機端底部導航 -->
+        <!-- ?��?端�??��???-->
         <el-footer v-if="isMobile" height="45px" class="mobile-footer">
           <div class="mobile-nav">
             <div
@@ -138,29 +138,29 @@
       </el-container>
     </template>
 
-    <!-- 統計資訊彈窗 -->
+    <!-- 統�?資�?彈�? -->
     <el-dialog
       v-model="dashboardVisible"
-      title="統計資訊"
+      title="統�?資�?"
       :width="isMobile ? '95%' : '500px'"
       center
     >
       <div class="dashboard-content">
         <el-row :gutter="16">
           <el-col :span="12">
-            <el-statistic title="總工讀生數" :value="stats.totalWorkers" />
+            <el-statistic title="總工讀?�數" :value="stats.totalWorkers" />
           </el-col>
           <el-col :span="12">
-            <el-statistic title="總組別數" :value="stats.totalGroups" />
+            <el-statistic title="總�??�數" :value="stats.totalGroups" />
           </el-col>
           <el-col :span="12">
-            <el-statistic title="今日打卡" :value="stats.todayClockedIn" />
+            <el-statistic title="今日?�卡" :value="stats.todayClockedIn" />
           </el-col>
           <el-col :span="12">
             <el-statistic
-              title="本月工時"
+              title="?��?工�?"
               :value="stats.monthlyHours"
-              suffix="小時"
+              suffix="小�?"
             />
           </el-col>
         </el-row>
@@ -200,17 +200,17 @@ const isMobile = computed(() => windowWidth.value <= 768);
 
 const stats = computed(() => statsStore.stats);
 
-// 用戶角色顯示
+// ?�戶角色顯示
 const userRoleText = computed(() => {
   switch (authStore.userRole) {
     case "admin":
-      return "管理員";
+      return "管�???;
     case "leader":
-      return "小組長";
+      return "小�???;
     case "reader":
       return "訪客";
     default:
-      return "未知";
+      return "?�知";
   }
 });
 
@@ -227,27 +227,27 @@ const userRoleTagType = computed(() => {
   }
 });
 
-// 手機端導航(根據權限動態過濾)
+// ?��?端�????��?權�??��??�濾)
 const mobileNavs = [
-  { path: "/", name: "首頁", icon: "HomeFilled" },
-  { path: "/workers", name: "工讀生", icon: "User" },
+  { path: "/", name: "首�?", icon: "HomeFilled" },
+  { path: "/workers", name: "工�???, icon: "User" },
   {
     path: "/attendance",
-    name: "打卡",
+    name: "?�卡",
     icon: "Clock",
     permission: "canClockIn",
   },
-  { path: "/time-records", name: "工時", icon: "Calendar" },
-  { path: "/salary", name: "薪資", icon: "Money" },
+  { path: "/time-records", name: "工�?", icon: "Calendar" },
+  { path: "/salary", name: "?��?", icon: "Money" },
   {
     path: "/activity-logs",
-    name: "日誌",
+    name: "?��?",
     icon: "Document",
     permission: "canViewReports",
   },
   {
     path: "/user-management",
-    name: "用戶",
+    name: "?�戶",
     icon: "Setting",
     adminOnly: true,
   },
@@ -261,11 +261,11 @@ const mobileNavs = [
 
 const visibleMobileNavs = computed(() => {
   return mobileNavs.filter((nav) => {
-    // 如果是僅限管理員的選項,檢查是否為管理員
+    // 如�??��??�管?�員?�選??檢查?�否?�管?�員
     if (nav.adminOnly) {
       return authStore.isAdmin;
     }
-    // 如果有權限要求,檢查權限
+    // 如�??��??��?�?檢查權�?
     if (nav.permission) {
       return authStore.hasPermission(nav.permission) || authStore.isAdmin;
     }
@@ -282,28 +282,28 @@ const showDashboard = async () => {
   dashboardVisible.value = true;
 };
 
-// 登出處理
+// ?�出?��?
 const handleLogout = async () => {
   try {
     const confirmResult = await ElMessageBox.confirm(
-      "確定要登出嗎？",
-      "確認登出",
+      "確�?要登?��?�?,
+      "確�??�出",
       {
-        confirmButtonText: "確定",
-        cancelButtonText: "取消",
+        confirmButtonText: "確�?",
+        cancelButtonText: "?��?",
         type: "warning",
       },
     );
 
     if (confirmResult === "confirm") {
       await authStore.logout();
-      ElMessage.success("已成功登出");
+      ElMessage.success("已�??�登??);
       router.push("/login");
     }
   } catch (error) {
-    // 用戶取消登出
+    // ?�戶?��??�出
     if (error !== "cancel") {
-      ElMessage.error("登出失敗");
+      ElMessage.error("?�出失�?");
     }
   }
 };
@@ -311,10 +311,10 @@ const handleLogout = async () => {
 onMounted(() => {
   window.addEventListener("resize", handleResize);
 
-  // 初始化認證狀態
+  // ?��??��?證�???
   authStore.initializeAuth();
 
-  // 載入統計資料
+  // 載入統�?資�?
   if (authStore.isLoggedIn) {
     statsStore.fetchStats();
   }
@@ -421,7 +421,7 @@ onUnmounted(() => {
   background: #555;
 }
 
-/* 手機端頂部 */
+/* ?��?端�???*/
 .mobile-header {
   background-color: #fff;
   border-bottom: 1px solid #e6e6e6;
@@ -493,19 +493,19 @@ onUnmounted(() => {
   padding: 20px 0;
 }
 
-/* 手機端樣式調整 */
+/* ?��?端樣式調??*/
 @media (max-width: 768px) {
   .app-main {
     padding: 0;
-    padding-top: 65px; /* 為固定的手機頂部導航留出空間 */
-    padding-bottom: 60px; /* 為固定的手機底部導航留出空間 */
+    padding-top: 65px; /* ?�固定�??��??�部導航?�出空�? */
+    padding-bottom: 60px; /* ?�固定�??��?底部導航?�出空�? */
     height: calc(100vh - 60px);
     overflow-y: auto;
     overflow-x: hidden;
   }
 
   .app-main::-webkit-scrollbar {
-    width: 4px; /* 手機版更細的滾動條 */
+    width: 4px; /* ?��??�更細�?滾�?�?*/
   }
 
   .app-main::-webkit-scrollbar-track {
@@ -535,7 +535,7 @@ onUnmounted(() => {
   }
 }
 
-/* 響應式調整 */
+/* ?��?式調??*/
 @media (max-width: 1200px) {
   .header-content {
     padding: 0 15px;

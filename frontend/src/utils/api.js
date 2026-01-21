@@ -1,23 +1,23 @@
 import axios from "axios";
 import { ElMessage } from "element-plus";
 
-// 動態設定 API 基礎 URL
+// ?��?設�? API ?��? URL
 const getBaseURL = () => {
-  // 如果有設定環境變數，使用環境變數
+  // 如�??�設定環境�??��?使用?��?變數
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
 
-  // 開發環境或本地環境使用代理
+  // ?�發?��??�本?�環境使?�代??
   if (import.meta.env.DEV) {
     return "/api";
   }
 
-  // 生產環境預設（之後需要更新為實際的後端網址）
+  // ?�產?��??�設（�?後�?要更?�為實�??��?端網?��?
   return "/api";
 };
 
-// 建立 axios 實例
+// 建�? axios 實�?
 const api = axios.create({
   baseURL: getBaseURL(),
   timeout: 10000,
@@ -26,10 +26,10 @@ const api = axios.create({
   },
 });
 
-// 請求攔截器
+// 請�??�截??
 api.interceptors.request.use(
   (config) => {
-    // 可以在這裡添加 loading 狀態
+    // ?�以?�這裡添�? loading ?�??
     return config;
   },
   (error) => {
@@ -37,42 +37,42 @@ api.interceptors.request.use(
   },
 );
 
-// 回應攔截器
+// ?��??�截??
 api.interceptors.response.use(
   (response) => {
-    // 直接返回原始response，讓各個組件自行處理
+    // ?�接返�??��?response，�??�個�?件自行�???
     return response;
   },
   (error) => {
-    let message = "網路錯誤，請稍後重試";
+    let message = "網路?�誤，�?稍�??�試";
 
     if (error.response) {
       const { status, data } = error.response;
 
       switch (status) {
         case 400:
-          message = data.message || "請求參數錯誤";
+          message = data.message || "請�??�數?�誤";
           break;
         case 401:
-          message = data.message || "認證失敗";
+          message = data.message || "認�?失�?";
           break;
         case 403:
-          message = data.message || "權限不足";
+          message = data.message || "權�?不足";
           break;
         case 404:
-          message = data.message || "請求的資源不存在";
+          message = data.message || "請�??��?源�?存在";
           break;
         case 500:
-          message = "伺服器錯誤，請稍後重試";
+          message = "伺�??�錯誤�?請�?後�?�?;
           break;
         default:
-          message = data.message || `請求失敗 (${status})`;
+          message = data.message || `請�?失�? (${status})`;
       }
     } else if (error.request) {
-      message = "無法連接到伺服器，請檢查網路連線";
+      message = "?��???��?�伺?�器，�?檢查網路???";
     }
 
-    console.error("API錯誤:", error);
+    console.error("API?�誤:", error);
     return Promise.reject(error);
   },
 );

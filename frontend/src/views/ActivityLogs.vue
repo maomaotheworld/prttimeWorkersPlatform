@@ -1,7 +1,7 @@
 <template>
   <div class="activity-logs-container">
     <div class="page-header">
-      <h1 class="page-title">活動日誌</h1>
+      <h1 class="page-title">活�??��?</h1>
       <div class="page-actions">
         <el-button
           type="danger"
@@ -9,7 +9,7 @@
           :icon="Delete"
           :disabled="logs.length === 0"
         >
-          清空日誌
+          清空?��?
         </el-button>
         <el-button
           type="primary"
@@ -17,58 +17,58 @@
           :icon="Refresh"
           :loading="loading"
         >
-          重新整理
+          ?�新?��?
         </el-button>
       </div>
     </div>
 
-    <!-- 篩選器 -->
+    <!-- 篩選??-->
     <div class="filters">
       <el-row :gutter="16">
         <el-col :span="6">
           <el-select
             v-model="filters.entityType"
-            placeholder="選擇實體類型"
+            placeholder="?��?實�?類�?"
             clearable
             @change="fetchLogs"
           >
-            <el-option label="工讀生" value="worker" />
-            <el-option label="時間記錄" value="time-record" />
-            <el-option label="活動日誌" value="activity-logs" />
+            <el-option label="工�??? value="worker" />
+            <el-option label="?��?記�?" value="time-record" />
+            <el-option label="活�??��?" value="activity-logs" />
           </el-select>
         </el-col>
         <el-col :span="6">
           <el-select
             v-model="filters.action"
-            placeholder="選擇動作"
+            placeholder="?��??��?"
             clearable
             @change="fetchLogs"
           >
-            <el-option label="新增" value="create" />
-            <el-option label="更新" value="update" />
-            <el-option label="刪除" value="delete" />
-            <el-option label="上班打卡" value="clock-in" />
-            <el-option label="下班打卡" value="clock-out" />
-            <el-option label="時數調整" value="time-adjust" />
-            <el-option label="清空日誌" value="clear" />
+            <el-option label="?��?" value="create" />
+            <el-option label="?�新" value="update" />
+            <el-option label="?�除" value="delete" />
+            <el-option label="上班?�卡" value="clock-in" />
+            <el-option label="下班?�卡" value="clock-out" />
+            <el-option label="?�數調整" value="time-adjust" />
+            <el-option label="清空?��?" value="clear" />
           </el-select>
         </el-col>
         <el-col :span="6">
           <el-input
             v-model="searchText"
-            placeholder="搜尋日誌內容"
+            placeholder="?��??��??�容"
             :prefix-icon="Search"
             clearable
             @input="handleSearch"
           />
         </el-col>
         <el-col :span="6">
-          <div class="stats">總共 {{ totalLogs }} 條記錄</div>
+          <div class="stats">總共 {{ totalLogs }} 條�???/div>
         </el-col>
       </el-row>
     </div>
 
-    <!-- 日誌列表 -->
+    <!-- ?��??�表 -->
     <div class="logs-content">
       <el-timeline v-if="filteredLogs.length > 0">
         <el-timeline-item
@@ -102,10 +102,10 @@
         </el-timeline-item>
       </el-timeline>
 
-      <el-empty v-else description="暫無活動日誌" />
+      <el-empty v-else description="?�無活�??��?" />
     </div>
 
-    <!-- 分頁 -->
+    <!-- ?��? -->
     <div v-if="totalPages > 1" class="pagination">
       <el-pagination
         v-model:current-page="currentPage"
@@ -136,7 +136,7 @@ import {
 } from "@element-plus/icons-vue";
 import api from "../utils/api";
 
-// 響應式數據
+// ?��?式數??
 const logs = ref([]);
 const loading = ref(false);
 const filters = ref({
@@ -149,7 +149,7 @@ const pageSize = ref(50);
 const totalLogs = ref(0);
 const totalPages = ref(0);
 
-// 計算屬性
+// 計�?屬�?
 const filteredLogs = computed(() => {
   if (!searchText.value) return logs.value;
 
@@ -161,7 +161,7 @@ const filteredLogs = computed(() => {
   );
 });
 
-// 獲取日誌列表
+// ?��??��??�表
 const fetchLogs = async () => {
   try {
     loading.value = true;
@@ -182,42 +182,42 @@ const fetchLogs = async () => {
     totalLogs.value = response.data.total;
     totalPages.value = response.data.totalPages;
   } catch (error) {
-    ElMessage.error("獲取活動日誌失敗");
-    console.error("獲取活動日誌失敗:", error);
+    ElMessage.error("?��?活�??��?失�?");
+    console.error("?��?活�??��?失�?:", error);
   } finally {
     loading.value = false;
   }
 };
 
-// 清空日誌
+// 清空?��?
 const handleClearLogs = async () => {
   try {
     await ElMessageBox.confirm(
-      "確定要清空所有活動日誌嗎？此操作無法復原。",
-      "確認清空",
+      "確�?要�?空�??�活?�日誌�?？此?��??��?復�???,
+      "確�?清空",
       {
-        confirmButtonText: "確定",
-        cancelButtonText: "取消",
+        confirmButtonText: "確�?",
+        cancelButtonText: "?��?",
         type: "warning",
       },
     );
 
     await api.delete("/activity-logs");
-    ElMessage.success("活動日誌已清空");
+    ElMessage.success("活�??��?已�?�?);
     await fetchLogs();
   } catch (error) {
     if (error !== "cancel") {
-      ElMessage.error("清空活動日誌失敗");
+      ElMessage.error("清空活�??��?失�?");
     }
   }
 };
 
-// 搜尋處理
+// ?��??��?
 const handleSearch = () => {
-  // 搜尋邏輯在計算屬性中處理
+  // ?��??�輯?��?算屬?�中?��?
 };
 
-// 分頁處理
+// ?��??��?
 const handleSizeChange = (size) => {
   pageSize.value = size;
   currentPage.value = 1;
@@ -229,7 +229,7 @@ const handlePageChange = (page) => {
   fetchLogs();
 };
 
-// 格式化時間
+// ?��??��???
 const formatTime = (timestamp) => {
   return new Date(timestamp).toLocaleString("zh-TW", {
     year: "numeric",
@@ -241,7 +241,7 @@ const formatTime = (timestamp) => {
   });
 };
 
-// 獲取時間軸類型
+// ?��??��?軸�???
 const getTimelineType = (action) => {
   switch (action) {
     case "create":
@@ -257,7 +257,7 @@ const getTimelineType = (action) => {
   }
 };
 
-// 獲取動作圖標
+// ?��??��??��?
 const getActionIcon = (action) => {
   switch (action) {
     case "create":
@@ -278,7 +278,7 @@ const getActionIcon = (action) => {
   }
 };
 
-// 獲取動作標籤類型
+// ?��??��?標籤類�?
 const getActionTagType = (action) => {
   switch (action) {
     case "create":
@@ -294,31 +294,31 @@ const getActionTagType = (action) => {
   }
 };
 
-// 獲取動作文字
+// ?��??��??��?
 const getActionText = (action) => {
   const actionMap = {
-    create: "新增",
-    update: "更新",
-    delete: "刪除",
-    "clock-in": "上班打卡",
-    "clock-out": "下班打卡",
-    "time-adjust": "時數調整",
-    clear: "清空日誌",
+    create: "?��?",
+    update: "?�新",
+    delete: "?�除",
+    "clock-in": "上班?�卡",
+    "clock-out": "下班?�卡",
+    "time-adjust": "?�數調整",
+    clear: "清空?��?",
   };
   return actionMap[action] || action;
 };
 
-// 獲取實體類型文字
+// ?��?實�?類�??��?
 const getEntityTypeText = (entityType) => {
   const typeMap = {
-    worker: "工讀生",
-    "time-record": "時間記錄",
-    "activity-logs": "活動日誌",
+    worker: "工�???,
+    "time-record": "?��?記�?",
+    "activity-logs": "活�??��?",
   };
   return typeMap[entityType] || entityType;
 };
 
-// 初始化
+// ?��???
 onMounted(() => {
   fetchLogs();
 });
@@ -414,7 +414,7 @@ onMounted(() => {
   text-align: center;
 }
 
-/* 響應式設計 */
+/* ?��?式設�?*/
 @media (max-width: 768px) {
   .activity-logs-container {
     padding: 12px;

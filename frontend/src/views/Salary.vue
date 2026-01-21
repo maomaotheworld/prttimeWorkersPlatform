@@ -1,23 +1,23 @@
 <template>
   <div class="salary-container">
     <div class="page-header">
-      <h1 class="page-title">薪資管理</h1>
+      <h1 class="page-title">?��?管�?</h1>
     </div>
 
-    <!-- 薪資計算區域 -->
+    <!-- ?��?計�??�??-->
     <el-card class="calculation-card mb-20">
       <template #header>
         <div class="card-header">
-          <span>薪資計算</span>
+          <span>?��?計�?</span>
         </div>
       </template>
 
       <el-row :gutter="16">
         <el-col :xs="24" :sm="8">
-          <el-form-item label="選擇工讀生">
+          <el-form-item label="?��?工�???>
             <el-select
               v-model="selectedWorker"
-              placeholder="請選擇工讀生"
+              placeholder="請選?�工讀??
               style="width: 100%"
               @change="handleWorkerChange"
             >
@@ -31,13 +31,13 @@
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="8">
-          <el-form-item label="計算期間">
+          <el-form-item label="計�??��?">
             <el-date-picker
               v-model="dateRange"
               type="monthrange"
-              range-separator="至"
-              start-placeholder="開始月份"
-              end-placeholder="結束月份"
+              range-separator="??
+              start-placeholder="?��??�份"
+              end-placeholder="結�??�份"
               format="YYYY/MM"
               value-format="YYYY-MM"
               @change="handleDateChange"
@@ -51,21 +51,21 @@
             :loading="calculating"
             :disabled="!selectedWorker"
           >
-            計算薪資
+            計�??��?
           </el-button>
         </el-col>
       </el-row>
     </el-card>
 
-    <!-- 薪資詳細資訊 -->
+    <!-- ?��?詳細資�? -->
     <el-card v-if="salaryData" class="salary-detail-card mb-20">
       <template #header>
         <div class="card-header">
           <span
-            >薪資詳情 - {{ salaryData.worker.name }} ({{
+            >?��?詳�? - {{ salaryData.worker.name }} ({{
               salaryData.period.startDate
             }}
-            至 {{ salaryData.period.endDate }})</span
+            ??{{ salaryData.period.endDate }})</span
           >
         </div>
       </template>
@@ -73,37 +73,37 @@
       <el-row :gutter="16" class="salary-overview">
         <el-col :xs="24" :sm="6">
           <div class="salary-item">
-            <div class="salary-label">基本時薪</div>
+            <div class="salary-label">?�本?�薪</div>
             <div class="salary-value">
-              {{ salaryData.worker.baseHourlyWage }} 元
+              {{ salaryData.worker.baseHourlyWage }} ??
             </div>
           </div>
         </el-col>
         <el-col :xs="24" :sm="6">
           <div class="salary-item">
-            <div class="salary-label">工作天數</div>
+            <div class="salary-label">工�?天數</div>
             <div class="salary-value">
-              {{ salaryData.workTime.workingDays }} 天
+              {{ salaryData.workTime.workingDays }} �?
             </div>
           </div>
         </el-col>
         <el-col :xs="24" :sm="6">
           <div class="salary-item">
-            <div class="salary-label">總工時</div>
+            <div class="salary-label">總工??/div>
             <div class="salary-value">
               {{
                 salaryData.workTime.totalRegularHours +
                 salaryData.workTime.totalAdditionalHours
               }}
-              小時
+              小�?
             </div>
           </div>
         </el-col>
         <el-col :xs="24" :sm="6">
           <div class="salary-item total">
-            <div class="salary-label">總薪資</div>
+            <div class="salary-label">總薪�?/div>
             <div class="salary-value">
-              {{ salaryData.salary.totalSalary }} 元
+              {{ salaryData.salary.totalSalary }} ??
             </div>
           </div>
         </el-col>
@@ -113,30 +113,30 @@
 
       <el-row :gutter="16">
         <el-col :xs="24" :sm="12">
-          <h3>工時詳情</h3>
+          <h3>工�?詳�?</h3>
           <el-descriptions :column="1" border>
-            <el-descriptions-item label="正常工時">
-              {{ salaryData.workTime.totalRegularHours }} 小時
+            <el-descriptions-item label="�?��工�?">
+              {{ salaryData.workTime.totalRegularHours }} 小�?
             </el-descriptions-item>
-            <el-descriptions-item label="額外工時">
-              {{ salaryData.workTime.totalAdditionalHours }} 小時
+            <el-descriptions-item label="額�?工�?">
+              {{ salaryData.workTime.totalAdditionalHours }} 小�?
             </el-descriptions-item>
-            <el-descriptions-item label="工作天數">
-              {{ salaryData.workTime.workingDays }} 天
+            <el-descriptions-item label="工�?天數">
+              {{ salaryData.workTime.workingDays }} �?
             </el-descriptions-item>
           </el-descriptions>
         </el-col>
 
         <el-col :xs="24" :sm="12">
-          <h3>薪資計算</h3>
+          <h3>?��?計�?</h3>
           <el-descriptions :column="1" border>
-            <el-descriptions-item label="基本薪資">
-              {{ salaryData.salary.baseSalary }} 元
+            <el-descriptions-item label="?�本?��?">
+              {{ salaryData.salary.baseSalary }} ??
             </el-descriptions-item>
-            <el-descriptions-item label="額外薪資">
-              {{ salaryData.salary.additionalSalary }} 元
+            <el-descriptions-item label="額�??��?">
+              {{ salaryData.salary.additionalSalary }} ??
             </el-descriptions-item>
-            <el-descriptions-item label="薪資調整">
+            <el-descriptions-item label="?��?調整">
               <span
                 :class="
                   salaryData.salary.totalAdjustments >= 0
@@ -145,12 +145,12 @@
                 "
               >
                 {{ salaryData.salary.totalAdjustments >= 0 ? "+" : ""
-                }}{{ salaryData.salary.totalAdjustments }} 元
+                }}{{ salaryData.salary.totalAdjustments }} ??
               </span>
             </el-descriptions-item>
-            <el-descriptions-item label="總薪資">
+            <el-descriptions-item label="總薪�?>
               <strong style="font-size: 18px; color: #409eff">
-                {{ salaryData.salary.totalSalary }} 元
+                {{ salaryData.salary.totalSalary }} ??
               </strong>
             </el-descriptions-item>
           </el-descriptions>
@@ -158,11 +158,11 @@
       </el-row>
     </el-card>
 
-    <!-- 薪資調整 -->
+    <!-- ?��?調整 -->
     <el-card class="adjustment-card mb-20">
       <template #header>
         <div class="card-header">
-          <span>薪資調整</span>
+          <span>?��?調整</span>
           <div>
             <el-button
               type="success"
@@ -171,7 +171,7 @@
               :disabled="!selectedWorker"
               style="margin-right: 8px;"
             >
-              調整總薪資
+              調整總薪�?
             </el-button>
             <el-button
               type="primary"
@@ -179,47 +179,47 @@
               @click="showAdjustmentDialog"
               :disabled="!selectedWorker"
             >
-              新增調整
+              ?��?調整
             </el-button>
           </div>
         </div>
       </template>
 
       <el-table v-loading="loadingAdjustments" :data="adjustments" stripe>
-        <el-table-column prop="date" label="日期" width="120">
+        <el-table-column prop="date" label="?��?" width="120">
           <template #default="{ row }">
             {{ formatDate(row.date) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="工讀生" min-width="120">
+        <el-table-column label="工�??? min-width="120">
           <template #default="{ row }">
             {{ getWorkerName(row.workerId) }}
           </template>
         </el-table-column>
 
-        <el-table-column prop="type" label="類型" width="100">
+        <el-table-column prop="type" label="類�?" width="100">
           <template #default="{ row }">
             <el-tag
               :type="row.type === 'increase' ? 'success' : 'danger'"
               size="small"
             >
-              {{ row.type === "increase" ? "加薪" : "減薪" }}
+              {{ row.type === "increase" ? "?�薪" : "減薪" }}
             </el-tag>
           </template>
         </el-table-column>
 
-        <el-table-column prop="amount" label="金額" width="100">
+        <el-table-column prop="amount" label="?��?" width="100">
           <template #default="{ row }">
             <span
               :class="row.type === 'increase' ? 'success-text' : 'error-text'"
             >
-              {{ row.type === "increase" ? "+" : "-" }}{{ row.amount }} 元
+              {{ row.type === "increase" ? "+" : "-" }}{{ row.amount }} ??
             </span>
           </template>
         </el-table-column>
 
-        <el-table-column prop="reason" label="理由" min-width="150" />
+        <el-table-column prop="reason" label="?�由" min-width="150" />
       </el-table>
 
       <div
@@ -227,14 +227,14 @@
         class="empty-state"
       >
         <el-icon size="48"><DocumentRemove /></el-icon>
-        <p>暫無薪資調整記錄</p>
+        <p>?�無?��?調整記�?</p>
       </div>
     </el-card>
 
-    <!-- 薪資調整對話框 -->
+    <!-- ?��?調整對話�?-->
     <el-dialog
       v-model="adjustmentDialogVisible"
-      title="新增薪資調整"
+      title="?��??��?調整"
       :width="isMobile ? '95%' : '500px'"
     >
       <el-form
@@ -243,10 +243,10 @@
         :rules="adjustmentFormRules"
         label-width="80px"
       >
-        <el-form-item label="工讀生" prop="workerId">
+        <el-form-item label="工�??? prop="workerId">
           <el-select
             v-model="adjustmentForm.workerId"
-            placeholder="請選擇工讀生"
+            placeholder="請選?�工讀??
             style="width: 100%"
           >
             <el-option
@@ -258,14 +258,14 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="調整類型" prop="type">
+        <el-form-item label="調整類�?" prop="type">
           <el-radio-group v-model="adjustmentForm.type">
-            <el-radio label="increase">加薪</el-radio>
+            <el-radio label="increase">?�薪</el-radio>
             <el-radio label="decrease">減薪</el-radio>
           </el-radio-group>
         </el-form-item>
 
-        <el-form-item label="調整金額" prop="amount">
+        <el-form-item label="調整?��?" prop="amount">
           <el-input-number
             v-model="adjustmentForm.amount"
             :min="1"
@@ -274,41 +274,41 @@
           />
         </el-form-item>
 
-        <el-form-item label="調整理由" prop="reason">
+        <el-form-item label="調整?�由" prop="reason">
           <el-input
             v-model="adjustmentForm.reason"
             type="textarea"
             :rows="3"
-            placeholder="請說明薪資調整的理由"
+            placeholder="請說?�薪資調?��??�由"
           />
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="adjustmentDialogVisible = false">取消</el-button>
+        <el-button @click="adjustmentDialogVisible = false">?��?</el-button>
         <el-button
           type="primary"
           @click="handleAddAdjustment"
           :loading="submitting"
         >
-          新增
+          ?��?
         </el-button>
       </template>
     </el-dialog>
 
-    <!-- 調整總薪資對話框 -->
+    <!-- 調整總薪資�?話�? -->
     <el-dialog
       v-model="totalSalaryDialogVisible"
-      title="調整總薪資"
+      title="調整總薪�?
       :width="isMobile ? '95%' : '600px'"
     >
       <el-alert
-        title="說明"
+        title="說�?"
         type="info"
         :closable="false"
         style="margin-bottom: 20px;"
       >
-        輸入要支付給工讀生的總薪資,系統將根據工作時數自動計算新的時薪
+        輸入要支付給工�??��?總薪�?系統將根?�工作�??�自?��?算新?��???
       </el-alert>
 
       <el-form
@@ -317,10 +317,10 @@
         :rules="totalSalaryFormRules"
         label-width="120px"
       >
-        <el-form-item label="工讀生" prop="workerId">
+        <el-form-item label="工�??? prop="workerId">
           <el-select
             v-model="totalSalaryForm.workerId"
-            placeholder="請選擇工讀生"
+            placeholder="請選?�工讀??
             style="width: 100%"
             @change="handleTotalSalaryWorkerChange"
           >
@@ -335,25 +335,25 @@
 
         <el-divider />
 
-        <el-form-item label="本期工作時數">
+        <el-form-item label="?��?工�??�數">
           <el-input
-            :value="currentPeriodHours + ' 小時'"
+            :value="currentPeriodHours + ' 小�?'"
             disabled
             style="width: 100%"
           />
         </el-form-item>
 
-        <el-form-item label="目前時薪">
+        <el-form-item label="?��??�薪">
           <el-input
-            :value="currentWage + ' 元/小時'"
+            :value="currentWage + ' ??小�?'"
             disabled
             style="width: 100%"
           />
         </el-form-item>
 
-        <el-form-item label="目前預估薪資">
+        <el-form-item label="?��??�估?��?">
           <el-input
-            :value="currentEstimatedSalary + ' 元'"
+            :value="currentEstimatedSalary + ' ??"
             disabled
             style="width: 100%"
           />
@@ -361,7 +361,7 @@
 
         <el-divider />
 
-        <el-form-item label="調整後總薪資" prop="targetTotalSalary">
+        <el-form-item label="調整後總?��?" prop="targetTotalSalary">
           <el-input-number
             v-model="totalSalaryForm.targetTotalSalary"
             :min="0"
@@ -371,56 +371,56 @@
             @change="calculateNewWage"
           />
           <span style="font-size: 12px; color: #909399; margin-left: 8px;">
-            元
+            ??
           </span>
         </el-form-item>
 
-        <el-form-item label="計算後新時薪" v-if="calculatedNewWage > 0">
+        <el-form-item label="計�?後新?�薪" v-if="calculatedNewWage > 0">
           <el-tag type="primary" size="large" style="padding: 10px 15px;">
-            {{ calculatedNewWage }} 元/小時
+            {{ calculatedNewWage }} ??小�?
           </el-tag>
         </el-form-item>
 
-        <el-form-item label="時薪調整" v-if="calculatedNewWage > 0">
+        <el-form-item label="?�薪調整" v-if="calculatedNewWage > 0">
           <el-tag
             :type="wageAdjustment >= 0 ? 'success' : 'danger'"
             size="large"
             style="padding: 10px 15px;"
           >
-            {{ wageAdjustment >= 0 ? '+' : '' }}{{ wageAdjustment }} 元/小時
+            {{ wageAdjustment >= 0 ? '+' : '' }}{{ wageAdjustment }} ??小�?
             ({{ wageAdjustmentPercent }})
           </el-tag>
         </el-form-item>
 
-        <el-form-item label="薪資調整" v-if="calculatedNewWage > 0">
+        <el-form-item label="?��?調整" v-if="calculatedNewWage > 0">
           <el-tag
             :type="salaryAdjustment >= 0 ? 'success' : 'danger'"
             size="large"
             style="padding: 10px 15px;"
           >
-            {{ salaryAdjustment >= 0 ? '+' : '' }}{{ salaryAdjustment }} 元
+            {{ salaryAdjustment >= 0 ? '+' : '' }}{{ salaryAdjustment }} ??
           </el-tag>
         </el-form-item>
 
-        <el-form-item label="調整理由" prop="reason">
+        <el-form-item label="調整?�由" prop="reason">
           <el-input
             v-model="totalSalaryForm.reason"
             type="textarea"
             :rows="3"
-            placeholder="請說明調整總薪資的理由（例如：本月績效獎勵、專案獎金等）"
+            placeholder="請說?�調?�總?��??��??��?例�?：本?�績?��??�、�?案�??��?�?
           />
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="totalSalaryDialogVisible = false">取消</el-button>
+        <el-button @click="totalSalaryDialogVisible = false">?��?</el-button>
         <el-button
           type="primary"
           @click="handleTotalSalaryAdjust"
           :loading="submitting"
           :disabled="calculatedNewWage <= 0"
         >
-          確認調整
+          確�?調整
         </el-button>
       </template>
     </el-dialog>
@@ -450,7 +450,7 @@ const calculating = ref(false);
 const loadingAdjustments = ref(false);
 const submitting = ref(false);
 
-// 薪資調整對話框
+// ?��?調整對話�?
 const adjustmentDialogVisible = ref(false);
 const adjustmentForm = ref({
   workerId: "",
@@ -460,15 +460,15 @@ const adjustmentForm = ref({
 });
 
 const adjustmentFormRules = {
-  workerId: [{ required: true, message: "請選擇工讀生", trigger: "change" }],
-  type: [{ required: true, message: "請選擇調整類型", trigger: "change" }],
-  amount: [{ required: true, message: "請輸入調整金額", trigger: "blur" }],
-  reason: [{ required: true, message: "請說明理由", trigger: "blur" }],
+  workerId: [{ required: true, message: "請選?�工讀??, trigger: "change" }],
+  type: [{ required: true, message: "請選?�調?��???, trigger: "change" }],
+  amount: [{ required: true, message: "請輸?�調?��?�?, trigger: "blur" }],
+  reason: [{ required: true, message: "請說?��???, trigger: "blur" }],
 };
 
 const adjustmentFormRef = ref();
 
-// 調整總薪資對話框
+// 調整總薪資�?話�?
 const totalSalaryDialogVisible = ref(false);
 const totalSalaryForm = ref({
   workerId: "",
@@ -477,14 +477,14 @@ const totalSalaryForm = ref({
 });
 
 const totalSalaryFormRules = {
-  workerId: [{ required: true, message: "請選擇工讀生", trigger: "change" }],
-  targetTotalSalary: [{ required: true, message: "請輸入目標總薪資", trigger: "blur" }],
-  reason: [{ required: true, message: "請說明調整理由", trigger: "blur" }],
+  workerId: [{ required: true, message: "請選?�工讀??, trigger: "change" }],
+  targetTotalSalary: [{ required: true, message: "請輸?�目標總?��?", trigger: "blur" }],
+  reason: [{ required: true, message: "請說?�調?��???, trigger: "blur" }],
 };
 
 const totalSalaryFormRef = ref();
 
-// 本期工作時數
+// ?��?工�??�數
 const currentPeriodHours = computed(() => {
   if (!salaryData.value) return 0;
   const regular = salaryData.value.workTime?.totalRegularHours || 0;
@@ -492,50 +492,50 @@ const currentPeriodHours = computed(() => {
   return regular + additional;
 });
 
-// 目前時薪
+// ?��??�薪
 const currentWage = computed(() => {
   if (!totalSalaryForm.value.workerId) return 0;
   const worker = workers.value.find(w => w.id === totalSalaryForm.value.workerId);
   return worker ? (worker.baseHourlyWage || 0) : 0;
 });
 
-// 目前預估薪資
+// ?��??�估?��?
 const currentEstimatedSalary = computed(() => {
   return Math.round(currentPeriodHours.value * currentWage.value);
 });
 
-// 計算後的新時薪
+// 計�?後�??��???
 const calculatedNewWage = computed(() => {
   if (!totalSalaryForm.value.targetTotalSalary || currentPeriodHours.value === 0) return 0;
   return Math.round(totalSalaryForm.value.targetTotalSalary / currentPeriodHours.value);
 });
 
-// 時薪調整
+// ?�薪調整
 const wageAdjustment = computed(() => {
   return calculatedNewWage.value - currentWage.value;
 });
 
-// 時薪調整百分比
+// ?�薪調整?��?�?
 const wageAdjustmentPercent = computed(() => {
   if (currentWage.value === 0) return '0%';
   const percent = ((wageAdjustment.value / currentWage.value) * 100).toFixed(1);
   return `${percent >= 0 ? '+' : ''}${percent}%`;
 });
 
-// 薪資調整金額
+// ?��?調整?��?
 const salaryAdjustment = computed(() => {
   return totalSalaryForm.value.targetTotalSalary - currentEstimatedSalary.value;
 });
 
-// 工具函數
+// 工具?�數
 const formatDate = (date) => moment(date).format("YYYY/MM/DD");
 
 const getWorkerName = (workerId) => {
   const worker = workers.value.find((w) => w.id === workerId);
-  return worker ? worker.name : "未知";
+  return worker ? worker.name : "?�知";
 };
 
-// 薪資計算
+// ?��?計�?
 const calculateSalary = async () => {
   if (!selectedWorker.value || !dateRange.value) return;
 
@@ -549,30 +549,30 @@ const calculateSalary = async () => {
       .format("YYYY-MM-DD");
 
     const response = await fetch(
-      `http://localhost:3005/api/workers/${selectedWorker.value}/salary-calculation?startDate=${startDate}&endDate=${endDate}`,
+      `/api/workers/${selectedWorker.value}/salary-calculation?startDate=${startDate}&endDate=${endDate}`,
     );
 
     const result = await response.json();
     
     if (!response.ok) {
-      throw new Error(result.message || "薪資計算失敗");
+      throw new Error(result.message || "?��?計�?失�?");
     }
 
-    // 後端返回格式為 { success: true, data: {...}, message: "..." }
+    // 後端返�??��???{ success: true, data: {...}, message: "..." }
     salaryData.value = result.data;
   } catch (error) {
-    console.error("薪資計算失敗:", error);
-    ElMessage.error(error.message || "薪資計算失敗");
+    console.error("?��?計�?失�?:", error);
+    ElMessage.error(error.message || "?��?計�?失�?");
   } finally {
     calculating.value = false;
   }
 };
 
-// 載入薪資調整記錄
+// 載入?��?調整記�?
 const fetchAdjustments = async () => {
   try {
     loadingAdjustments.value = true;
-    let url = "http://localhost:3005/api/salary-adjustments";
+    let url = "/api/salary-adjustments";
     if (selectedWorker.value) {
       url += `?workerId=${selectedWorker.value}`;
     }
@@ -581,19 +581,19 @@ const fetchAdjustments = async () => {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.message || "載入薪資調整記錄失敗");
+      throw new Error(result.message || "載入?��?調整記�?失�?");
     }
 
-    // 後端返回格式為 { success: true, data: [...], message: "..." }
+    // 後端返�??��???{ success: true, data: [...], message: "..." }
     adjustments.value = result.data || [];
   } catch (error) {
-    console.error("載入薪資調整記錄失敗:", error);
+    console.error("載入?��?調整記�?失�?:", error);
   } finally {
     loadingAdjustments.value = false;
   }
 };
 
-// 事件處理
+// 事件?��?
 const handleWorkerChange = () => {
   salaryData.value = null;
   if (selectedWorker.value) {
@@ -619,7 +619,7 @@ const showAdjustmentDialog = () => {
 
 const showTotalSalaryDialog = () => {
   if (!salaryData.value) {
-    ElMessage.warning("請先計算薪資以獲取工作時數");
+    ElMessage.warning("請�?計�??��?以獲?�工作�???);
     return;
   }
   
@@ -632,14 +632,14 @@ const showTotalSalaryDialog = () => {
 };
 
 const handleTotalSalaryWorkerChange = async () => {
-  // 當選擇工讀生時,重新計算該工讀生的薪資數據
+  // ?�選?�工讀?��?,?�新計�?該工讀?��??��??��?
   if (totalSalaryForm.value.workerId && dateRange.value) {
     await calculateSalaryForWorker(totalSalaryForm.value.workerId);
   }
 };
 
 const calculateNewWage = () => {
-  // 當輸入目標總薪資時,會自動觸發 computed 計算新時薪
+  // ?�輸?�目標總?��????�自?�觸??computed 計�??��???
 };
 
 const calculateSalaryForWorker = async (workerId) => {
@@ -649,7 +649,7 @@ const calculateSalaryForWorker = async (workerId) => {
     const endDate = moment(dateRange.value[1]).endOf("month").format("YYYY-MM-DD");
 
     const response = await fetch(
-      `http://localhost:3005/api/workers/${workerId}/salary-calculation?startDate=${startDate}&endDate=${endDate}`,
+      `/api/workers/${workerId}/salary-calculation?startDate=${startDate}&endDate=${endDate}`,
       {
         method: "GET",
         headers: {
@@ -661,13 +661,13 @@ const calculateSalaryForWorker = async (workerId) => {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.message || "薪資計算失敗");
+      throw new Error(result.message || "?��?計�?失�?");
     }
 
     salaryData.value = result.data;
   } catch (error) {
-    console.error("薪資計算失敗:", error);
-    ElMessage.error(error.message || "薪資計算失敗");
+    console.error("?��?計�?失�?:", error);
+    ElMessage.error(error.message || "?��?計�?失�?");
   } finally {
     calculating.value = false;
   }
@@ -678,7 +678,7 @@ const handleTotalSalaryAdjust = async () => {
     await totalSalaryFormRef.value.validate();
     submitting.value = true;
 
-    const response = await fetch("http://localhost:3005/api/salary-adjustments/total", {
+    const response = await fetch("/api/salary-adjustments/total", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -695,22 +695,22 @@ const handleTotalSalaryAdjust = async () => {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.message || "總薪資調整失敗");
+      throw new Error(result.message || "總薪資調?�失??);
     }
 
-    ElMessage.success(`總薪資調整成功！新時薪：${calculatedNewWage.value} 元/小時`);
+    ElMessage.success(`總薪資調?��??��??��??��?${calculatedNewWage.value} ??小�?`);
     totalSalaryDialogVisible.value = false;
     
-    // 重新載入工讀生資料
+    // ?�新載入工�??��???
     await workersStore.fetchWorkers();
 
-    // 重新計算薪資
+    // ?�新計�??��?
     if (selectedWorker.value) {
       await calculateSalary();
     }
   } catch (error) {
-    console.error("總薪資調整失敗:", error);
-    ElMessage.error(error.message || "總薪資調整失敗");
+    console.error("總薪資調?�失??", error);
+    ElMessage.error(error.message || "總薪資調?�失??);
   } finally {
     submitting.value = false;
   }
@@ -721,7 +721,7 @@ const handleAddAdjustment = async () => {
     await adjustmentFormRef.value.validate();
     submitting.value = true;
 
-    const response = await fetch("http://localhost:3005/api/salary-adjustments", {
+    const response = await fetch("/api/salary-adjustments", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -732,20 +732,20 @@ const handleAddAdjustment = async () => {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.message || "薪資調整新增失敗");
+      throw new Error(result.message || "?��?調整?��?失�?");
     }
 
-    ElMessage.success("薪資調整新增成功");
+    ElMessage.success("?��?調整?��??��?");
     adjustmentDialogVisible.value = false;
     await fetchAdjustments();
 
-    // 重新計算薪資
+    // ?�新計�??��?
     if (selectedWorker.value) {
       await calculateSalary();
     }
   } catch (error) {
-    console.error("薪資調整新增失敗:", error);
-    ElMessage.error(error.message || "薪資調整新增失敗");
+    console.error("?��?調整?��?失�?:", error);
+    ElMessage.error(error.message || "?��?調整?��?失�?");
   } finally {
     submitting.value = false;
   }
@@ -763,7 +763,7 @@ onMounted(() => {
   overflow: auto;
 }
 
-/* 自定義滾動條樣式 */
+/* ?��?義滾?��?�?? */
 .salary-container::-webkit-scrollbar {
   width: 6px;
   height: 6px;

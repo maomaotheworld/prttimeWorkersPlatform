@@ -8,9 +8,9 @@ export const useWorkersStore = defineStore("workers", () => {
   const fetchWorkers = async () => {
     try {
       loading.value = true;
-      console.log("Workers store: 開始獲取工讀生列表");
+      console.log("Workers store: ?��??��?工�??��?�?);
 
-      const response = await fetch("http://localhost:3005/api/workers", {
+      const response = await fetch("/api/workers", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -18,17 +18,17 @@ export const useWorkersStore = defineStore("workers", () => {
       });
 
       const data = await response.json();
-      console.log("Workers store: 收到工讀生數據", data);
+      console.log("Workers store: ?�到工�??�數??, data);
 
       if (data.success) {
         workers.value = data.data;
-        console.log("Workers store: 工讀生列表更新成功", workers.value.length);
+        console.log("Workers store: 工�??��?表更?��???, workers.value.length);
       } else {
-        console.error("Workers store: 獲取工讀生失敗", data.message);
-        throw new Error(data.message || "獲取工讀生列表失敗");
+        console.error("Workers store: ?��?工�??�失??, data.message);
+        throw new Error(data.message || "?��?工�??��?表失??);
       }
     } catch (error) {
-      console.error("Workers store: 獲取工讀生列表失敗:", error);
+      console.error("Workers store: ?��?工�??��?表失??", error);
       throw error;
     } finally {
       loading.value = false;
@@ -37,9 +37,9 @@ export const useWorkersStore = defineStore("workers", () => {
 
   const addWorker = async (workerData) => {
     try {
-      console.log("Workers store: 開始新增工讀生", workerData);
+      console.log("Workers store: ?��??��?工�???, workerData);
 
-      const response = await fetch("http://localhost:3005/api/workers", {
+      const response = await fetch("/api/workers", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -48,27 +48,27 @@ export const useWorkersStore = defineStore("workers", () => {
       });
 
       const data = await response.json();
-      console.log("Workers store: 新增工讀生回應", data);
+      console.log("Workers store: ?��?工�??��???, data);
 
       if (data.success) {
         workers.value.push(data.data);
-        console.log("Workers store: 工讀生新增成功");
+        console.log("Workers store: 工�??�新增�???);
         return data.data;
       } else {
-        console.error("Workers store: 新增工讀生失敗", data.message);
-        throw new Error(data.message || "新增工讀生失敗");
+        console.error("Workers store: ?��?工�??�失??, data.message);
+        throw new Error(data.message || "?��?工�??�失??);
       }
     } catch (error) {
-      console.error("Workers store: 新增工讀生失敗:", error);
+      console.error("Workers store: ?��?工�??�失??", error);
       throw error;
     }
   };
 
   const updateWorker = async (id, workerData) => {
     try {
-      console.log("Workers store: 開始更新工讀生", id, workerData);
+      console.log("Workers store: ?��??�新工�???, id, workerData);
 
-      const response = await fetch(`http://localhost:3005/api/workers/${id}`, {
+      const response = await fetch(`/api/workers/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -77,30 +77,30 @@ export const useWorkersStore = defineStore("workers", () => {
       });
 
       const data = await response.json();
-      console.log("Workers store: 更新工讀生回應", data);
+      console.log("Workers store: ?�新工�??��???, data);
 
       if (data.success) {
         const index = workers.value.findIndex((w) => w.id === id);
         if (index !== -1) {
           workers.value[index] = data.data;
         }
-        console.log("Workers store: 工讀生更新成功");
+        console.log("Workers store: 工�??�更?��???);
         return data.data;
       } else {
-        console.error("Workers store: 更新工讀生失敗", data.message);
-        throw new Error(data.message || "更新工讀生失敗");
+        console.error("Workers store: ?�新工�??�失??, data.message);
+        throw new Error(data.message || "?�新工�??�失??);
       }
     } catch (error) {
-      console.error("Workers store: 更新工讀生失敗:", error);
+      console.error("Workers store: ?�新工�??�失??", error);
       throw error;
     }
   };
 
   const deleteWorker = async (id) => {
     try {
-      console.log("Workers store: 開始刪除工讀生", id);
+      console.log("Workers store: ?��??�除工�???, id);
 
-      const response = await fetch(`http://localhost:3005/api/workers/${id}`, {
+      const response = await fetch(`/api/workers/${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -108,30 +108,30 @@ export const useWorkersStore = defineStore("workers", () => {
       });
 
       const data = await response.json();
-      console.log("Workers store: 刪除工讀生回應", data);
+      console.log("Workers store: ?�除工�??��???, data);
 
       if (data.success) {
         const index = workers.value.findIndex((w) => w.id === id);
         if (index !== -1) {
           workers.value.splice(index, 1);
         }
-        console.log("Workers store: 工讀生刪除成功");
+        console.log("Workers store: 工�??�刪?��???);
         return true;
       } else {
-        console.error("Workers store: 刪除工讀生失敗", data.message);
-        throw new Error(data.message || "刪除工讀生失敗");
+        console.error("Workers store: ?�除工�??�失??, data.message);
+        throw new Error(data.message || "?�除工�??�失??);
       }
     } catch (error) {
-      console.error("Workers store: 刪除工讀生失敗:", error);
+      console.error("Workers store: ?�除工�??�失??", error);
       throw error;
     }
   };
 
   const batchUpdateWage = async (workerIds, wageData) => {
     try {
-      console.log("Workers store: 開始批次更新薪資", workerIds, wageData);
+      console.log("Workers store: ?��??�次?�新?��?", workerIds, wageData);
 
-      const response = await fetch("http://localhost:3005/api/workers/batch-update-wage", {
+      const response = await fetch("/api/workers/batch-update-wage", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -143,36 +143,36 @@ export const useWorkersStore = defineStore("workers", () => {
       });
 
       const data = await response.json();
-      console.log("Workers store: 批次更新薪資回應", data);
+      console.log("Workers store: ?�次?�新?��??��?", data);
 
       if (data.success) {
-        // 更新本地數據
+        // ?�新?�地?��?
         data.data.updated.forEach((updatedWorker) => {
           const index = workers.value.findIndex((w) => w.id === updatedWorker.id);
           if (index !== -1) {
             workers.value[index] = updatedWorker;
           }
         });
-        console.log("Workers store: 批次更新薪資成功");
+        console.log("Workers store: ?�次?�新?��??��?");
         return data.data;
       } else {
-        console.error("Workers store: 批次更新薪資失敗", data.message);
-        throw new Error(data.message || "批次更新薪資失敗");
+        console.error("Workers store: ?�次?�新?��?失�?", data.message);
+        throw new Error(data.message || "?�次?�新?��?失�?");
       }
     } catch (error) {
-      console.error("Workers store: 批次更新薪資失敗:", error);
+      console.error("Workers store: ?�次?�新?��?失�?:", error);
       throw error;
     }
   };
 
   const addTimeRecord = async (timeRecord) => {
     try {
-      console.log("Workers store: 開始新增時數記錄", timeRecord);
+      console.log("Workers store: ?��??��??�數記�?", timeRecord);
 
-      // 從 localStorage 獲取 token（用於識別操作者）
+      // �?localStorage ?��? token（用?��??��?作者�?
       const token = localStorage.getItem("auth_token") || "";
 
-      const response = await fetch("http://localhost:3005/api/time-records/additional-hours", {
+      const response = await fetch("/api/time-records/additional-hours", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -183,22 +183,22 @@ export const useWorkersStore = defineStore("workers", () => {
           date: timeRecord.date,
           hours: Math.abs(timeRecord.hours),
           reason: timeRecord.description,
-          adjustmentType: timeRecord.adjustmentType || "add", // 傳遞調整類型：add 或 subtract
+          adjustmentType: timeRecord.adjustmentType || "add", // ?��?調整類�?：add ??subtract
         }),
       });
 
       const data = await response.json();
-      console.log("Workers store: 新增時數記錄回應", data);
+      console.log("Workers store: ?��??�數記�??��?", data);
 
       if (data.success) {
-        console.log("Workers store: 時數記錄新增成功");
+        console.log("Workers store: ?�數記�??��??��?");
         return data.data;
       } else {
-        console.error("Workers store: 新增時數記錄失敗", data.message);
-        throw new Error(data.message || "新增時數記錄失敗");
+        console.error("Workers store: ?��??�數記�?失�?", data.message);
+        throw new Error(data.message || "?��??�數記�?失�?");
       }
     } catch (error) {
-      console.error("Workers store: 新增時數記錄失敗:", error);
+      console.error("Workers store: ?��??�數記�?失�?:", error);
       throw error;
     }
   };

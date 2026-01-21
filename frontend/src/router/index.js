@@ -6,7 +6,7 @@ const routes = [
     name: "Login",
     component: () => import("../views/Login.vue"),
     meta: {
-      title: "登入",
+      title: "?�入",
       requiresAuth: false,
       hideFromGuests: false,
     },
@@ -16,7 +16,7 @@ const routes = [
     name: "Home",
     component: () => import("../views/Home.vue"),
     meta: {
-      title: "首頁",
+      title: "首�?",
       requiresAuth: true,
       allowedRoles: ["admin", "leader", "reader"],
     },
@@ -26,7 +26,7 @@ const routes = [
     name: "Workers",
     component: () => import("../views/Workers.vue"),
     meta: {
-      title: "工讀生管理",
+      title: "工�??�管??,
       requiresAuth: true,
       allowedRoles: ["admin", "leader", "reader"],
     },
@@ -36,7 +36,7 @@ const routes = [
     name: "Groups",
     component: () => import("../views/Groups.vue"),
     meta: {
-      title: "組別管理",
+      title: "組別管�?",
       requiresAuth: true,
       allowedRoles: ["admin", "leader", "reader"],
     },
@@ -46,7 +46,7 @@ const routes = [
     name: "Attendance",
     component: () => import("../views/Attendance.vue"),
     meta: {
-      title: "打卡系統",
+      title: "?�卡系統",
       requiresAuth: true,
       allowedRoles: ["admin", "leader"],
       requiredPermission: "canClockIn",
@@ -57,7 +57,7 @@ const routes = [
     name: "TimeRecords",
     component: () => import("../views/TimeRecords.vue"),
     meta: {
-      title: "工時記錄",
+      title: "工�?記�?",
       requiresAuth: true,
       allowedRoles: ["admin", "leader", "reader"],
     },
@@ -67,7 +67,7 @@ const routes = [
     name: "Salary",
     component: () => import("../views/Salary.vue"),
     meta: {
-      title: "薪資管理",
+      title: "?��?管�?",
       requiresAuth: true,
       allowedRoles: ["admin", "leader", "reader"],
     },
@@ -77,7 +77,7 @@ const routes = [
     name: "ActivityLogs",
     component: () => import("../views/ActivityLogs.vue"),
     meta: {
-      title: "活動日誌",
+      title: "活�??��?",
       requiresAuth: true,
       allowedRoles: ["admin", "leader", "reader"],
     },
@@ -87,7 +87,7 @@ const routes = [
     name: "UserManagement",
     component: () => import("../views/UserManagement.vue"),
     meta: {
-      title: "用戶管理",
+      title: "?�戶管�?",
       requiresAuth: true,
       allowedRoles: ["admin"],
       requiredPermission: "canManageUsers",
@@ -100,20 +100,20 @@ const router = createRouter({
   routes,
 });
 
-// 認證守衛 - 簡化版本避免循環依賴
+// 認�?守�? - 簡�??�本?��?循環依賴
 router.beforeEach((to, from, next) => {
-  // 設定頁面標題
+  // 設�??�面標�?
   document.title = to.meta.title
-    ? `${to.meta.title} - 工讀生管理平台`
-    : "工讀生管理平台";
+    ? `${to.meta.title} - 工�??�管?�平?�`
+    : "工�??�管?�平??;
 
-  // 如果是登入頁面，直接進入（在登入組件內部處理重定向）
+  // 如�??�登?��??��??�接?�入（在?�入組件?�部?��??��??��?
   if (to.path === "/login") {
     next();
     return;
   }
 
-  // 對於需要認證的頁面，暫時先允許進入，認證檢查在App.vue中處理
+  // 對於?�要�?證�??�面，暫?��??�許?�入，�?證檢?�在App.vue中�???
   next();
 });
 

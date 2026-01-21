@@ -75,9 +75,10 @@ export const useAuthStore = defineStore("auth", {
       try {
         console.log("Auth store: 開始登入請求", { username });
 
-        // 嘗試直接調用後端（跳過Vite代理）
+        // 使用環境變數中的 API URL
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3005';
         const directResponse = await fetch(
-          "http://localhost:3005/api/auth/login",
+          `${API_URL}/api/auth/login`,
           {
             method: "POST",
             headers: {

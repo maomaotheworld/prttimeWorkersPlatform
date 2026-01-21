@@ -194,14 +194,14 @@
       center
     >
       <el-form :model="timeEditForm" label-width="100px">
-        <el-form-item label="工�???>
+        <el-form-item label="工讀生">
           <el-input
             :value="`${timeEditForm.workerNumber} - ${timeEditForm.workerName}`"
             readonly
           />
         </el-form-item>
 
-        <el-form-item label="上班?��?">
+        <el-form-item label="上班時間">
           <el-date-picker
             v-model="timeEditForm.clockIn"
             type="datetime"
@@ -223,25 +223,25 @@
           />
         </el-form-item>
 
-        <el-form-item label="?�註">
+        <el-form-item label="備註">
           <el-input
             v-model="timeEditForm.note"
             type="textarea"
             :rows="3"
-            placeholder="?��?調整?��??��?�?
+            placeholder="請輸入調整原因"
           />
         </el-form-item>
       </el-form>
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="editTimeDialogVisible = false">?��?</el-button>
+          <el-button @click="editTimeDialogVisible = false">取消</el-button>
           <el-button
             type="primary"
             @click="handleTimeEdit"
             :loading="submitting"
           >
-            確�?修改
+            確認修改
           </el-button>
         </div>
       </template>

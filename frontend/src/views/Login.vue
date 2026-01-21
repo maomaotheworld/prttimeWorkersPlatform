@@ -1,16 +1,16 @@
 <template>
   <div class="login-container">
     <div class="login-card">
-      <!-- Logo ?�??-->
+      <!-- Logo 區域-->
       <div class="logo-section">
         <el-icon class="logo-icon" :size="60">
           <User />
         </el-icon>
-        <h1 class="app-title">工�??�管?�系�?/h1>
+        <h1 class="app-title">工讀生管理系統</h1>
         <p class="app-subtitle">Parttime Workers Management</p>
       </div>
 
-      <!-- ?�入表單 -->
+      <!-- 登入表單 -->
       <el-form
         ref="loginFormRef"
         :model="loginForm"
@@ -18,12 +18,12 @@
         class="login-form"
         @submit.prevent="handleLogin"
       >
-        <h2 class="login-title">?�入系統</h2>
+        <h2 class="login-title">登入系統</h2>
 
         <el-form-item prop="username">
           <el-input
             v-model="loginForm.username"
-            placeholder="請輸?�帳??
+            placeholder="請輸入帳號"
             size="large"
             :prefix-icon="User"
             clearable
@@ -35,7 +35,7 @@
           <el-input
             v-model="loginForm.password"
             type="password"
-            placeholder="請輸?��?�?
+            placeholder="請輸入密碼"
             size="large"
             :prefix-icon="Lock"
             show-password
@@ -56,15 +56,15 @@
             <el-icon class="mr-2">
               <Key />
             </el-icon>
-            ?�入
+            ?�入
           </el-button>
         </el-form-item>
       </el-form>
 
-      <!-- 訪客模�? -->
+      <!-- 訪客模式 -->
       <div class="guest-section">
         <el-divider>
-          <span class="divider-text">??/span>
+          <span class="divider-text">或</span>
         </el-divider>
 
         <el-button
@@ -79,18 +79,18 @@
           <el-icon class="mr-2">
             <View />
           </el-icon>
-          以訪客身份進入（�??�覽�?
+          以訪客身份進入（唯讀模式）
         </el-button>
       </div>
 
-      <!-- 權�?說�? -->
+      <!-- 權限說明 -->
       <div class="permission-info">
-        <el-alert title="權�?說�?" type="info" :closable="false" show-icon>
+        <el-alert title="權限說明" type="info" :closable="false" show-icon>
           <template #default>
             <div class="permission-list">
-              <p><strong>管�???/strong>：全?��???+ 帳�?管�?</p>
-              <p><strong>小�???/strong>：編輯、匯?�、�??�、報�?/p>
-              <p><strong>訪客</strong>：�??�覽?�能</p>
+              <p><strong>管理者</strong>：全部功能 + 帳號管理</p>
+              <p><strong>小組長</strong>：編輯、匯入、刪除、報表</p>
+              <p><strong>訪客</strong>：唯讀模式</p>
             </div>
           </template>
         </el-alert>
@@ -109,16 +109,16 @@ import { useAuthStore } from "../stores/auth";
 const router = useRouter();
 const authStore = useAuthStore();
 
-// 表單?��?
+// 表單?��?
 const loginForm = reactive({
   username: "",
   password: "",
 });
 
-// 表單驗�?規�?
+// 表單驗證規則
 const loginRules = {
-  username: [{ required: true, message: "請輸?�帳??, trigger: "blur" }],
-  password: [{ required: true, message: "請輸?��?�?, trigger: "blur" }],
+  username: [{ required: true, message: "請輸入帳號", trigger: "blur" }],
+  password: [{ required: true, message: "請輸入密碼", trigger: "blur" }],
 };
 
 // 引用
@@ -126,58 +126,58 @@ const loginFormRef = ref();
 const loading = ref(false);
 const guestLoading = ref(false);
 
-// ?�入?��?
+// 登入處理
 const handleLogin = async () => {
   if (!loginFormRef.value) {
-    ElMessage.error("表單?��??��??��?請�?後�?�?);
+    ElMessage.error("表單參考未初始化，請稍後重試");
     return;
   }
 
   try {
-    // 表單驗�?
+    // 表單驗證
     const valid = await loginFormRef.value.validate();
     if (!valid) {
-      ElMessage.warning("請填寫�??��?�?);
+      ElMessage.warning("請填寫完整資料");
       return;
     }
 
     loading.value = true;
-    console.log("Login.vue: ?��??�入流�?", { username: loginForm.username });
+    console.log("Login.vue: 開始登入流程", { username: loginForm.username });
 
     const result = await authStore.login(
       loginForm.username,
       loginForm.password,
     );
-    console.log("Login.vue: ?�入結�?", result);
+    console.log("Login.vue: 登入結果", result);
 
     if (result.success) {
-      ElMessage.success(result.message || "?�入?��?");
-      console.log("Login.vue: ?�入?��?，�??�跳�?);
-      console.log("Login.vue: 認�??�??, {
+      ElMessage.success(result.message || "登入成功");
+      console.log("Login.vue: 登入成功，準備跳轉");
+      console.log("Login.vue: 認證狀態", {
         isLoggedIn: authStore.isLoggedIn,
         userRole: authStore.userRole,
         user: authStore.user,
       });
 
-      // 等�??�?�更?��???
+      // 等待狀態更新完成
       await new Promise((resolve) => setTimeout(resolve, 200));
 
-      // 跳�??��???
-      console.log("Login.vue: ?��?跳�?");
+      // 跳轉到首頁
+      console.log("Login.vue: 開始跳轉");
       window.location.href = "/";
     } else {
-      ElMessage.error(result.message || "?�入失�?");
-      console.error("Login.vue: ?�入失�?", result.message);
+      ElMessage.error(result.message || "登入失敗");
+      console.error("Login.vue: 登入失敗", result.message);
     }
   } catch (error) {
-    console.error("Login.vue: ?�入?�誤", error);
-    ElMessage.error("?�入?��?中發?�錯誤�?請�?後�?�?);
+    console.error("Login.vue: 登入錯誤", error);
+    ElMessage.error("登入過程中發生錯誤，請稍後重試");
   } finally {
     loading.value = false;
   }
 };
 
-// 訪客?�入
+// 訪客登入
 const handleGuestLogin = async () => {
   try {
     guestLoading.value = true;
@@ -191,21 +191,21 @@ const handleGuestLogin = async () => {
       ElMessage.error(result.message);
     }
   } catch (error) {
-    console.error("訪客?�入?�誤:", error);
-    ElMessage.error("訪客?�入失�?，�?稍�??�試");
+    console.error("訪客登入錯誤:", error);
+    ElMessage.error("訪客登入失敗，請稍後重試");
   } finally {
     guestLoading.value = false;
   }
 };
 
-// 組件?��??�檢?�登?��???
+// 組件掛載時檢查登入狀態
 onMounted(() => {
-  // ?��??��?證�???
+  // 初始化認證狀態
   authStore.initializeAuth();
 
-  // 如�?已�??�入，直?�跳�?
+  // 如果已經登入，直接跳轉
   if (authStore.isLoggedIn) {
-    console.log("?�戶已登?��?跳�??��???);
+    console.log("用戶已登入，跳轉到首頁");
     router.push("/");
   }
 });
@@ -325,7 +325,7 @@ onMounted(() => {
   margin-right: 8px;
 }
 
-/* ?��??�適??*/
+/* ?��??�適??*/
 @media (max-width: 480px) {
   .login-container {
     padding: 15px;
@@ -346,7 +346,7 @@ onMounted(() => {
   }
 }
 
-/* Element Plus �??覆�? */
+/* Element Plus �??覆�? */
 .login-form :deep(.el-input) {
   --el-input-border-radius: 12px;
   margin-bottom: 8px;

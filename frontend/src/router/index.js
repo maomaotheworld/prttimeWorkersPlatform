@@ -102,12 +102,12 @@ const router = createRouter({
 
 // 認�?守�? - 簡�??�本?��?循環依賴
 router.beforeEach((to, from, next) => {
-  // 設�??�面標�?
+  // 設定頁面標題
   document.title = to.meta.title
-    ? `${to.meta.title} - 工�??�管?�平?�`
-    : "工�??�管?�平??;
+    ? `${to.meta.title} - 工讀生管理平台`
+    : "工讀生管理平台";
 
-  // 如�??�登?��??��??�接?�入（在?�入組件?�部?��??��??��?
+  // 如果是登入頁面直接進入（在進入組件內部處理登入邏輯）
   if (to.path === "/login") {
     next();
     return;

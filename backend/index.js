@@ -13,7 +13,16 @@ const PORT = process.env.PORT || 3005;
 const JWT_SECRET = "your-secret-key-here"; // 實際專案中應使用環境變數
 
 // 中間件
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "https://prttime-workers-platform.vercel.app",
+      "https://prttime-workers-platform-lkh13i3lp-eps-projects-6d54422e.vercel.app",
+      "http://localhost:5175",
+    ],
+    credentials: true,
+  })
+);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 

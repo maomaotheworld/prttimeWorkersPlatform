@@ -1,0 +1,41 @@
+[
+  {
+    "id": "group-1",
+    "name": "前台組",
+    "description": "負責前台接待工作"
+  },
+  {
+    "id": "group-2",
+    "name": "後台組",
+    "description": "負責後台作業"
+  },
+  {
+    "id": "group-3",
+    "name": "清潔組",
+    "description": "負責環境清潔維護"
+  },
+  {
+    "id": "05afa282-a17f-472c-b5e0-e943c1c36881",
+    "name": "頒獎",
+    "description": "從 Excel 匯入的組別",
+    "createdAt": "2026-01-21T07:02:43.130Z"
+  },
+  {
+    "id": "bc7d81d2-2e6a-4606-a077-f55f5d2db02b",
+    "name": "點錄",
+    "description": "從 Excel 匯入的組別",
+    "createdAt": "2026-01-21T07:02:43.142Z"
+  },
+  {
+    "id": "2b8cace5-7c83-45d4-9f5e-c1a4360f1660",
+    "name": "顧門",
+    "description": "從 Excel 匯入的組別",
+    "createdAt": "2026-01-21T07:02:43.155Z"
+  },
+  {
+    "id": "42feec74-238f-4a6e-b715-b8ba2668a799",
+    "name": "點票",
+    "description": "從 Excel 匯入的組別",
+    "createdAt": "2026-01-21T07:02:43.167Z"
+  }
+]

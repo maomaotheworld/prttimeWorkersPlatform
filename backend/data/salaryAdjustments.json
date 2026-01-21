@@ -1,0 +1,11 @@
+[
+  {
+    "id": "1752b447-fa08-43d8-9a28-2ce0185278ac",
+    "workerId": "worker-001",
+    "type": "increase",
+    "amount": 81,
+    "reason": "湊整數",
+    "date": "2026-01-21T07:04:49.868Z",
+    "createdAt": "2026-01-21T07:04:49.868Z"
+  }
+]

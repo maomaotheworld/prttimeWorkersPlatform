@@ -1,0 +1,216 @@
+import { defineStore } from "pinia";
+import { ref } from "vue";
+
+export const useWorkersStore = defineStore("workers", () => {
+  const workers = ref([]);
+  const loading = ref(false);
+
+  const fetchWorkers = async () => {
+    try {
+      loading.value = true;
+      console.log("Workers store: 開始獲取工讀生列表");
+
+      const response = await fetch("http://localhost:3005/api/workers", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await response.json();
+      console.log("Workers store: 收到工讀生數據", data);
+
+      if (data.success) {
+        workers.value = data.data;
+        console.log("Workers store: 工讀生列表更新成功", workers.value.length);
+      } else {
+        console.error("Workers store: 獲取工讀生失敗", data.message);
+        throw new Error(data.message || "獲取工讀生列表失敗");
+      }
+    } catch (error) {
+      console.error("Workers store: 獲取工讀生列表失敗:", error);
+      throw error;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const addWorker = async (workerData) => {
+    try {
+      console.log("Workers store: 開始新增工讀生", workerData);
+
+      const response = await fetch("http://localhost:3005/api/workers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(workerData),
+      });
+
+      const data = await response.json();
+      console.log("Workers store: 新增工讀生回應", data);
+
+      if (data.success) {
+        workers.value.push(data.data);
+        console.log("Workers store: 工讀生新增成功");
+        return data.data;
+      } else {
+        console.error("Workers store: 新增工讀生失敗", data.message);
+        throw new Error(data.message || "新增工讀生失敗");
+      }
+    } catch (error) {
+      console.error("Workers store: 新增工讀生失敗:", error);
+      throw error;
+    }
+  };
+
+  const updateWorker = async (id, workerData) => {
+    try {
+      console.log("Workers store: 開始更新工讀生", id, workerData);
+
+      const response = await fetch(`http://localhost:3005/api/workers/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(workerData),
+      });
+
+      const data = await response.json();
+      console.log("Workers store: 更新工讀生回應", data);
+
+      if (data.success) {
+        const index = workers.value.findIndex((w) => w.id === id);
+        if (index !== -1) {
+          workers.value[index] = data.data;
+        }
+        console.log("Workers store: 工讀生更新成功");
+        return data.data;
+      } else {
+        console.error("Workers store: 更新工讀生失敗", data.message);
+        throw new Error(data.message || "更新工讀生失敗");
+      }
+    } catch (error) {
+      console.error("Workers store: 更新工讀生失敗:", error);
+      throw error;
+    }
+  };
+
+  const deleteWorker = async (id) => {
+    try {
+      console.log("Workers store: 開始刪除工讀生", id);
+
+      const response = await fetch(`http://localhost:3005/api/workers/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await response.json();
+      console.log("Workers store: 刪除工讀生回應", data);
+
+      if (data.success) {
+        const index = workers.value.findIndex((w) => w.id === id);
+        if (index !== -1) {
+          workers.value.splice(index, 1);
+        }
+        console.log("Workers store: 工讀生刪除成功");
+        return true;
+      } else {
+        console.error("Workers store: 刪除工讀生失敗", data.message);
+        throw new Error(data.message || "刪除工讀生失敗");
+      }
+    } catch (error) {
+      console.error("Workers store: 刪除工讀生失敗:", error);
+      throw error;
+    }
+  };
+
+  const batchUpdateWage = async (workerIds, wageData) => {
+    try {
+      console.log("Workers store: 開始批次更新薪資", workerIds, wageData);
+
+      const response = await fetch("http://localhost:3005/api/workers/batch-update-wage", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          workerIds,
+          ...wageData,
+        }),
+      });
+
+      const data = await response.json();
+      console.log("Workers store: 批次更新薪資回應", data);
+
+      if (data.success) {
+        // 更新本地數據
+        data.data.updated.forEach((updatedWorker) => {
+          const index = workers.value.findIndex((w) => w.id === updatedWorker.id);
+          if (index !== -1) {
+            workers.value[index] = updatedWorker;
+          }
+        });
+        console.log("Workers store: 批次更新薪資成功");
+        return data.data;
+      } else {
+        console.error("Workers store: 批次更新薪資失敗", data.message);
+        throw new Error(data.message || "批次更新薪資失敗");
+      }
+    } catch (error) {
+      console.error("Workers store: 批次更新薪資失敗:", error);
+      throw error;
+    }
+  };
+
+  const addTimeRecord = async (timeRecord) => {
+    try {
+      console.log("Workers store: 開始新增時數記錄", timeRecord);
+
+      // 從 localStorage 獲取 token（用於識別操作者）
+      const token = localStorage.getItem("auth_token") || "";
+
+      const response = await fetch("http://localhost:3005/api/time-records/additional-hours", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          workerId: timeRecord.workerId,
+          date: timeRecord.date,
+          hours: Math.abs(timeRecord.hours),
+          reason: timeRecord.description,
+          adjustmentType: timeRecord.adjustmentType || "add", // 傳遞調整類型：add 或 subtract
+        }),
+      });
+
+      const data = await response.json();
+      console.log("Workers store: 新增時數記錄回應", data);
+
+      if (data.success) {
+        console.log("Workers store: 時數記錄新增成功");
+        return data.data;
+      } else {
+        console.error("Workers store: 新增時數記錄失敗", data.message);
+        throw new Error(data.message || "新增時數記錄失敗");
+      }
+    } catch (error) {
+      console.error("Workers store: 新增時數記錄失敗:", error);
+      throw error;
+    }
+  };
+
+  return {
+    workers,
+    loading,
+    fetchWorkers,
+    addWorker,
+    updateWorker,
+    deleteWorker,
+    batchUpdateWage,
+    addTimeRecord,
+  };
+});

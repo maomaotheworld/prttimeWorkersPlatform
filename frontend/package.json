@@ -1,0 +1,30 @@
+{
+  "name": "parttime-workers-frontend",
+  "version": "1.0.0",
+  "description": "工讀生管理系統前端",
+  "private": true,
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview",
+    "vercel-build": "npm run build"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.1.0",
+    "axios": "^1.4.0",
+    "bcryptjs": "^3.0.3",
+    "element-plus": "^2.3.8",
+    "jsonwebtoken": "^9.0.3",
+    "moment": "^2.29.4",
+    "pinia": "^2.1.6",
+    "vue": "^3.3.4",
+    "vue-router": "^4.2.4",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.2.3",
+    "unplugin-auto-import": "^0.16.6",
+    "unplugin-vue-components": "^0.25.1",
+    "vite": "^4.4.0"
+  }
+}

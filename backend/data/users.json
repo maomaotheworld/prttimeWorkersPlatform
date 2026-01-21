@@ -1,0 +1,24 @@
+{
+  "users": [
+    {
+      "id": "admin001",
+      "username": "evelyn",
+      "password": "19940110",
+      "role": "admin",
+      "name": "Evelyn Pan",
+      "email": "",
+      "createdAt": "2026-01-21T05:15:00.000Z",
+      "isActive": true,
+      "permissions": {
+        "canManageUsers": true,
+        "canEditWorkers": true,
+        "canImportData": true,
+        "canClockIn": true,
+        "canEditTime": true,
+        "canViewReports": true,
+        "canDeleteData": true
+      }
+    }
+  ],
+  "lastUserId": 1
+}

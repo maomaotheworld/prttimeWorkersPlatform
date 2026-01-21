@@ -1,0 +1,31 @@
+[
+  {
+    "id": "338e4b0e-16be-408a-84f5-88305afb791a",
+    "workerId": "worker-001",
+    "date": "2026-01-21T00:00:00.000Z",
+    "clockIn": "2026-01-21 13:03:58",
+    "clockOut": "2026-01-21 22:00:00",
+    "totalHours": 8.9,
+    "additionalHours": 1,
+    "adjustments": [
+      {
+        "id": "b6b3ae0f-2c49-4b37-9942-1c9505bdc4ac",
+        "hours": 0.5,
+        "reason": "手動新增時數",
+        "operatorId": "admin001",
+        "operatorName": "evelyn",
+        "createdAt": "2026-01-21T07:02:50.077Z"
+      },
+      {
+        "id": "7437ec16-d38f-4844-bbc6-53348311846d",
+        "hours": 0.5,
+        "reason": "手動新增時數",
+        "operatorId": "admin001",
+        "operatorName": "evelyn",
+        "createdAt": "2026-01-21T07:02:52.540Z"
+      }
+    ],
+    "createdAt": "2026-01-21T07:02:50.080Z",
+    "updatedAt": "2026-01-21T07:04:14.650Z"
+  }
+]

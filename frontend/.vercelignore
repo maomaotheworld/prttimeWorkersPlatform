@@ -1,0 +1,31 @@
+# Vercel 部署配置
+
+# 建置輸出目錄
+dist/
+
+# 依賴項
+node_modules/
+
+# 環境配置
+.env.local
+.env.development
+.env.test
+.env.production
+
+# 編輯器配置
+.vscode/
+.idea/
+
+# 系統文件
+.DS_Store
+Thumbs.db
+
+# 日誌文件
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 臨時文件
+.tmp/
+.cache/

@@ -30,6 +30,6 @@ export default defineConfig({
     outDir: "dist",
     assetsDir: "assets",
     sourcemap: false,
-    minify: "terser",
+    minify: "esbuild", // 使用 esbuild 壓縮，無需額外依賴
   },
 });

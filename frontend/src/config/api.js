@@ -7,6 +7,16 @@ export const getApiUrl = (endpoint) => {
   return `${API_BASE_URL}${path}`;
 };
 
+// 重寫全局 fetch 來自動處理 /api 路徑
+const originalFetch = window.fetch;
+window.fetch = function(input, init) {
+  // 如果是字符串且以 /api 開頭，自動添加基礎URL
+  if (typeof input === 'string' && input.startsWith('/api')) {
+    input = getApiUrl(input);
+  }
+  return originalFetch(input, init);
+};
+
 // 統一的 fetch 封裝
 export const apiFetch = async (endpoint, options = {}) => {
   const url = getApiUrl(endpoint);

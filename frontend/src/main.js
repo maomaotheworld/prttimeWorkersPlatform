@@ -3,10 +3,13 @@ import { createPinia } from "pinia";
 import router from "./router";
 import App from "./App.vue";
 
-// Element Plus �??
+// 初始化 API 配置（重寫 fetch）
+import "./config/api.js";
+
+// Element Plus 樣式
 import "element-plus/dist/index.css";
 
-// ?��?�??
+// 自定義樣式
 import "./styles/index.css";
 
 const app = createApp(App);

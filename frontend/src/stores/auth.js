@@ -1,15 +1,14 @@
 import { defineStore } from "pinia";
-import api from "../utils/api";
-import { getApiUrl } from "@/config/api";
+import { getApiUrl } from "../config/api";
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
-    // ?�戶資�?
+    // 用戶資料
     user: null,
     token: null,
     isLoggedIn: false,
 
-    // 權�??�制
+    // 權限控制
     permissions: {
       canManageUsers: false,
       canEditWorkers: false,
@@ -267,25 +266,25 @@ export const useAuthStore = defineStore("auth", {
           await this.fetchUsers();
           return {
             success: true,
-            message: "小�??�帳?�建立�???,
+            message: "小�??�帳?�建立�???",
             data: response.data.data,
           };
         }
 
         return { success: false, message: response.data.message };
       } catch (error) {
-        console.error("建�?小�??�帳?�失??", error);
+        console.error("建立小組帳號失敗", error);
         return {
           success: false,
-          message: error.response?.data?.message || "建�?小�??�帳?�失??,
+          message: error.response?.data?.message || "建立小組帳號失敗",
         };
       }
     },
 
-    // ?�除?�戶（�?admin�?
+    // 刪除用戶（僅admin）
     async deleteUser(userId) {
       if (!this.isAdmin) {
-        return { success: false, message: "權�?不足" };
+        return { success: false, message: "權限不足" };
       }
 
       try {

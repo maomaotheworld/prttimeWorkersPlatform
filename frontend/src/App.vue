@@ -52,44 +52,44 @@
             >
               <el-menu-item index="/">
                 <el-icon><HomeFilled /></el-icon>
-                <span>首�?</span>
+                <span>首頁</span>
               </el-menu-item>
               <el-menu-item index="/workers">
                 <el-icon><User /></el-icon>
-                <span>工�??�管??/span>
+                <span>工讀生管理</span>
               </el-menu-item>
               <el-menu-item
                 v-if="authStore.canEditWorkers || authStore.isAdmin"
                 index="/groups"
               >
                 <el-icon><UserFilled /></el-icon>
-                <span>組別管�?</span>
+                <span>組別管理</span>
               </el-menu-item>
               <el-menu-item
                 v-if="authStore.hasPermission('canClockIn')"
                 index="/attendance"
               >
                 <el-icon><Clock /></el-icon>
-                <span>?�卡系統</span>
+                <span>打卡系統</span>
               </el-menu-item>
               <el-menu-item index="/time-records">
                 <el-icon><Calendar /></el-icon>
-                <span>工�?記�?</span>
+                <span>工時記錄</span>
               </el-menu-item>
               <el-menu-item index="/salary">
                 <el-icon><Money /></el-icon>
-                <span>?��?管�?</span>
+                <span>薪資管理</span>
               </el-menu-item>
               <el-menu-item
                 v-if="authStore.canViewReports || authStore.isAdmin"
                 index="/activity-logs"
               >
                 <el-icon><Document /></el-icon>
-                <span>活�??��?</span>
+                <span>活動資料</span>
               </el-menu-item>
               <el-menu-item v-if="authStore.isAdmin" index="/user-management">
                 <el-icon><Setting /></el-icon>
-                <span>?�戶管�?</span>
+                <span>用戶管理</span>
               </el-menu-item>
             </el-menu>
           </el-aside>
@@ -200,17 +200,17 @@ const isMobile = computed(() => windowWidth.value <= 768);
 
 const stats = computed(() => statsStore.stats);
 
-// ?�戶角色顯示
+// 用戶角色顯示
 const userRoleText = computed(() => {
   switch (authStore.userRole) {
     case "admin":
-      return "管�???;
+      return "管理員";
     case "leader":
-      return "小�???;
+      return "小組長";
     case "reader":
       return "訪客";
     default:
-      return "?�知";
+      return "未知";
   }
 });
 
@@ -227,27 +227,27 @@ const userRoleTagType = computed(() => {
   }
 });
 
-// ?��?端�????��?權�??��??�濾)
+// 底部端點配置(需要權限過濾)
 const mobileNavs = [
-  { path: "/", name: "首�?", icon: "HomeFilled" },
-  { path: "/workers", name: "工�???, icon: "User" },
+  { path: "/", name: "首頁", icon: "HomeFilled" },
+  { path: "/workers", name: "工讀生", icon: "User" },
   {
     path: "/attendance",
-    name: "?�卡",
+    name: "打卡",
     icon: "Clock",
     permission: "canClockIn",
   },
-  { path: "/time-records", name: "工�?", icon: "Calendar" },
-  { path: "/salary", name: "?��?", icon: "Money" },
+  { path: "/time-records", name: "工時", icon: "Calendar" },
+  { path: "/salary", name: "薪資", icon: "Money" },
   {
     path: "/activity-logs",
-    name: "?��?",
+    name: "活動",
     icon: "Document",
     permission: "canViewReports",
   },
   {
     path: "/user-management",
-    name: "?�戶",
+    name: "用戶",
     icon: "Setting",
     adminOnly: true,
   },
@@ -282,26 +282,26 @@ const showDashboard = async () => {
   dashboardVisible.value = true;
 };
 
-// ?�出?��?
+// 登出操作
 const handleLogout = async () => {
   try {
     const confirmResult = await ElMessageBox.confirm(
-      "確�?要登?��?�?,
-      "確�??�出",
+      "確定要登出嗎?",
+      "確認登出",
       {
-        confirmButtonText: "確�?",
-        cancelButtonText: "?��?",
+        confirmButtonText: "確定",
+        cancelButtonText: "取消",
         type: "warning",
       },
     );
 
     if (confirmResult === "confirm") {
       await authStore.logout();
-      ElMessage.success("已�??�登??);
+      ElMessage.success("已成功登出");
       router.push("/login");
     }
   } catch (error) {
-    // ?�戶?��??�出
+    // 用戶取消登出
     if (error !== "cancel") {
       ElMessage.error("?�出失�?");
     }

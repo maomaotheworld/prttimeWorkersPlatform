@@ -108,11 +108,11 @@
               >
                 {{ getGroupName(row.groupId) }}
               </el-tag>
-              <span v-else class="info-text">?��?�?/span>
+              <span v-else class="info-text">未分組</span>
             </template>
           </el-table-column>
 
-          <el-table-column label="?�卡?�?? min-width="140">
+          <el-table-column label="打卡狀態" min-width="140">
             <template #default="{ row }">
               <div class="attendance-status">
                 <div v-if="row.todayAttendance?.clockIn" class="status-item">
@@ -126,7 +126,7 @@
                   </el-tag>
                 </div>
                 <div v-if="!row.todayAttendance?.clockIn" class="status-item">
-                  <el-tag type="info" size="small">?��???/el-tag>
+                  <el-tag type="info" size="small">未打卡</el-tag>
                 </div>
                 <div
                   v-else-if="
@@ -135,14 +135,14 @@
                   "
                   class="status-item"
                 >
-                  <el-tag type="primary" size="small">工�?�?/el-tag>
+                  <el-tag type="primary" size="small">工作中</el-tag>
                 </div>
               </div>
             </template>
           </el-table-column>
 
           <el-table-column
-            label="?��?"
+            label="操作"
             :width="isMobile ? 80 : 200"
             fixed="right"
           >
@@ -453,7 +453,7 @@ const handleTimeEdit = async () => {
     submitting.value = true;
 
     const token = authStore.token;
-    const response = await fetch("/api/time-records/edit-time", {
+    const response = await fetch(getApiUrl("/api/time-records/edit-time"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -492,7 +492,7 @@ const loadTodayAttendance = async () => {
   try {
     const today = moment().format("YYYY-MM-DD");
     const token = authStore.token;
-    const response = await fetch(`/api/time-records?date=${today}`, {
+    const response = await fetch(getApiUrl(`/api/time-records?date=${today}`), {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,

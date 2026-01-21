@@ -1,7 +1,7 @@
 <template>
   <div class="activity-logs-container">
     <div class="page-header">
-      <h1 class="page-title">Ê¥ªÂ??•Ë?</h1>
+      <h1 class="page-title">Ê¥ªÂãïÊó•Ë™å</h1>
       <div class="page-actions">
         <el-button
           type="danger"
@@ -9,7 +9,7 @@
           :icon="Delete"
           :disabled="logs.length === 0"
         >
-          Ê∏ÖÁ©∫?•Ë?
+          Ê∏ÖÁ©∫?ÔøΩÔøΩ?
         </el-button>
         <el-button
           type="primary"
@@ -17,58 +17,58 @@
           :icon="Refresh"
           :loading="loading"
         >
-          ?çÊñ∞?¥Á?
+          ?ÔøΩÊñ∞?ÔøΩÔøΩ?
         </el-button>
       </div>
     </div>
 
-    <!-- ÁØ©ÈÅ∏??-->
+    <!-- ÁØ©ÈÅ∏Âô® -->
     <div class="filters">
       <el-row :gutter="16">
         <el-col :span="6">
           <el-select
             v-model="filters.entityType"
-            placeholder="?∏Ê?ÂØ¶È?È°ûÂ?"
+            placeholder="ÈÅ∏ÊìáÂØ¶È´îÈ°ûÂûã"
             clearable
             @change="fetchLogs"
           >
-            <el-option label="Â∑•Ë??? value="worker" />
-            <el-option label="?ÇÈ?Ë®òÈ?" value="time-record" />
-            <el-option label="Ê¥ªÂ??•Ë?" value="activity-logs" />
+            <el-option label="Â∑•ËÆÄÁîü" value="worker" />
+            <el-option label="Â∑•ÊôÇË®òÈåÑ" value="time-record" />
+            <el-option label="Ê¥ªÂãïÊó•Ë™å" value="activity-logs" />
           </el-select>
         </el-col>
         <el-col :span="6">
           <el-select
             v-model="filters.action"
-            placeholder="?∏Ê??ï‰?"
+            placeholder="ÈÅ∏ÊìáÊìç‰Ωú"
             clearable
             @change="fetchLogs"
           >
-            <el-option label="?∞Â?" value="create" />
-            <el-option label="?¥Êñ∞" value="update" />
-            <el-option label="?™Èô§" value="delete" />
-            <el-option label="‰∏äÁè≠?ìÂç°" value="clock-in" />
-            <el-option label="‰∏ãÁè≠?ìÂç°" value="clock-out" />
-            <el-option label="?ÇÊï∏Ë™øÊï¥" value="time-adjust" />
-            <el-option label="Ê∏ÖÁ©∫?•Ë?" value="clear" />
+            <el-option label="Êñ∞Â¢û" value="create" />
+            <el-option label="Êõ¥Êñ∞" value="update" />
+            <el-option label="Âà™Èô§" value="delete" />
+            <el-option label="‰∏äÁè≠ÊâìÂç°" value="clock-in" />
+            <el-option label="‰∏ãÁè≠ÊâìÂç°" value="clock-out" />
+            <el-option label="Â∑•ÊôÇË™øÊï¥" value="time-adjust" />
+            <el-option label="Ê∏ÖÁ©∫Êó•Ë™å" value="clear" />
           </el-select>
         </el-col>
         <el-col :span="6">
           <el-input
             v-model="searchText"
-            placeholder="?úÂ??•Ë??ßÂÆπ"
+            placeholder="ÊêúÂ∞ãÊó•Ë™åÂÖßÂÆπ"
             :prefix-icon="Search"
             clearable
             @input="handleSearch"
           />
         </el-col>
         <el-col :span="6">
-          <div class="stats">Á∏ΩÂÖ± {{ totalLogs }} Ê¢ùË???/div>
+          <div class="stats">Á∏ΩÂÖ± {{ totalLogs }} Ê¢ùË®òÈåÑ</div>
         </el-col>
       </el-row>
     </div>
 
-    <!-- ?•Ë??óË°® -->
+    <!-- Êó•Ë™åÂàóË°® -->
     <div class="logs-content">
       <el-timeline v-if="filteredLogs.length > 0">
         <el-timeline-item
@@ -102,10 +102,10 @@
         </el-timeline-item>
       </el-timeline>
 
-      <el-empty v-else description="?´ÁÑ°Ê¥ªÂ??•Ë?" />
+      <el-empty v-else description="Êö´ÁÑ°Ê¥ªÂãïÊó•Ë™å" />
     </div>
 
-    <!-- ?ÜÈ? -->
+    <!-- ÂàÜÈ†Å -->
     <div v-if="totalPages > 1" class="pagination">
       <el-pagination
         v-model:current-page="currentPage"
@@ -134,9 +134,9 @@ import {
   User,
   Timer,
 } from "@element-plus/icons-vue";
-import api from "../utils/api";
+import { getApiUrl } from "../config/api";
 
-// ?øÊ?ÂºèÊï∏??
+// ÈüøÊáâÂºèÊï∏Êìö
 const logs = ref([]);
 const loading = ref(false);
 const filters = ref({
@@ -149,7 +149,7 @@ const pageSize = ref(50);
 const totalLogs = ref(0);
 const totalPages = ref(0);
 
-// Ë®àÁ?Â±¨ÊÄ?
+// Ë®àÁÆóÂ±¨ÊÄß
 const filteredLogs = computed(() => {
   if (!searchText.value) return logs.value;
 
@@ -161,7 +161,7 @@ const filteredLogs = computed(() => {
   );
 });
 
-// ?≤Â??•Ë??óË°®
+// Áç≤ÂèñÊ¥ªÂãïÊó•Ë™åÂàóË°®
 const fetchLogs = async () => {
   try {
     loading.value = true;
@@ -177,47 +177,53 @@ const fetchLogs = async () => {
       params.action = filters.value.action;
     }
 
-    const response = await api.get("/activity-logs", { params });
-    logs.value = response.data.data;
-    totalLogs.value = response.data.total;
-    totalPages.value = response.data.totalPages;
+    const response = await fetch(
+      `${getApiUrl()}/activity-logs?` + new URLSearchParams(params)
+    );
+    const data = await response.json();
+    
+    logs.value = data.data;
+    totalLogs.value = data.total;
+    totalPages.value = data.totalPages;
   } catch (error) {
-    ElMessage.error("?≤Â?Ê¥ªÂ??•Ë?Â§±Ê?");
-    console.error("?≤Â?Ê¥ªÂ??•Ë?Â§±Ê?:", error);
+    ElMessage.error("Áç≤ÂèñÊ¥ªÂãïÊó•Ë™åÂ§±Êïó");
+    console.error("Áç≤ÂèñÊ¥ªÂãïÊó•Ë™åÂ§±Êïó:", error);
   } finally {
     loading.value = false;
   }
 };
 
-// Ê∏ÖÁ©∫?•Ë?
+// Ê∏ÖÁ©∫Êó•Ë™å
 const handleClearLogs = async () => {
   try {
     await ElMessageBox.confirm(
-      "Á¢∫Â?Ë¶ÅÊ?Á©∫Ê??âÊ¥ª?ïÊó•Ë™åÂ?ÔºüÊ≠§?ç‰??°Ê?Âæ©Â???,
-      "Á¢∫Ë?Ê∏ÖÁ©∫",
+      "Á¢∫ÂÆöË¶ÅÊ∏ÖÁ©∫ÊâÄÊúâÊ¥ªÂãïÊó•Ë™åÂóéÔºüÊ≠§Êìç‰Ωú‰∏çÂèØÊÅ¢Âæ©„ÄÇ",
+      "Á¢∫Ë™çÊ∏ÖÁ©∫",
       {
-        confirmButtonText: "Á¢∫Â?",
-        cancelButtonText: "?ñÊ?",
+        confirmButtonText: "Á¢∫ÂÆö",
+        cancelButtonText: "ÂèñÊ∂à",
         type: "warning",
       },
     );
 
-    await api.delete("/activity-logs");
-    ElMessage.success("Ê¥ªÂ??•Ë?Â∑≤Ê?Á©?);
+    await fetch(`${getApiUrl()}/activity-logs`, {
+      method: 'DELETE'
+    });
+    ElMessage.success("Ê¥ªÂãïÊó•Ë™åÂ∑≤Ê∏ÖÁ©∫");
     await fetchLogs();
   } catch (error) {
     if (error !== "cancel") {
-      ElMessage.error("Ê∏ÖÁ©∫Ê¥ªÂ??•Ë?Â§±Ê?");
+      ElMessage.error("Ê∏ÖÁ©∫Ê¥ªÂãïÊó•Ë™åÂ§±Êïó");
     }
   }
 };
 
-// ?úÂ??ïÁ?
+// ÊêúÂ∞ãÂäüËÉΩ
 const handleSearch = () => {
-  // ?úÂ??èËºØ?®Ë?ÁÆóÂ±¨?ß‰∏≠?ïÁ?
+  // ?ÔøΩÔøΩ??ÔøΩËºØ?ÔøΩÔøΩ?ÁÆóÂ±¨?ÔøΩ‰∏≠?ÔøΩÔøΩ?
 };
 
-// ?ÜÈ??ïÁ?
+// ?ÔøΩÔøΩ??ÔøΩÔøΩ?
 const handleSizeChange = (size) => {
   pageSize.value = size;
   currentPage.value = 1;
@@ -229,7 +235,7 @@ const handlePageChange = (page) => {
   fetchLogs();
 };
 
-// ?ºÂ??ñÊ???
+// ?ÔøΩÔøΩ??ÔøΩÔøΩ???
 const formatTime = (timestamp) => {
   return new Date(timestamp).toLocaleString("zh-TW", {
     year: "numeric",
@@ -241,7 +247,7 @@ const formatTime = (timestamp) => {
   });
 };
 
-// ?≤Â??ÇÈ?Ëª∏È???
+// ?ÔøΩÔøΩ??ÔøΩÔøΩ?Ëª∏ÔøΩ???
 const getTimelineType = (action) => {
   switch (action) {
     case "create":
@@ -257,7 +263,7 @@ const getTimelineType = (action) => {
   }
 };
 
-// ?≤Â??ï‰??ñÊ?
+// ?ÔøΩÔøΩ??ÔøΩÔøΩ??ÔøΩÔøΩ?
 const getActionIcon = (action) => {
   switch (action) {
     case "create":
@@ -278,7 +284,7 @@ const getActionIcon = (action) => {
   }
 };
 
-// ?≤Â??ï‰?Ê®ôÁ±§È°ûÂ?
+// ?ÔøΩÔøΩ??ÔøΩÔøΩ?Ê®ôÁ±§È°ûÔøΩ?
 const getActionTagType = (action) => {
   switch (action) {
     case "create":
@@ -294,31 +300,31 @@ const getActionTagType = (action) => {
   }
 };
 
-// ?≤Â??ï‰??áÂ?
+// ?ÔøΩÔøΩ??ÔøΩÔøΩ??ÔøΩÔøΩ?
 const getActionText = (action) => {
   const actionMap = {
-    create: "?∞Â?",
-    update: "?¥Êñ∞",
-    delete: "?™Èô§",
-    "clock-in": "‰∏äÁè≠?ìÂç°",
-    "clock-out": "‰∏ãÁè≠?ìÂç°",
-    "time-adjust": "?ÇÊï∏Ë™øÊï¥",
-    clear: "Ê∏ÖÁ©∫?•Ë?",
+    create: "Êñ∞Â¢û",
+    update: "Êõ¥Êñ∞",
+    delete: "Âà™Èô§",
+    "clock-in": "‰∏äÁè≠ÊâìÂç°",
+    "clock-out": "‰∏ãÁè≠ÊâìÂç°",
+    "time-adjust": "Â∑•ÊôÇË™øÊï¥",
+    clear: "Ê∏ÖÁ©∫Êó•Ë™å",
   };
   return actionMap[action] || action;
 };
 
-// ?≤Â?ÂØ¶È?È°ûÂ??áÂ?
+// Áç≤ÂèñÂØ¶È´îÈ°ûÂûãÊñáÂ≠ó
 const getEntityTypeText = (entityType) => {
   const typeMap = {
-    worker: "Â∑•Ë???,
-    "time-record": "?ÇÈ?Ë®òÈ?",
-    "activity-logs": "Ê¥ªÂ??•Ë?",
+    worker: "Â∑•ËÆÄÁîü",
+    "time-record": "Â∑•ÊôÇË®òÈåÑ",
+    "activity-logs": "Ê¥ªÂãïÊó•Ë™å",
   };
   return typeMap[entityType] || entityType;
 };
 
-// ?ùÂ???
+// ÂàùÂßãÂåñ
 onMounted(() => {
   fetchLogs();
 });
@@ -414,7 +420,7 @@ onMounted(() => {
   text-align: center;
 }
 
-/* ?øÊ?ÂºèË®≠Ë®?*/
+/* ?ÔøΩÔøΩ?ÂºèË®≠ÔøΩ?*/
 @media (max-width: 768px) {
   .activity-logs-container {
     padding: 12px;

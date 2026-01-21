@@ -1,19 +1,19 @@
 <template>
   <div id="app">
-    <!-- Â¶ÇÊ??®Áôª?•È??¢Ô??™È°ØÁ§∫Áôª?•Á?‰ª?-->
+    <!-- Â¶ÇÊûúÊòØÁôªÂÖ•È†ÅÈù¢Â∞±È°ØÁ§∫ÁôªÂÖ•È†ÅÈù¢ -->
     <template v-if="$route.path === '/login'">
       <router-view />
     </template>
 
-    <!-- ‰∏ªÊ??®Á???-->
+    <!-- ‰∏ªÊáâÁî®ÂçÄÂüü -->
     <template v-else>
       <el-container class="app-container">
-        <!-- ?ÇÈÉ®Â∞éËà™ -->
+        <!-- È†ÇÈÉ®Â∞éËà™ -->
         <el-header v-if="!isMobile" height="60px" class="app-header">
           <div class="header-content">
             <div class="logo">
               <el-icon size="24"><Management /></el-icon>
-              <span>Â∑•Ë??üÁÆ°?ÜÂπ≥??/span>
+              <span>Â∑•ËÆÄÁîüÁÆ°ÁêÜÂπ≥Âè∞</span>
             </div>
             <div class="header-actions">
               <div class="user-info">
@@ -28,11 +28,11 @@
               <div class="action-buttons">
                 <el-button type="primary" @click="showDashboard">
                   <el-icon><DataAnalysis /></el-icon>
-                  Áµ±Ë?Ë≥áË?
+                  Áµ±Ë®àË≥áË®ä
                 </el-button>
                 <el-button type="danger" @click="handleLogout" plain>
                   <el-icon><SwitchButton /></el-icon>
-                  ?ªÂá∫
+                  ?ÔøΩÂá∫
                 </el-button>
               </div>
             </div>
@@ -40,7 +40,7 @@
         </el-header>
 
         <el-container>
-          <!-- ?¥È?Â∞éËà™ -->
+          <!-- ?ÔøΩÔøΩ?Â∞éËà™ -->
           <el-aside v-if="!isMobile" width="200px" class="app-aside">
             <el-menu
               :default-active="$route.path"
@@ -52,55 +52,55 @@
             >
               <el-menu-item index="/">
                 <el-icon><HomeFilled /></el-icon>
-                <span>È¶ñÈ?</span>
+                <span>È¶ñÔøΩ?</span>
               </el-menu-item>
               <el-menu-item index="/workers">
                 <el-icon><User /></el-icon>
-                <span>Â∑•Ë??üÁÆ°??/span>
+                <span>Â∑•ÔøΩ??ÔøΩÁÆ°??/span>
               </el-menu-item>
               <el-menu-item
                 v-if="authStore.canEditWorkers || authStore.isAdmin"
                 index="/groups"
               >
                 <el-icon><UserFilled /></el-icon>
-                <span>ÁµÑÂà•ÁÆ°Á?</span>
+                <span>ÁµÑÂà•ÁÆ°ÔøΩ?</span>
               </el-menu-item>
               <el-menu-item
                 v-if="authStore.hasPermission('canClockIn')"
                 index="/attendance"
               >
                 <el-icon><Clock /></el-icon>
-                <span>?ìÂç°Á≥ªÁµ±</span>
+                <span>?ÔøΩÂç°Á≥ªÁµ±</span>
               </el-menu-item>
               <el-menu-item index="/time-records">
                 <el-icon><Calendar /></el-icon>
-                <span>Â∑•Ê?Ë®òÈ?</span>
+                <span>Â∑•ÔøΩ?Ë®òÔøΩ?</span>
               </el-menu-item>
               <el-menu-item index="/salary">
                 <el-icon><Money /></el-icon>
-                <span>?™Ë?ÁÆ°Á?</span>
+                <span>?ÔøΩÔøΩ?ÁÆ°ÔøΩ?</span>
               </el-menu-item>
               <el-menu-item
                 v-if="authStore.canViewReports || authStore.isAdmin"
                 index="/activity-logs"
               >
                 <el-icon><Document /></el-icon>
-                <span>Ê¥ªÂ??•Ë?</span>
+                <span>Ê¥ªÔøΩ??ÔøΩÔøΩ?</span>
               </el-menu-item>
               <el-menu-item v-if="authStore.isAdmin" index="/user-management">
                 <el-icon><Setting /></el-icon>
-                <span>?®Êà∂ÁÆ°Á?</span>
+                <span>?ÔøΩÊà∂ÁÆ°ÔøΩ?</span>
               </el-menu-item>
             </el-menu>
           </el-aside>
 
-          <!-- ‰∏ªÂÖßÂÆπÂ???-->
+          <!-- ‰∏ªÂÖßÂÆπÔøΩ???-->
           <el-main class="app-main">
             <router-view />
           </el-main>
         </el-container>
 
-        <!-- ?ãÊ?Á´ØÈ???-->
+        <!-- ?ÔøΩÔøΩ?Á´ØÔøΩ???-->
         <el-header v-if="isMobile" height="50px" class="mobile-header">
           <div class="mobile-header-content">
             <div class="mobile-user-info">
@@ -117,12 +117,12 @@
               plain
               :icon="SwitchButton"
             >
-              ?ªÂá∫
+              ?ÔøΩÂá∫
             </el-button>
           </div>
         </el-header>
 
-        <!-- ?ãÊ?Á´ØÂ??®Â???-->
+        <!-- ?ÔøΩÔøΩ?Á´ØÔøΩ??ÔøΩÔøΩ???-->
         <el-footer v-if="isMobile" height="45px" class="mobile-footer">
           <div class="mobile-nav">
             <div
@@ -138,29 +138,29 @@
       </el-container>
     </template>
 
-    <!-- Áµ±Ë?Ë≥áË?ÂΩàÁ? -->
+    <!-- Áµ±ÔøΩ?Ë≥áÔøΩ?ÂΩàÔøΩ? -->
     <el-dialog
       v-model="dashboardVisible"
-      title="Áµ±Ë?Ë≥áË?"
+      title="Áµ±ÔøΩ?Ë≥áÔøΩ?"
       :width="isMobile ? '95%' : '500px'"
       center
     >
       <div class="dashboard-content">
         <el-row :gutter="16">
           <el-col :span="12">
-            <el-statistic title="Á∏ΩÂ∑•ËÆÄ?üÊï∏" :value="stats.totalWorkers" />
+            <el-statistic title="Á∏ΩÂ∑•ËÆÄ?ÔøΩÊï∏" :value="stats.totalWorkers" />
           </el-col>
           <el-col :span="12">
-            <el-statistic title="Á∏ΩÁ??•Êï∏" :value="stats.totalGroups" />
+            <el-statistic title="Á∏ΩÔøΩ??ÔøΩÊï∏" :value="stats.totalGroups" />
           </el-col>
           <el-col :span="12">
-            <el-statistic title="‰ªäÊó•?ìÂç°" :value="stats.todayClockedIn" />
+            <el-statistic title="‰ªäÊó•?ÔøΩÂç°" :value="stats.todayClockedIn" />
           </el-col>
           <el-col :span="12">
             <el-statistic
-              title="?¨Ê?Â∑•Ê?"
+              title="?ÔøΩÔøΩ?Â∑•ÔøΩ?"
               :value="stats.monthlyHours"
-              suffix="Â∞èÊ?"
+              suffix="Â∞èÔøΩ?"
             />
           </el-col>
         </el-row>
@@ -200,17 +200,17 @@ const isMobile = computed(() => windowWidth.value <= 768);
 
 const stats = computed(() => statsStore.stats);
 
-// ?®Êà∂ËßíËâ≤È°ØÁ§∫
+// ?ÔøΩÊà∂ËßíËâ≤È°ØÁ§∫
 const userRoleText = computed(() => {
   switch (authStore.userRole) {
     case "admin":
-      return "ÁÆ°Á???;
+      return "ÁÆ°ÔøΩ???;
     case "leader":
-      return "Â∞èÁ???;
+      return "Â∞èÔøΩ???;
     case "reader":
       return "Ë®™ÂÆ¢";
     default:
-      return "?™Áü•";
+      return "?ÔøΩÁü•";
   }
 });
 
@@ -227,27 +227,27 @@ const userRoleTagType = computed(() => {
   }
 });
 
-// ?ãÊ?Á´ØÂ????πÊ?Ê¨äÈ??ïÊ??éÊøæ)
+// ?ÔøΩÔøΩ?Á´ØÔøΩ????ÔøΩÔøΩ?Ê¨äÔøΩ??ÔøΩÔøΩ??ÔøΩÊøæ)
 const mobileNavs = [
-  { path: "/", name: "È¶ñÈ?", icon: "HomeFilled" },
-  { path: "/workers", name: "Â∑•Ë???, icon: "User" },
+  { path: "/", name: "È¶ñÔøΩ?", icon: "HomeFilled" },
+  { path: "/workers", name: "Â∑•ÔøΩ???, icon: "User" },
   {
     path: "/attendance",
-    name: "?ìÂç°",
+    name: "?ÔøΩÂç°",
     icon: "Clock",
     permission: "canClockIn",
   },
-  { path: "/time-records", name: "Â∑•Ê?", icon: "Calendar" },
-  { path: "/salary", name: "?™Ë?", icon: "Money" },
+  { path: "/time-records", name: "Â∑•ÔøΩ?", icon: "Calendar" },
+  { path: "/salary", name: "?ÔøΩÔøΩ?", icon: "Money" },
   {
     path: "/activity-logs",
-    name: "?•Ë?",
+    name: "?ÔøΩÔøΩ?",
     icon: "Document",
     permission: "canViewReports",
   },
   {
     path: "/user-management",
-    name: "?®Êà∂",
+    name: "?ÔøΩÊà∂",
     icon: "Setting",
     adminOnly: true,
   },
@@ -261,11 +261,11 @@ const mobileNavs = [
 
 const visibleMobileNavs = computed(() => {
   return mobileNavs.filter((nav) => {
-    // Â¶ÇÊ??ØÂ??êÁÆ°?ÜÂì°?ÑÈÅ∏??Ê™¢Êü•?ØÂê¶?∫ÁÆ°?ÜÂì°
+    // Â¶ÇÔøΩ??ÔøΩÔøΩ??ÔøΩÁÆ°?ÔøΩÂì°?ÔøΩÈÅ∏??Ê™¢Êü•?ÔøΩÂê¶?ÔøΩÁÆ°?ÔøΩÂì°
     if (nav.adminOnly) {
       return authStore.isAdmin;
     }
-    // Â¶ÇÊ??âÊ??êË?Ê±?Ê™¢Êü•Ê¨äÈ?
+    // Â¶ÇÔøΩ??ÔøΩÔøΩ??ÔøΩÔøΩ?ÔøΩ?Ê™¢Êü•Ê¨äÔøΩ?
     if (nav.permission) {
       return authStore.hasPermission(nav.permission) || authStore.isAdmin;
     }
@@ -282,28 +282,28 @@ const showDashboard = async () => {
   dashboardVisible.value = true;
 };
 
-// ?ªÂá∫?ïÁ?
+// ?ÔøΩÂá∫?ÔøΩÔøΩ?
 const handleLogout = async () => {
   try {
     const confirmResult = await ElMessageBox.confirm(
-      "Á¢∫Â?Ë¶ÅÁôª?∫Â?Ôº?,
-      "Á¢∫Ë??ªÂá∫",
+      "Á¢∫ÔøΩ?Ë¶ÅÁôª?ÔøΩÔøΩ?ÔøΩ?,
+      "Á¢∫ÔøΩ??ÔøΩÂá∫",
       {
-        confirmButtonText: "Á¢∫Â?",
-        cancelButtonText: "?ñÊ?",
+        confirmButtonText: "Á¢∫ÔøΩ?",
+        cancelButtonText: "?ÔøΩÔøΩ?",
         type: "warning",
       },
     );
 
     if (confirmResult === "confirm") {
       await authStore.logout();
-      ElMessage.success("Â∑≤Ê??üÁôª??);
+      ElMessage.success("Â∑≤ÔøΩ??ÔøΩÁôª??);
       router.push("/login");
     }
   } catch (error) {
-    // ?®Êà∂?ñÊ??ªÂá∫
+    // ?ÔøΩÊà∂?ÔøΩÔøΩ??ÔøΩÂá∫
     if (error !== "cancel") {
-      ElMessage.error("?ªÂá∫Â§±Ê?");
+      ElMessage.error("?ÔøΩÂá∫Â§±ÔøΩ?");
     }
   }
 };
@@ -311,10 +311,10 @@ const handleLogout = async () => {
 onMounted(() => {
   window.addEventListener("resize", handleResize);
 
-  // ?ùÂ??ñË?Ë≠âÁ???
+  // ?ÔøΩÔøΩ??ÔøΩÔøΩ?Ë≠âÔøΩ???
   authStore.initializeAuth();
 
-  // ËºâÂÖ•Áµ±Ë?Ë≥áÊ?
+  // ËºâÂÖ•Áµ±ÔøΩ?Ë≥áÔøΩ?
   if (authStore.isLoggedIn) {
     statsStore.fetchStats();
   }
@@ -421,7 +421,7 @@ onUnmounted(() => {
   background: #555;
 }
 
-/* ?ãÊ?Á´ØÈ???*/
+/* ?ÔøΩÔøΩ?Á´ØÔøΩ???*/
 .mobile-header {
   background-color: #fff;
   border-bottom: 1px solid #e6e6e6;
@@ -493,19 +493,19 @@ onUnmounted(() => {
   padding: 20px 0;
 }
 
-/* ?ãÊ?Á´ØÊ®£ÂºèË™ø??*/
+/* ?ÔøΩÔøΩ?Á´ØÊ®£ÂºèË™ø??*/
 @media (max-width: 768px) {
   .app-main {
     padding: 0;
-    padding-top: 65px; /* ?∫Âõ∫ÂÆöÁ??ãÊ??ÇÈÉ®Â∞éËà™?ôÂá∫Á©∫È? */
-    padding-bottom: 60px; /* ?∫Âõ∫ÂÆöÁ??ãÊ?Â∫ïÈÉ®Â∞éËà™?ôÂá∫Á©∫È? */
+    padding-top: 65px; /* ?ÔøΩÂõ∫ÂÆöÔøΩ??ÔøΩÔøΩ??ÔøΩÈÉ®Â∞éËà™?ÔøΩÂá∫Á©∫ÔøΩ? */
+    padding-bottom: 60px; /* ?ÔøΩÂõ∫ÂÆöÔøΩ??ÔøΩÔøΩ?Â∫ïÈÉ®Â∞éËà™?ÔøΩÂá∫Á©∫ÔøΩ? */
     height: calc(100vh - 60px);
     overflow-y: auto;
     overflow-x: hidden;
   }
 
   .app-main::-webkit-scrollbar {
-    width: 4px; /* ?ãÊ??àÊõ¥Á¥∞Á?ÊªæÂ?Ê¢?*/
+    width: 4px; /* ?ÔøΩÔøΩ??ÔøΩÊõ¥Á¥∞ÔøΩ?ÊªæÔøΩ?ÔøΩ?*/
   }
 
   .app-main::-webkit-scrollbar-track {
@@ -535,7 +535,7 @@ onUnmounted(() => {
   }
 }
 
-/* ?øÊ?ÂºèË™ø??*/
+/* ?ÔøΩÔøΩ?ÂºèË™ø??*/
 @media (max-width: 1200px) {
   .header-content {
     padding: 0 15px;

@@ -256,6 +256,19 @@ const requireRole = (roles) => {
   };
 };
 
+// === 健康檢查和根路徑 ===
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "工讀生管理系統 API 運行中",
+    version: "1.0.0",
+  });
+});
+
+app.get("/health", (req, res) => {
+  res.json({ status: "healthy", timestamp: new Date().toISOString() });
+});
+
 // === 認證相關 API ===
 
 // 登入

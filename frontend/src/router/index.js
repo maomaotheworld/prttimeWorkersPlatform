@@ -6,7 +6,7 @@ const routes = [
     name: "Login",
     component: () => import("../views/Login.vue"),
     meta: {
-      title: "?╗хЕе",
+      title: "?я┐╜хЕе",
       requiresAuth: false,
       hideFromGuests: false,
     },
@@ -16,7 +16,7 @@ const routes = [
     name: "Home",
     component: () => import("../views/Home.vue"),
     meta: {
-      title: "щжЦщ?",
+      title: "щжЦя┐╜?",
       requiresAuth: true,
       allowedRoles: ["admin", "leader", "reader"],
     },
@@ -26,7 +26,7 @@ const routes = [
     name: "Workers",
     component: () => import("../views/Workers.vue"),
     meta: {
-      title: "х╖еш??Ячоб??,
+      title: "х╖ешоАчФЯчобчРЖ",
       requiresAuth: true,
       allowedRoles: ["admin", "leader", "reader"],
     },
@@ -36,7 +36,7 @@ const routes = [
     name: "Groups",
     component: () => import("../views/Groups.vue"),
     meta: {
-      title: "ч╡ДхИечобч?",
+      title: "ч╡ДхИечобя┐╜?",
       requiresAuth: true,
       allowedRoles: ["admin", "leader", "reader"],
     },
@@ -46,7 +46,7 @@ const routes = [
     name: "Attendance",
     component: () => import("../views/Attendance.vue"),
     meta: {
-      title: "?УхНбч│╗ч╡▒",
+      title: "?я┐╜хНбч│╗ч╡▒",
       requiresAuth: true,
       allowedRoles: ["admin", "leader"],
       requiredPermission: "canClockIn",
@@ -57,7 +57,7 @@ const routes = [
     name: "TimeRecords",
     component: () => import("../views/TimeRecords.vue"),
     meta: {
-      title: "х╖ец?шиШщ?",
+      title: "х╖ея┐╜?шиШя┐╜?",
       requiresAuth: true,
       allowedRoles: ["admin", "leader", "reader"],
     },
@@ -67,7 +67,7 @@ const routes = [
     name: "Salary",
     component: () => import("../views/Salary.vue"),
     meta: {
-      title: "?кш?чобч?",
+      title: "?я┐╜я┐╜?чобя┐╜?",
       requiresAuth: true,
       allowedRoles: ["admin", "leader", "reader"],
     },
@@ -77,7 +77,7 @@ const routes = [
     name: "ActivityLogs",
     component: () => import("../views/ActivityLogs.vue"),
     meta: {
-      title: "ц┤╗х??еш?",
+      title: "ц┤╗я┐╜??я┐╜я┐╜?",
       requiresAuth: true,
       allowedRoles: ["admin", "leader", "reader"],
     },
@@ -87,7 +87,7 @@ const routes = [
     name: "UserManagement",
     component: () => import("../views/UserManagement.vue"),
     meta: {
-      title: "?ицИ╢чобч?",
+      title: "?я┐╜цИ╢чобя┐╜?",
       requiresAuth: true,
       allowedRoles: ["admin"],
       requiredPermission: "canManageUsers",
@@ -100,20 +100,20 @@ const router = createRouter({
   routes,
 });
 
-// шкНш?хоИш? - ч░бх??ИцЬм?┐х?х╛кчТ░ф╛Эш│┤
+// шкНя┐╜?хоИя┐╜? - ч░бя┐╜??я┐╜цЬм?я┐╜я┐╜?х╛кчТ░ф╛Эш│┤
 router.beforeEach((to, from, next) => {
-  // шинх??БщЭвциЩщ?
+  // шиня┐╜??я┐╜щЭвциЩя┐╜?
   document.title = to.meta.title
-    ? `${to.meta.title} - х╖еш??Ячоб?Жх╣│?░`
-    : "х╖еш??Ячоб?Жх╣│??;
+    ? `${to.meta.title} - х╖ея┐╜??я┐╜чоб?я┐╜х╣│?я┐╜`
+    : "х╖ея┐╜??я┐╜чоб?я┐╜х╣│??;
 
-  // хжВц??пчЩ╗?ещ??вя??┤цОе?▓хЕея╝ИхЬи?╗хЕеч╡Дф╗╢?зщГи?Хч??Нх??Ся?
+  // хжВя┐╜??я┐╜чЩ╗?я┐╜я┐╜??я┐╜я┐╜??я┐╜цОе?я┐╜хЕея╝ИхЬи?я┐╜хЕеч╡Дф╗╢?я┐╜щГи?я┐╜я┐╜??я┐╜я┐╜??я┐╜я┐╜?
   if (to.path === "/login") {
     next();
     return;
   }
 
-  // х░НцЦ╝?АшжБш?шнЙч??БщЭвя╝МцЪл?Вх??Бши▒?▓хЕея╝Мш?шнЙцкв?ехЬиApp.vueф╕нш???
+  // х░НцЦ╝?я┐╜шжБя┐╜?шнЙя┐╜??я┐╜щЭвя╝МцЪл?я┐╜я┐╜??я┐╜ши▒?я┐╜хЕея╝Мя┐╜?шнЙцкв?я┐╜хЬиApp.vueф╕ня┐╜???
   next();
 });
 

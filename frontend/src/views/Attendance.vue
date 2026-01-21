@@ -1,20 +1,20 @@
 <template>
   <div class="attendance-container">
     <div class="page-header">
-      <h1 class="page-title">?ìÂç°Á≥ªÁµ±</h1>
+      <h1 class="page-title">?ÔøΩÂç°Á≥ªÁµ±</h1>
       <div class="current-time">
         <el-icon><Clock /></el-icon>
         {{ currentTime }}
       </div>
     </div>
 
-    <!-- ?ÜÁ?ÁØ©ÈÅ∏?Ä??-->
+    <!-- ?ÔøΩÔøΩ?ÁØ©ÈÅ∏?ÔøΩ??-->
     <el-card class="filter-card mb-20">
       <el-row :gutter="16" class="filter-row">
         <el-col :xs="24" :sm="8">
-          <el-form-item label="?ÜÁ??πÂ?">
+          <el-form-item label="?ÔøΩÔøΩ??ÔøΩÔøΩ?">
             <el-radio-group v-model="groupBy" @change="handleGroupChange">
-              <el-radio-button label="all">?®ÈÉ®</el-radio-button>
+              <el-radio-button label="all">?ÔøΩÈÉ®</el-radio-button>
               <el-radio-button label="floor">Ê®ìÂ±§</el-radio-button>
               <el-radio-button label="group">ÁµÑÂà•</el-radio-button>
             </el-radio-group>
@@ -22,12 +22,12 @@
         </el-col>
 
         <el-col :xs="24" :sm="8" v-if="groupBy === 'floor'">
-          <el-form-item label="?∏Ê?Ê®ìÂ±§">
+          <el-form-item label="?ÔøΩÔøΩ?Ê®ìÂ±§">
             <el-select
               v-model="selectedFloor"
               @change="filterWorkers"
               clearable
-              placeholder="?∏Ê?Ê®ìÂ±§"
+              placeholder="?ÔøΩÔøΩ?Ê®ìÂ±§"
             >
               <el-option
                 v-for="floor in availableFloors"
@@ -40,12 +40,12 @@
         </el-col>
 
         <el-col :xs="24" :sm="8" v-if="groupBy === 'group'">
-          <el-form-item label="?∏Ê?ÁµÑÂà•">
+          <el-form-item label="?ÔøΩÔøΩ?ÁµÑÂà•">
             <el-select
               v-model="selectedGroup"
               @change="filterWorkers"
               clearable
-              placeholder="?∏Ê?ÁµÑÂà•"
+              placeholder="?ÔøΩÔøΩ?ÁµÑÂà•"
             >
               <el-option
                 v-for="group in groups"
@@ -59,11 +59,11 @@
       </el-row>
     </el-card>
 
-    <!-- Â∑•Ë??üÊ??°Â?Ë°?-->
+    <!-- Â∑•ÔøΩ??ÔøΩÔøΩ??ÔøΩÔøΩ?ÔøΩ?-->
     <el-card class="attendance-list-card">
       <template #header>
         <div class="card-header">
-          <span>Â∑•Ë??üÊ??°Â?Ë°?({{ filteredWorkers.length }}‰∫?</span>
+          <span>Â∑•ÔøΩ??ÔøΩÔøΩ??ÔøΩÔøΩ?ÔøΩ?({{ filteredWorkers.length }}ÔøΩ?</span>
           <div class="header-actions">
             <el-button
               type="primary"
@@ -72,7 +72,7 @@
               :loading="loading"
             >
               <el-icon><Refresh /></el-icon>
-              ?∑Êñ∞
+              ?ÔøΩÊñ∞
             </el-button>
           </div>
         </div>
@@ -86,12 +86,12 @@
           class="attendance-table"
           :height="tableHeight"
         >
-          <el-table-column prop="number" label="Á∑®Ë?" width="80" sortable />
+          <el-table-column prop="number" label="Á∑®ÔøΩ?" width="80" sortable />
 
-          <el-table-column prop="name" label="ÂßìÂ?" min-width="100" />
+          <el-table-column prop="name" label="ÂßìÔøΩ?" min-width="100" />
 
           <el-table-column prop="floor" label="Ê®ìÂ±§" width="70">
-            <template #default="{ row }"> {{ row.floor || "-" }}Ê®?</template>
+            <template #default="{ row }"> {{ row.floor || "-" }}ÔøΩ?</template>
           </el-table-column>
 
           <el-table-column prop="groupId" label="ÁµÑÂà•" min-width="90">
@@ -108,11 +108,11 @@
               >
                 {{ getGroupName(row.groupId) }}
               </el-tag>
-              <span v-else class="info-text">?™Â?Áµ?/span>
+              <span v-else class="info-text">?ÔøΩÔøΩ?ÔøΩ?/span>
             </template>
           </el-table-column>
 
-          <el-table-column label="?ìÂç°?Ä?? min-width="140">
+          <el-table-column label="?ÔøΩÂç°?ÔøΩ?? min-width="140">
             <template #default="{ row }">
               <div class="attendance-status">
                 <div v-if="row.todayAttendance?.clockIn" class="status-item">
@@ -126,7 +126,7 @@
                   </el-tag>
                 </div>
                 <div v-if="!row.todayAttendance?.clockIn" class="status-item">
-                  <el-tag type="info" size="small">?™Ê???/el-tag>
+                  <el-tag type="info" size="small">?ÔøΩÔøΩ???/el-tag>
                 </div>
                 <div
                   v-else-if="
@@ -135,20 +135,20 @@
                   "
                   class="status-item"
                 >
-                  <el-tag type="primary" size="small">Â∑•‰?‰∏?/el-tag>
+                  <el-tag type="primary" size="small">Â∑•ÔøΩ?ÔøΩ?/el-tag>
                 </div>
               </div>
             </template>
           </el-table-column>
 
           <el-table-column
-            label="?ç‰?"
+            label="?ÔøΩÔøΩ?"
             :width="isMobile ? 80 : 200"
             fixed="right"
           >
             <template #default="{ row }">
               <div class="action-buttons">
-                <!-- ‰∏äÁè≠?ìÂç°?âÈ? -->
+                <!-- ‰∏äÁè≠?ÔøΩÂç°?ÔøΩÔøΩ? -->
                 <el-button
                   v-if="!row.todayAttendance?.clockIn"
                   type="success"
@@ -156,10 +156,10 @@
                   @click="handleQuickClock(row, 'in')"
                   :loading="row.clocking"
                 >
-                  ‰∏äÁè≠?ìÂç°
+                  ‰∏äÁè≠?ÔøΩÂç°
                 </el-button>
 
-                <!-- ‰∏ãÁè≠?ìÂç°?âÈ? -->
+                <!-- ‰∏ãÁè≠?ÔøΩÂç°?ÔøΩÔøΩ? -->
                 <el-button
                   v-else-if="!row.todayAttendance?.clockOut"
                   type="warning"
@@ -167,17 +167,17 @@
                   @click="handleQuickClock(row, 'out')"
                   :loading="row.clocking"
                 >
-                  ‰∏ãÁè≠?ìÂç°
+                  ‰∏ãÁè≠?ÔøΩÂç°
                 </el-button>
 
-                <!-- Á∑®ËºØ?ÇÈ??âÈ? -->
+                <!-- Á∑®ËºØ?ÔøΩÔøΩ??ÔøΩÔøΩ? -->
                 <el-button
                   type="primary"
                   size="small"
                   @click="showEditTimeDialog(row)"
                   plain
                 >
-                  Á∑®ËºØ?ÇÈ?
+                  Á∑®ËºØ?ÔøΩÔøΩ?
                 </el-button>
               </div>
             </template>
@@ -186,62 +186,62 @@
       </div>
     </el-card>
 
-    <!-- Á∑®ËºØ?ìÂç°?ÇÈ?Â∞çË©±Ê°?-->
+    <!-- Á∑®ËºØ?ÔøΩÂç°?ÔøΩÔøΩ?Â∞çË©±ÔøΩ?-->
     <el-dialog
       v-model="editTimeDialogVisible"
-      title="Á∑®ËºØ?ìÂç°?ÇÈ?"
+      title="Á∑®ËºØ?ÔøΩÂç°?ÔøΩÔøΩ?"
       :width="isMobile ? '95%' : '500px'"
       center
     >
       <el-form :model="timeEditForm" label-width="100px">
-        <el-form-item label="Â∑•Ë???>
+        <el-form-item label="Â∑•ÔøΩ???>
           <el-input
             :value="`${timeEditForm.workerNumber} - ${timeEditForm.workerName}`"
             readonly
           />
         </el-form-item>
 
-        <el-form-item label="‰∏äÁè≠?ÇÈ?">
+        <el-form-item label="‰∏äÁè≠?ÔøΩÔøΩ?">
           <el-date-picker
             v-model="timeEditForm.clockIn"
             type="datetime"
-            placeholder="?∏Ê?‰∏äÁè≠?ÇÈ?"
+            placeholder="?ÔøΩÔøΩ?‰∏äÁè≠?ÔøΩÔøΩ?"
             format="YYYY-MM-DD HH:mm"
             value-format="YYYY-MM-DD HH:mm:ss"
             style="width: 100%"
           />
         </el-form-item>
 
-        <el-form-item label="‰∏ãÁè≠?ÇÈ?">
+        <el-form-item label="‰∏ãÁè≠?ÔøΩÔøΩ?">
           <el-date-picker
             v-model="timeEditForm.clockOut"
             type="datetime"
-            placeholder="?∏Ê?‰∏ãÁè≠?ÇÈ?"
+            placeholder="?ÔøΩÔøΩ?‰∏ãÁè≠?ÔøΩÔøΩ?"
             format="YYYY-MM-DD HH:mm"
             value-format="YYYY-MM-DD HH:mm:ss"
             style="width: 100%"
           />
         </el-form-item>
 
-        <el-form-item label="?ôË®ª">
+        <el-form-item label="?ÔøΩË®ª">
           <el-input
             v-model="timeEditForm.note"
             type="textarea"
             :rows="3"
-            placeholder="?ÇÈ?Ë™øÊï¥?üÂ??ñÂ?Ë®?
+            placeholder="?ÔøΩÔøΩ?Ë™øÊï¥?ÔøΩÔøΩ??ÔøΩÔøΩ?ÔøΩ?
           />
         </el-form-item>
       </el-form>
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="editTimeDialogVisible = false">?ñÊ?</el-button>
+          <el-button @click="editTimeDialogVisible = false">?ÔøΩÔøΩ?</el-button>
           <el-button
             type="primary"
             @click="handleTimeEdit"
             :loading="submitting"
           >
-            Á¢∫Â?‰øÆÊîπ
+            Á¢∫ÔøΩ?‰øÆÊîπ
           </el-button>
         </div>
       </template>
@@ -257,29 +257,30 @@ import { Clock, Refresh } from "@element-plus/icons-vue";
 import { useWorkersStore } from "../stores/workers";
 import { useGroupsStore } from "../stores/groups";
 import { useAuthStore } from "../stores/auth";
+import { getApiUrl } from "@/config/api";
 
 const workersStore = useWorkersStore();
 const groupsStore = useGroupsStore();
 const authStore = useAuthStore();
 
-// ?øÊ?ÂºèÊï∏??
+// ?ÔøΩÔøΩ?ÂºèÊï∏??
 const windowWidth = ref(window.innerWidth);
 const isMobile = computed(() => windowWidth.value <= 768);
 const currentTime = ref(moment().format("YYYY/MM/DD HH:mm:ss"));
 
-// Â∑•Ë??üÂ?ÁµÑÂà•?∏Ê?
+// Â∑•ÔøΩ??ÔøΩÔøΩ?ÁµÑÂà•?ÔøΩÔøΩ?
 const workers = computed(() => workersStore.workers);
 const groups = computed(() => groupsStore.groups);
 
-// ?ÜÁ??∏È?
+// ?ÔøΩÔøΩ??ÔøΩÔøΩ?
 const groupBy = ref("all");
 const selectedFloor = ref("");
 const selectedGroup = ref("");
 
-// ÁØ©ÈÅ∏ÂæåÁ?Â∑•Ë??üÊ???
+// ÁØ©ÈÅ∏ÂæåÔøΩ?Â∑•ÔøΩ??ÔøΩÔøΩ???
 const filteredWorkers = ref([]);
 
-// ?ØÁî®Ê®ìÂ±§Ê∏ÖÂñÆ
+// ?ÔøΩÁî®Ê®ìÂ±§Ê∏ÖÂñÆ
 const availableFloors = computed(() => {
   const floors = [
     ...new Set(workers.value.map((w) => w.floor).filter((f) => f)),
@@ -287,11 +288,11 @@ const availableFloors = computed(() => {
   return floors.sort((a, b) => a - b);
 });
 
-// ËºâÂÖ•?Ä??
+// ËºâÂÖ•?ÔøΩ??
 const loading = ref(false);
 const submitting = ref(false);
 
-// Á∑®ËºØ?ÇÈ?Â∞çË©±Ê°?
+// Á∑®ËºØ?ÔøΩÔøΩ?Â∞çË©±ÔøΩ?
 const editTimeDialogVisible = ref(false);
 const timeEditForm = ref({
   workerId: "",
@@ -307,10 +308,10 @@ const tableHeight = computed(() => {
   return isMobile.value ? "calc(100vh - 350px)" : "calc(100vh - 300px)";
 });
 
-// ?ÇÈ?ÂÆöÊ???
+// ?ÔøΩÔøΩ?ÂÆöÔøΩ???
 let timeInterval = null;
 
-// È¶¨Âç°ÈæçÈ??≤È?ÁΩÆÔ?ÂæûWorkers.vueË§áË£ΩÔº?
+// È¶¨Âç°ÈæçÔøΩ??ÔøΩÔøΩ?ÁΩÆÔøΩ?ÂæûWorkers.vueË§áË£ΩÔøΩ?
 const macaronColors = [
   "#FFB6C1",
   "#FFCCCB",
@@ -344,7 +345,7 @@ const macaronColors = [
   "#EE82EE",
 ];
 
-// Â∑•ÂÖ∑?ΩÊï∏
+// Â∑•ÂÖ∑?ÔøΩÊï∏
 const formatTime = (timeString) => {
   return moment(timeString).format("HH:mm");
 };
@@ -374,7 +375,7 @@ const getTextColor = (backgroundColor) => {
   return luminance > 0.5 ? "#333333" : "#ffffff";
 };
 
-// ?ÜÁ??ïÁ?
+// ?ÔøΩÔøΩ??ÔøΩÔøΩ?
 const handleGroupChange = () => {
   selectedFloor.value = "";
   selectedGroup.value = "";
@@ -390,7 +391,7 @@ const filterWorkers = () => {
     filtered = filtered.filter((w) => w.groupId === selectedGroup.value);
   }
 
-  // ?∫Ê??ãÂ∑•ËÆÄ?üÊ∑ª?†‰??•Âá∫?§Ë???
+  // ?ÔøΩÔøΩ??ÔøΩÂ∑•ËÆÄ?ÔøΩÊ∑ª?ÔøΩÔøΩ??ÔøΩÂá∫?ÔøΩÔøΩ???
   filteredWorkers.value = filtered.map((worker) => ({
     ...worker,
     todayAttendance: worker.todayAttendance || null,
@@ -398,17 +399,17 @@ const filterWorkers = () => {
   }));
 };
 
-// Âø´ÈÄüÊ??°Ë???
+// Âø´ÈÄüÔøΩ??ÔøΩÔøΩ???
 const handleQuickClock = async (worker, type) => {
   try {
-    // Ë®≠Â?Ë©≤Â∑•ËÆÄ?üÁ?ËºâÂÖ•?Ä??
+    // Ë®≠ÔøΩ?Ë©≤Â∑•ËÆÄ?ÔøΩÔøΩ?ËºâÂÖ•?ÔøΩ??
     worker.clocking = true;
 
     const endpoint =
       type === "in" ? "/time-records/clock-in" : "/time-records/clock-out";
     const action = type === "in" ? "‰∏äÁè≠" : "‰∏ãÁè≠";
 
-    const response = await fetch(`http://localhost:3005/api${endpoint}`, {
+    const response = await fetch(getApiUrl(`/api${endpoint}`), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -419,21 +420,21 @@ const handleQuickClock = async (worker, type) => {
     const data = await response.json();
 
     if (data.success) {
-      ElMessage.success(`${worker.name} ${action}?ìÂç°?êÂ?`);
-      // ?çÊñ∞ËºâÂÖ•?∏Ê?
+      ElMessage.success(`${worker.name} ${action}?ÔøΩÂç°?ÔøΩÔøΩ?`);
+      // ?ÔøΩÊñ∞ËºâÂÖ•?ÔøΩÔøΩ?
       await loadTodayAttendance();
     } else {
-      throw new Error(data.message || "?ìÂç°Â§±Ê?");
+      throw new Error(data.message || "?ÔøΩÂç°Â§±ÔøΩ?");
     }
   } catch (error) {
-    console.error(`${worker.name} ?ìÂç°Â§±Ê?:`, error);
-    ElMessage.error(`${worker.name} ?ìÂç°Â§±Ê?`);
+    console.error(`${worker.name} ?ÔøΩÂç°Â§±ÔøΩ?:`, error);
+    ElMessage.error(`${worker.name} ?ÔøΩÂç°Â§±ÔøΩ?`);
   } finally {
     worker.clocking = false;
   }
 };
 
-// È°ØÁ§∫Á∑®ËºØ?ÇÈ?Â∞çË©±Ê°?
+// È°ØÁ§∫Á∑®ËºØ?ÔøΩÔøΩ?Â∞çË©±ÔøΩ?
 const showEditTimeDialog = (worker) => {
   timeEditForm.value = {
     workerId: worker.id,
@@ -446,7 +447,7 @@ const showEditTimeDialog = (worker) => {
   editTimeDialogVisible.value = true;
 };
 
-// ?ïÁ??ÇÈ?Á∑®ËºØ
+// ?ÔøΩÔøΩ??ÔøΩÔøΩ?Á∑®ËºØ
 const handleTimeEdit = async () => {
   try {
     submitting.value = true;
@@ -470,23 +471,23 @@ const handleTimeEdit = async () => {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.message || "?ÇÈ?Á∑®ËºØÂ§±Ê?");
+      throw new Error(result.message || "?ÔøΩÔøΩ?Á∑®ËºØÂ§±ÔøΩ?");
     }
 
-    ElMessage.success("?ìÂç°?ÇÈ?‰øÆÊîπ?êÂ?");
+    ElMessage.success("?ÔøΩÂç°?ÔøΩÔøΩ?‰øÆÊîπ?ÔøΩÔøΩ?");
     editTimeDialogVisible.value = false;
 
-    // ?çÊñ∞ËºâÂÖ•?∏Ê?
+    // ?ÔøΩÊñ∞ËºâÂÖ•?ÔøΩÔøΩ?
     await loadTodayAttendance();
   } catch (error) {
-    console.error("?ÇÈ?Á∑®ËºØÂ§±Ê?:", error);
-    ElMessage.error(error.message || "?ÇÈ?Á∑®ËºØÂ§±Ê?");
+    console.error("?ÔøΩÔøΩ?Á∑®ËºØÂ§±ÔøΩ?:", error);
+    ElMessage.error(error.message || "?ÔøΩÔøΩ?Á∑®ËºØÂ§±ÔøΩ?");
   } finally {
     submitting.value = false;
   }
 };
 
-// ËºâÂÖ•‰ªäÊó•?∫Âã§Ë®òÈ?
+// ËºâÂÖ•‰ªäÊó•?ÔøΩÂã§Ë®òÔøΩ?
 const loadTodayAttendance = async () => {
   try {
     const today = moment().format("YYYY-MM-DD");
@@ -501,13 +502,13 @@ const loadTodayAttendance = async () => {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.message || "ËºâÂÖ•?∫Âã§Ë®òÈ?Â§±Ê?");
+      throw new Error(result.message || "ËºâÂÖ•?ÔøΩÂã§Ë®òÔøΩ?Â§±ÔøΩ?");
     }
 
-    // ÂæåÁ´ØËøîÂ??ºÂ???{ success: true, data: [...], message: "..." }
+    // ÂæåÁ´ØËøîÔøΩ??ÔøΩÔøΩ???{ success: true, data: [...], message: "..." }
     const records = result.data || [];
     
-    // ?∫Ê??ãÂ∑•ËÆÄ?üË®≠ÂÆö‰??•Âá∫?§Ë???
+    // ?ÔøΩÔøΩ??ÔøΩÂ∑•ËÆÄ?ÔøΩË®≠ÂÆöÔøΩ??ÔøΩÂá∫?ÔøΩÔøΩ???
     workers.value.forEach((worker) => {
       const attendance = records.find(
         (record) => record.workerId === worker.id,
@@ -515,14 +516,14 @@ const loadTodayAttendance = async () => {
       worker.todayAttendance = attendance || null;
     });
 
-    // ?çÊñ∞ÁØ©ÈÅ∏
+    // ?ÔøΩÊñ∞ÁØ©ÈÅ∏
     filterWorkers();
   } catch (error) {
-    console.error("ËºâÂÖ•‰ªäÊó•?∫Âã§Ë®òÈ?Â§±Ê?:", error);
+    console.error("ËºâÂÖ•‰ªäÊó•?ÔøΩÂã§Ë®òÔøΩ?Â§±ÔøΩ?:", error);
   }
 };
 
-// ?∑Êñ∞?∏Ê?
+// ?ÔøΩÊñ∞?ÔøΩÔøΩ?
 const refreshData = async () => {
   loading.value = true;
   try {
@@ -532,7 +533,7 @@ const refreshData = async () => {
       loadTodayAttendance(),
     ]);
   } catch (error) {
-    console.error("?∑Êñ∞?∏Ê?Â§±Ê?:", error);
+    console.error("?ÔøΩÊñ∞?ÔøΩÔøΩ?Â§±ÔøΩ?:", error);
   } finally {
     loading.value = false;
   }
@@ -545,10 +546,10 @@ const handleResize = () => {
 onMounted(() => {
   window.addEventListener("resize", handleResize);
 
-  // ?üÂ??ÇÈ?ÂÆöÊ???
+  // ?ÔøΩÔøΩ??ÔøΩÔøΩ?ÂÆöÔøΩ???
   timeInterval = setInterval(updateCurrentTime, 1000);
 
-  // ËºâÂÖ•?ùÂ??∏Ê?
+  // ËºâÂÖ•?ÔøΩÔøΩ??ÔøΩÔøΩ?
   refreshData();
 });
 
@@ -567,7 +568,7 @@ onUnmounted(() => {
   overflow: auto;
 }
 
-/* ?™Â?Áæ©Êªæ?ïÊ?Ê®?? */
+/* ?ÔøΩÔøΩ?Áæ©Êªæ?ÔøΩÔøΩ?ÔøΩ?? */
 .attendance-container::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -669,11 +670,11 @@ onUnmounted(() => {
   justify-content: flex-end;
 }
 
-/* ?ãÊ?Á´ØÈÅ©??*/
+/* ?ÔøΩÔøΩ?Á´ØÈÅ©??*/
 @media (max-width: 768px) {
   .attendance-container {
     padding: 12px;
-    padding-bottom: 60px; /* ?∫Ê?Ê©üÂ??®Â??™Á??∫Á©∫??*/
+    padding-bottom: 60px; /* ?ÔøΩÔøΩ?Ê©üÔøΩ??ÔøΩÔøΩ??ÔøΩÔøΩ??ÔøΩÁ©∫??*/
     height: 100%;
     overflow: auto;
   }

@@ -1,14 +1,15 @@
 import { defineStore } from "pinia";
 import api from "../utils/api";
+import { getApiUrl } from "@/config/api";
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
-    // ?�戶資�?
+    // ?�戶資�?
     user: null,
     token: null,
     isLoggedIn: false,
 
-    // 權�??�制
+    // 權�??�制
     permissions: {
       canManageUsers: false,
       canEditWorkers: false,
@@ -19,34 +20,34 @@ export const useAuthStore = defineStore("auth", {
       canDeleteData: false,
     },
 
-    // ?�戶?�表（�?admin?��?�?
+    // ?�戶?�表（�?admin?��?�?
     users: [],
   }),
 
   getters: {
-    // ?�戶角色
+    // ?�戶角色
     userRole: (state) => state.user?.role || null,
 
-    // ?�否?�管?�員
+    // ?�否?�管?�員
     isAdmin: (state) => state.user?.role === "admin",
 
-    // ?�否?��?組長
+    // ?�否?��?組長
     isLeader: (state) => state.user?.role === "leader",
 
-    // ?�否?�訪�?
+    // ?�否?�訪�?
     isReader: (state) => state.user?.role === "reader",
 
-    // ?�戶顯示?�稱
+    // ?�戶顯示?�稱
     displayName: (state) => state.user?.name || state.user?.username || "訪客",
 
-    // 權�?檢查輔助?��?
+    // 權�?檢查輔助?��?
     hasPermission: (state) => (permission) => {
       return state.permissions[permission] || false;
     },
   },
 
   actions: {
-    // �?localStorage ?�復?�入?�??
+    // �?localStorage ?�復?�入?�??
     initializeAuth() {
       const token = localStorage.getItem("auth_token");
       const userData = localStorage.getItem("auth_user");
@@ -58,27 +59,26 @@ export const useAuthStore = defineStore("auth", {
           this.isLoggedIn = true;
           this.permissions = this.user?.permissions || {};
 
-          // 設置API?�設header
+          // 設置API?�設header
           api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-          // 驗�?token?�否?��?
+          // 驗�?token?�否?��?
           this.verifyToken();
         } catch (error) {
-          console.error("?�復?�入?�?�失??", error);
+          console.error("?�復?�入?�?�失??", error);
           this.logout();
         }
       }
     },
 
-    // ?�入
+    // ?�入
     async login(username, password) {
       try {
-        console.log("Auth store: ?��??�入請�?", { username });
+        console.log("Auth store: ?��??�入請�?", { username });
 
-        // 使用?��?變數中�? API URL
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3005';
+        // 使用getApiUrl獲取正確的 API URL  
         const directResponse = await fetch(
-          `${API_URL}/api/auth/login`,
+          getApiUrl("/api/auth/login"),
           {
             method: "POST",
             headers: {
@@ -89,45 +89,45 @@ export const useAuthStore = defineStore("auth", {
         );
 
         const responseData = await directResponse.json();
-        console.log("Auth store: ?�接請�??��?", responseData);
+        console.log("Auth store: ?�接請�??��?", responseData);
 
         if (responseData && responseData.success) {
           const { token, user } = responseData.data;
 
-          console.log("Auth store: �???�戶?��?", {
+          console.log("Auth store: �???�戶?��?", {
             token: token ? "存在" : "缺失",
             user,
           });
 
-          // 保�???store
+          // 保�???store
           this.token = token;
           this.user = user;
           this.isLoggedIn = true;
           this.permissions = user.permissions || {};
 
-          // 保�???localStorage
+          // 保�???localStorage
           localStorage.setItem("auth_token", token);
           localStorage.setItem("auth_user", JSON.stringify(user));
 
-          // 設置API?�設header
+          // 設置API?�設header
           api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-          console.log("Auth store: ?�入?��?，�??�已?�新", {
+          console.log("Auth store: ?�入?��?，�??�已?�新", {
             isLoggedIn: this.isLoggedIn,
             userRole: this.userRole,
             permissions: this.permissions,
           });
 
-          return { success: true, message: "?�入?��?" };
+          return { success: true, message: "?�入?��?" };
         }
 
-        const errorMessage = responseData?.message || "?�入失�?";
-        console.error("Auth store: ?�入失�?", errorMessage);
+        const errorMessage = responseData?.message || "?�入失�?";
+        console.error("Auth store: ?�入失�?", errorMessage);
         return { success: false, message: errorMessage };
       } catch (error) {
-        console.error("Auth store: ?�入?�誤", error);
+        console.error("Auth store: ?�入?�誤", error);
 
-        let errorMessage = "?�入失�?";
+        let errorMessage = "?�入失�?";
         if (error.response?.data?.message) {
           errorMessage = error.response.data.message;
         } else if (error.message) {
@@ -141,7 +141,7 @@ export const useAuthStore = defineStore("auth", {
       }
     },
 
-    // 訪客?�入
+    // 訪客?�入
     async guestLogin() {
       try {
         const response = await api.post("/auth/guest-login");
@@ -149,42 +149,42 @@ export const useAuthStore = defineStore("auth", {
         if (response.data.success) {
           const { token, user } = response.data.data;
 
-          // 保�???store
+          // 保�???store
           this.token = token;
           this.user = user;
           this.isLoggedIn = true;
           this.permissions = user.permissions || {};
 
-          // 保�???localStorage
+          // 保�???localStorage
           localStorage.setItem("auth_token", token);
           localStorage.setItem("auth_user", JSON.stringify(user));
 
-          // 設置API?�設header
+          // 設置API?�設header
           api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-          return { success: true, message: "訪客?�入?��?" };
+          return { success: true, message: "訪客?�入?��?" };
         }
 
         return { success: false, message: response.data.message };
       } catch (error) {
-        console.error("訪客?�入?�誤:", error);
+        console.error("訪客?�入?�誤:", error);
         return {
           success: false,
-          message: error.response?.data?.message || "訪客?�入失�?",
+          message: error.response?.data?.message || "訪客?�入失�?",
         };
       }
     },
 
-    // ?�出
+    // ?�出
     async logout() {
       try {
         if (this.token) {
           await api.post("/auth/logout");
         }
       } catch (error) {
-        console.error("?�出請�?失�?:", error);
+        console.error("?�出請�?失�?:", error);
       } finally {
-        // 清除?�??
+        // 清除?�??
         this.token = null;
         this.user = null;
         this.isLoggedIn = false;
@@ -208,31 +208,31 @@ export const useAuthStore = defineStore("auth", {
       }
     },
 
-    // 驗�?token
+    // 驗�?token
     async verifyToken() {
       try {
         const response = await api.get("/auth/verify");
 
         if (!response.data.success) {
-          throw new Error("Token驗�?失�?");
+          throw new Error("Token驗�?失�?");
         }
 
-        // ?�新?�戶資�?
+        // ?�新?�戶資�?
         this.user = response.data.data.user;
         this.permissions = this.user.permissions || {};
 
         return true;
       } catch (error) {
-        console.error("Token驗�?失�?:", error);
+        console.error("Token驗�?失�?:", error);
         this.logout();
         return false;
       }
     },
 
-    // ?��??�戶?�表（�?admin�?
+    // ?��??�戶?�表（�?admin�?
     async fetchUsers() {
       if (!this.isAdmin) {
-        return { success: false, message: "權�?不足" };
+        return { success: false, message: "權�?不足" };
       }
 
       try {
@@ -245,75 +245,75 @@ export const useAuthStore = defineStore("auth", {
 
         return { success: false, message: response.data.message };
       } catch (error) {
-        console.error("?��??�戶?�表失�?:", error);
+        console.error("?��??�戶?�表失�?:", error);
         return {
           success: false,
-          message: error.response?.data?.message || "?��??�戶?�表失�?",
+          message: error.response?.data?.message || "?��??�戶?�表失�?",
         };
       }
     },
 
-    // ?�建小�??�帳?��??�admin�?
+    // ?�建小�??�帳?��??�admin�?
     async createLeader(userData) {
       if (!this.isAdmin) {
-        return { success: false, message: "權�?不足" };
+        return { success: false, message: "權�?不足" };
       }
 
       try {
         const response = await api.post("/auth/create-leader", userData);
 
         if (response.data.success) {
-          // ?�新?�戶?�表
+          // ?�新?�戶?�表
           await this.fetchUsers();
           return {
             success: true,
-            message: "小�??�帳?�建立�???,
+            message: "小�??�帳?�建立�???,
             data: response.data.data,
           };
         }
 
         return { success: false, message: response.data.message };
       } catch (error) {
-        console.error("建�?小�??�帳?�失??", error);
+        console.error("建�?小�??�帳?�失??", error);
         return {
           success: false,
-          message: error.response?.data?.message || "建�?小�??�帳?�失??,
+          message: error.response?.data?.message || "建�?小�??�帳?�失??,
         };
       }
     },
 
-    // ?�除?�戶（�?admin�?
+    // ?�除?�戶（�?admin�?
     async deleteUser(userId) {
       if (!this.isAdmin) {
-        return { success: false, message: "權�?不足" };
+        return { success: false, message: "權�?不足" };
       }
 
       try {
         const response = await api.delete(`/auth/users/${userId}`);
 
         if (response.data.success) {
-          // ?�新?�戶?�表
+          // ?�新?�戶?�表
           await this.fetchUsers();
-          return { success: true, message: "?�戶?�除?��?" };
+          return { success: true, message: "?�戶?�除?��?" };
         }
 
         return { success: false, message: response.data.message };
       } catch (error) {
-        console.error("?�除?�戶失�?:", error);
+        console.error("?�除?�戶失�?:", error);
         return {
           success: false,
-          message: error.response?.data?.message || "?�除?�戶失�?",
+          message: error.response?.data?.message || "?�除?�戶失�?",
         };
       }
     },
 
-    // 權�?檢查?��?
+    // 權�?檢查?��?
     checkPermission(permission) {
       return this.permissions[permission] || false;
     },
 
-    // 要�?權�?檢查
-    requirePermission(permission, errorMessage = "權�?不足") {
+    // 要�?權�?檢查
+    requirePermission(permission, errorMessage = "權�?不足") {
       if (!this.checkPermission(permission)) {
         throw new Error(errorMessage);
       }

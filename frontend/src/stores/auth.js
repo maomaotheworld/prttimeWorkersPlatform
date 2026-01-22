@@ -58,13 +58,10 @@ export const useAuthStore = defineStore("auth", {
           this.isLoggedIn = true;
           this.permissions = this.user?.permissions || {};
 
-          // 設置API?�設header
-          api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
-          // 驗�?token?�否?��?
+          // 驗證token是否有效
           this.verifyToken();
         } catch (error) {
-          console.error("?�復?�入?�?�失??", error);
+          console.error("恢復登入狀態失敗", error);
           this.logout();
         }
       }
@@ -95,26 +92,23 @@ export const useAuthStore = defineStore("auth", {
             user,
           });
 
-          // 保�???store
+          // 保存到store
           this.token = token;
           this.user = user;
           this.isLoggedIn = true;
           this.permissions = user.permissions || {};
 
-          // 保�???localStorage
+          // 保存到localStorage
           localStorage.setItem("auth_token", token);
           localStorage.setItem("auth_user", JSON.stringify(user));
 
-          // 設置API?�設header
-          api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
-          console.log("Auth store: ?�入?��?，�??�已?�新", {
+          console.log("Auth store: 登入成功，狀態已更新", {
             isLoggedIn: this.isLoggedIn,
             userRole: this.userRole,
             permissions: this.permissions,
           });
 
-          return { success: true, message: "?�入?��?" };
+          return { success: true, message: "登入成功" };
         }
 
         const errorMessage = responseData?.message || "?�入失�?";
@@ -137,36 +131,40 @@ export const useAuthStore = defineStore("auth", {
       }
     },
 
-    // 訪客?�入
+    // 訪客登入
     async guestLogin() {
       try {
-        const response = await api.post("/auth/guest-login");
+        const response = await fetch(getApiUrl("/api/auth/guest-login"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
 
-        if (response.data.success) {
-          const { token, user } = response.data.data;
+        const responseData = await response.json();
 
-          // 保�???store
+        if (responseData.success) {
+          const { token, user } = responseData.data;
+
+          // 保存到store
           this.token = token;
           this.user = user;
           this.isLoggedIn = true;
           this.permissions = user.permissions || {};
 
-          // 保�???localStorage
+          // 保存到localStorage
           localStorage.setItem("auth_token", token);
           localStorage.setItem("auth_user", JSON.stringify(user));
 
-          // 設置API?�設header
-          api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
-          return { success: true, message: "訪客?�入?��?" };
+          return { success: true, message: "訪客登入成功" };
         }
 
-        return { success: false, message: response.data.message };
+        return { success: false, message: responseData.message };
       } catch (error) {
-        console.error("訪客?�入?�誤:", error);
+        console.error("訪客登入錯誤:", error);
         return {
           success: false,
-          message: error.response?.data?.message || "訪客?�入失�?",
+          message: "訪客登入失敗",
         };
       }
     },
@@ -216,14 +214,22 @@ export const useAuthStore = defineStore("auth", {
     // 驗證token
     async verifyToken() {
       try {
-        const response = await api.get("/auth/verify");
+        const response = await fetch(getApiUrl("/api/auth/verify"), {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${this.token}`
+          },
+        });
 
-        if (!response.data.success) {
+        const responseData = await response.json();
+
+        if (!responseData.success) {
           throw new Error("Token驗證失敗");
         }
 
         // 更新用戶資訊
-        this.user = response.data.data.user;
+        this.user = responseData.data.user;
         this.permissions = this.user.permissions || {};
 
         return true;
@@ -237,23 +243,31 @@ export const useAuthStore = defineStore("auth", {
     // 獲取用戶列表（僅admin）
     async fetchUsers() {
       if (!this.isAdmin) {
-        return { success: false, message: "權�?不足" };
+        return { success: false, message: "權限不足" };
       }
 
       try {
-        const response = await api.get("/auth/users");
+        const response = await fetch(getApiUrl("/api/auth/users"), {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${this.token}`
+          },
+        });
 
-        if (response.data.success) {
-          this.users = response.data.data;
+        const responseData = await response.json();
+
+        if (responseData.success) {
+          this.users = responseData.data;
           return { success: true, data: this.users };
         }
 
-        return { success: false, message: response.data.message };
+        return { success: false, message: responseData.message };
       } catch (error) {
-        console.error("?��??�戶?�表失�?:", error);
+        console.error("獲取用戶列表失敗:", error);
         return {
           success: false,
-          message: error.response?.data?.message || "?��??�戶?�表失�?",
+          message: "獲取用戶列表失敗",
         };
       }
     },

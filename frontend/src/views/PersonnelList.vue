@@ -142,7 +142,6 @@ export default defineComponent({
     const filterGroup = ref("");
     const loading = ref(false);
     const groupMapping = ref({});
-    const groupMapping = ref({});
 
     // 計算屬性
     const workers = computed(() => workersStore.workers);

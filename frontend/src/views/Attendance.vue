@@ -391,12 +391,16 @@ const filterWorkers = () => {
     filtered = filtered.filter((w) => w.groupId === selectedGroup.value);
   }
 
-  // 為每位工讀生添加今日出勤狀態
-  filteredWorkers.value = filtered.map((worker) => ({
-    ...worker,
-    todayAttendance: worker.todayAttendance || null,
-    clocking: false,
-  }));
+  // 為每位工讀生添加今日出勤狀態，保持現有的clocking狀態
+  filteredWorkers.value = filtered.map((worker) => {
+    // 查找現有的工讀生記錄以保持clocking狀態
+    const existing = filteredWorkers.value.find(fw => fw.id === worker.id);
+    return {
+      ...worker,
+      todayAttendance: worker.todayAttendance || null,
+      clocking: existing?.clocking || false, // 保持現有的clocking狀態
+    };
+  });
 };
 
 // 快速打卡功能
@@ -518,8 +522,15 @@ const loadTodayAttendance = async () => {
       worker.todayAttendance = attendance || null;
     });
 
-    // 重新篩選
-    filterWorkers();
+    // 同時更新篩選後的工讀生列表中的todayAttendance
+    filteredWorkers.value.forEach((filteredWorker) => {
+      const attendance = records.find(
+        (record) => record.workerId === filteredWorker.id,
+      );
+      filteredWorker.todayAttendance = attendance || null;
+    });
+
+    console.log("今日考勤記錄載入完成:", records);
   } catch (error) {
     console.error("載入今日考勤記錄失敗:", error);
   }

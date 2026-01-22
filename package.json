@@ -1,0 +1,17 @@
+{
+  "name": "prttime-workers-platform",
+  "version": "1.0.0",
+  "description": "工讀生管理系統",
+  "scripts": {
+    "build": "cd frontend && npm ci && npm run build",
+    "dev": "cd frontend && npm run dev",
+    "install": "cd frontend && npm install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maomaotheworld/prttimeWorkersPlatform.git"
+  },
+  "keywords": ["vue", "management", "workers"],
+  "author": "maomaotheworld",
+  "license": "MIT"
+}

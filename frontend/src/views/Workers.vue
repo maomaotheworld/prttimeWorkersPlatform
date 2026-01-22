@@ -243,9 +243,17 @@ const workerRules = {
 
 const fetchWorkers = async () => {
   loading.value = true;
-  await workersStore.fetchWorkers();
-  workers.value = workersStore.workers;
-  loading.value = false;
+  try {
+    await workersStore.fetchWorkers();
+    workers.value = workersStore.workers;
+    console.log("Workers.vue: 獲取到的工讀生數據", workers.value);
+    console.log("Workers.vue: 第一個工讀生數據樣例", workers.value[0]);
+  } catch (error) {
+    console.error("Workers.vue: 獲取工讀生失敗", error);
+    ElMessage.error("獲取工讀生列表失敗");
+  } finally {
+    loading.value = false;
+  }
 };
 
 const handleFileChange = (file: any) => {
@@ -362,7 +370,20 @@ const showAddWorker = () => {
 
 const showEditWorker = (worker: Worker) => {
   isEditing.value = true;
-  Object.assign(workerForm, worker);
+  
+  console.log("編輯工讀生 - 原始數據:", worker);
+  
+  // 確保所有字段都正確映射，處理可能的字段名差異
+  workerForm.id = worker.id || worker._id || "";
+  workerForm.workerNumber = worker.workerNumber || worker.worker_number || "";
+  workerForm.name = worker.name || "";
+  workerForm.group = worker.group || "";
+  workerForm.floor = worker.floor || "";
+  workerForm.hourlyWage = Number(worker.hourlyWage || worker.hourly_wage) || 200;
+  workerForm.baseHours = Number(worker.baseHours || worker.base_hours) || 8;
+  
+  console.log("編輯工讀生 - 表單數據:", workerForm);
+  
   showWorkerDialog.value = true;
 };
 

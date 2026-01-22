@@ -57,7 +57,7 @@
       </el-row>
     </el-card>
 
-    <!-- ?��?詳細資�? -->
+    <!-- 薪資詳細資訊 -->
     <el-card v-if="salaryData" class="salary-detail-card mb-20">
       <template #header>
         <div class="card-header">
@@ -451,7 +451,7 @@ const calculating = ref(false);
 const loadingAdjustments = ref(false);
 const submitting = ref(false);
 
-// ?��?調整對話�?
+// 薪資調整對話框
 const adjustmentDialogVisible = ref(false);
 const adjustmentForm = ref({
   workerId: "",
@@ -469,7 +469,7 @@ const adjustmentFormRules = {
 
 const adjustmentFormRef = ref();
 
-// 調整總薪資�?話�?
+// 調整總薪資對話框
 const totalSalaryDialogVisible = ref(false);
 const totalSalaryForm = ref({
   workerId: "",
@@ -495,7 +495,7 @@ const currentPeriodHours = computed(() => {
   return regular + additional;
 });
 
-// ?��??�薪
+// 目前時薪
 const currentWage = computed(() => {
   if (!totalSalaryForm.value.workerId) return 0;
   const worker = workers.value.find(
@@ -504,12 +504,12 @@ const currentWage = computed(() => {
   return worker ? worker.baseHourlyWage || 0 : 0;
 });
 
-// ?��??�估?��?
+// 目前預估薪資
 const currentEstimatedSalary = computed(() => {
   return Math.round(currentPeriodHours.value * currentWage.value);
 });
 
-// 計�?後�??��???
+// 計算後新時薪
 const calculatedNewWage = computed(() => {
   if (
     !totalSalaryForm.value.targetTotalSalary ||
@@ -521,32 +521,32 @@ const calculatedNewWage = computed(() => {
   );
 });
 
-// ?�薪調整
+// 時薪調整
 const wageAdjustment = computed(() => {
   return calculatedNewWage.value - currentWage.value;
 });
 
-// ?�薪調整?��?�?
+// 時薪調整百分比
 const wageAdjustmentPercent = computed(() => {
   if (currentWage.value === 0) return "0%";
   const percent = ((wageAdjustment.value / currentWage.value) * 100).toFixed(1);
   return `${percent >= 0 ? "+" : ""}${percent}%`;
 });
 
-// ?��?調整?��?
+// 薪資調整金額
 const salaryAdjustment = computed(() => {
   return totalSalaryForm.value.targetTotalSalary - currentEstimatedSalary.value;
 });
 
-// 工具?�數
+// 工具函數
 const formatDate = (date) => moment(date).format("YYYY/MM/DD");
 
 const getWorkerName = (workerId) => {
   const worker = workers.value.find((w) => w.id === workerId);
-  return worker ? worker.name : "?�知";
+  return worker ? worker.name : "未知";
 };
 
-// ?��?計�?
+// 薪資計算
 const calculateSalary = async () => {
   if (!selectedWorker.value || !dateRange.value) return;
 
@@ -566,20 +566,20 @@ const calculateSalary = async () => {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.message || "?��?計�?失�?");
+      throw new Error(result.message || "薪資計算失敗");
     }
 
-    // 後端返�??��???{ success: true, data: {...}, message: "..." }
+    // 後端返回格式：{ success: true, data: {...}, message: "..." }
     salaryData.value = result.data;
   } catch (error) {
-    console.error("?��?計�?失�?:", error);
-    ElMessage.error(error.message || "?��?計�?失�?");
+    console.error("薪資計算失敗:", error);
+    ElMessage.error(error.message || "薪資計算失敗");
   } finally {
     calculating.value = false;
   }
 };
 
-// 載入?��?調整記�?
+// 載入薪資調整記錄
 const fetchAdjustments = async () => {
   try {
     loadingAdjustments.value = true;
@@ -592,19 +592,19 @@ const fetchAdjustments = async () => {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.message || "載入?��?調整記�?失�?");
+      throw new Error(result.message || "載入薪資調整記錄失敗");
     }
 
-    // 後端返�??��???{ success: true, data: [...], message: "..." }
+    // 後端返回格式：{ success: true, data: [...], message: "..." }
     adjustments.value = result.data || [];
   } catch (error) {
-    console.error("載入?��?調整記�?失�?:", error);
+    ElMessage.error(error.message || "載入薪資調整記錄失敗");
   } finally {
     loadingAdjustments.value = false;
   }
 };
 
-// 事件?��?
+// 事件處理
 const handleWorkerChange = () => {
   salaryData.value = null;
   if (selectedWorker.value) {
@@ -643,14 +643,14 @@ const showTotalSalaryDialog = () => {
 };
 
 const handleTotalSalaryWorkerChange = async () => {
-  // ?�選?�工讀?��?,?�新計�?該工讀?��??��??��?
+  // 當選擇工讀生變更時，重新計算該工讀生的薪資數據
   if (totalSalaryForm.value.workerId && dateRange.value) {
     await calculateSalaryForWorker(totalSalaryForm.value.workerId);
   }
 };
 
 const calculateNewWage = () => {
-  // ?�輸?�目標總?��????�自?�觸??computed 計�??��???
+  // 當輸入目標總薪水時，自動觸發 computed 計算新時薪
 };
 
 const calculateSalaryForWorker = async (workerId) => {
@@ -676,13 +676,13 @@ const calculateSalaryForWorker = async (workerId) => {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.message || "?��?計�?失�?");
+      throw new Error(result.message || "薪資計算失敗");
     }
 
     salaryData.value = result.data;
   } catch (error) {
-    console.error("?��?計�?失�?:", error);
-    ElMessage.error(error.message || "?��?計�?失�?");
+    console.error("薪資計算失敗:", error);
+    ElMessage.error(error.message || "薪資計算失敗");
   } finally {
     calculating.value = false;
   }
@@ -714,14 +714,14 @@ const handleTotalSalaryAdjust = async () => {
     }
 
     ElMessage.success(
-      `總薪資調?��??��??��??��?${calculatedNewWage.value} ??小�?`,
+      `總薪資調整成功！新時薪為 ${calculatedNewWage.value} 元/小時`,
     );
     totalSalaryDialogVisible.value = false;
 
-    // ?�新載入工�??��???
+    // 重新載入工讀生列表
     await workersStore.fetchWorkers();
 
-    // ?�新計�??��?
+    // 重新計算薪資
     if (selectedWorker.value) {
       await calculateSalary();
     }
@@ -749,20 +749,20 @@ const handleAddAdjustment = async () => {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.message || "?��?調整?��?失�?");
+      throw new Error(result.message || "薪資調整紀錄失敗");
     }
 
-    ElMessage.success("?��?調整?��??��?");
+    ElMessage.success("薪資調整紀錄成功");
     adjustmentDialogVisible.value = false;
     await fetchAdjustments();
 
-    // ?�新計�??��?
+    // 重新計算薪資
     if (selectedWorker.value) {
       await calculateSalary();
     }
   } catch (error) {
-    console.error("?��?調整?��?失�?:", error);
-    ElMessage.error(error.message || "?��?調整?��?失�?");
+    console.error("薪資調整紀錄失敗:", error);
+    ElMessage.error(error.message || "薪資調整紀錄失敗");
   } finally {
     submitting.value = false;
   }
@@ -780,7 +780,7 @@ onMounted(() => {
   overflow: auto;
 }
 
-/* ?��?義滾?��?�?? */
+/* 自定義滾動條樣式 */
 .salary-container::-webkit-scrollbar {
   width: 6px;
   height: 6px;

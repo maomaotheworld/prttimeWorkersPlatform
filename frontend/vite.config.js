@@ -3,6 +3,7 @@ import vue from "@vitejs/plugin-vue";
 import AutoImport from "unplugin-auto-import/vite";
 import Components from "unplugin-vue-components/vite";
 import { ElementPlusResolver } from "unplugin-vue-components/resolvers";
+import path from "path";
 
 export default defineConfig(({ mode }) => {
   // 載入環境變數
@@ -19,6 +20,12 @@ export default defineConfig(({ mode }) => {
         resolvers: [ElementPlusResolver()],
       }),
     ],
+    // 路徑別名配置
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "src"),
+      },
+    },
     // 明確定義環境變數
     define: {
       "import.meta.env.VITE_API_URL": JSON.stringify(

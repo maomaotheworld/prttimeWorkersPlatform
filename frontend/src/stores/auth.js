@@ -171,16 +171,16 @@ export const useAuthStore = defineStore("auth", {
       }
     },
 
-    // ?�出
+    // 登出
     async logout() {
       try {
         if (this.token) {
           await api.post("/auth/logout");
         }
       } catch (error) {
-        console.error("?�出請�?失�?:", error);
+        console.error("登出請求失敗:", error);
       } finally {
-        // 清除?�??
+        // 清除狀態
         this.token = null;
         this.user = null;
         this.isLoggedIn = false;
@@ -199,33 +199,33 @@ export const useAuthStore = defineStore("auth", {
         localStorage.removeItem("auth_token");
         localStorage.removeItem("auth_user");
 
-        // 清除API header
+        // 清除API默認header
         delete api.defaults.headers.common["Authorization"];
       }
     },
 
-    // 驗�?token
+    // 驗證token
     async verifyToken() {
       try {
         const response = await api.get("/auth/verify");
 
         if (!response.data.success) {
-          throw new Error("Token驗�?失�?");
+          throw new Error("Token驗證失敗");
         }
 
-        // ?�新?�戶資�?
+        // 更新用戶資訊
         this.user = response.data.data.user;
         this.permissions = this.user.permissions || {};
 
         return true;
       } catch (error) {
-        console.error("Token驗�?失�?:", error);
+        console.error("Token驗證失敗:", error);
         this.logout();
         return false;
       }
     },
 
-    // ?��??�戶?�表（�?admin�?
+    // 獲取用戶列表（僅admin）
     async fetchUsers() {
       if (!this.isAdmin) {
         return { success: false, message: "權�?不足" };

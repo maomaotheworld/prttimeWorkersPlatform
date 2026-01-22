@@ -311,7 +311,7 @@ const handleLogout = async () => {
   } catch (error) {
     // 用戶取消登出
     if (error !== "cancel") {
-      ElMessage.error("?�出失�?");
+      ElMessage.error("登出失敗");
     }
   }
 };

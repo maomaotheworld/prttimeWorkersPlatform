@@ -1858,10 +1858,12 @@ app.get("/api/workers/:id/salary-calculation", (req, res) => {
     }
   });
 
-  // 計算薪資工時：基本工時 + 加班工時
-  const baseWorkingHours = workingDays * (worker.baseWorkingHours || 0); // 基本工時
-  const totalSalaryHours = baseWorkingHours + totalAdditionalHours; // 薪資計算工時
-  const baseSalary = totalSalaryHours * (worker.baseHourlyWage || 0);
+  // 簡化薪資計算邏輯：
+  // 只要有設定基本時數，就直接計算基本工時，不考慮月份和天數
+  // 總工時 = 基本工時 + 加班工時
+  const baseWorkingHours = worker.baseWorkingHours || 0; // 直接使用設定的基本工時
+  const totalSalaryHours = baseWorkingHours + totalAdditionalHours; // 總工時 = 基本工時 + 加班工時
+  const baseSalary = totalSalaryHours * (worker.baseHourlyWage || 0); // 薪資 = 總工時 × 時薪
 
   // 獲取薪資調整記錄（額外薪資）
   const salaryAdjustmentsInPeriod = salaryAdjustments.filter((adj) => {

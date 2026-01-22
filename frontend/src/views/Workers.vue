@@ -58,6 +58,32 @@
       </div>
     </el-card>
 
+    <!-- 手機版當前編輯工讀生顯示 -->
+    <el-card 
+      v-if="isMobile && currentEditingWorker" 
+      class="mobile-editing-worker"
+      style="margin-bottom: 10px; position: sticky; top: 10px; z-index: 100;"
+    >
+      <div class="editing-worker-info">
+        <div class="worker-basic">
+          <el-tag type="info" size="small">正在編輯</el-tag>
+          <span class="worker-name">{{ currentEditingWorker.workerNumber }} - {{ currentEditingWorker.name }}</span>
+        </div>
+        <div class="worker-details">
+          <span class="detail-item">{{ currentEditingWorker.group }}</span>
+          <span class="detail-item">{{ currentEditingWorker.floor }}樓</span>
+          <span class="detail-item">{{ currentEditingWorker.hourlyWage }}元/時</span>
+        </div>
+        <el-button 
+          size="small" 
+          @click="clearCurrentEditingWorker"
+          style="margin-left: auto;"
+        >
+          收起
+        </el-button>
+      </div>
+    </el-card>
+
     <!-- 篩選器 -->
     <el-card style="margin-bottom: 10px;">
       <div class="filter-container">
@@ -143,21 +169,46 @@
             {{ row.baseHours + (row.additionalHours || 0) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200">
+        <el-table-column label="操作" :width="isMobile ? '100' : '200'">
           <template #default="{ row }">
-            <el-button size="small" type="primary" @click="showEditWorker(row)">
-              編輯
-            </el-button>
-            <el-button
-              size="small"
-              type="warning"
-              @click="showAdjustHours(row)"
-            >
-              工時
-            </el-button>
-            <el-button size="small" type="danger" @click="confirmDelete(row)">
-              刪除
-            </el-button>
+            <!-- 桌面版：顯示所有按鈕 -->
+            <template v-if="!isMobile">
+              <el-button size="small" type="primary" @click="showEditWorker(row)">
+                編輯
+              </el-button>
+              <el-button
+                size="small"
+                type="warning"
+                @click="showAdjustHours(row)"
+              >
+                工時
+              </el-button>
+              <el-button size="small" type="danger" @click="confirmDelete(row)">
+                刪除
+              </el-button>
+            </template>
+            
+            <!-- 手機版：下拉選單 -->
+            <template v-else>
+              <el-dropdown @command="(command) => handleMobileAction(command, row)">
+                <el-button size="small" type="primary">
+                  操作<el-icon class="el-icon--right"><arrow-down /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="edit">
+                      <el-icon><Edit /></el-icon>編輯
+                    </el-dropdown-item>
+                    <el-dropdown-item command="hours">
+                      <el-icon><Clock /></el-icon>調整工時
+                    </el-dropdown-item>
+                    <el-dropdown-item command="delete" divided>
+                      <el-icon><Delete /></el-icon>刪除
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </template>
           </template>
         </el-table-column>
       </el-table>
@@ -263,7 +314,7 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="showHoursDialog = false">取消</el-button>
+        <el-button @click="closeHoursDialog">取消</el-button>
         <el-button type="primary" @click="submitHoursAdjust"> 確認 </el-button>
       </template>
     </el-dialog>
@@ -314,7 +365,7 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="showWorkerDialog = false">取消</el-button>
+        <el-button @click="closeWorkerDialog">取消</el-button>
         <el-button
           type="primary"
           @click="submitWorker"
@@ -457,6 +508,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { Edit, Delete, Clock, ArrowDown } from "@element-plus/icons-vue";
 import * as XLSX from "xlsx";
 import { useWorkersStore } from "@/stores/workers";
 import { getApiUrl } from "@/config/api";
@@ -480,6 +532,9 @@ const loading = ref(false);
 const filterType = ref('all'); // 'all', 'group', 'floor'
 const selectedGroup = ref('');
 const selectedFloor = ref('');
+
+// 手機版當前編輯工讀生
+const currentEditingWorker = ref<Worker | null>(null);
 
 const isMobile = computed(() => window.innerWidth <= 768);
 
@@ -566,6 +621,43 @@ const batchAccumulatedHoursForm = reactive({
   hours: 1,
   reason: '',
 });
+
+// 手機版操作處理
+const handleMobileAction = (command: string, row: Worker) => {
+  switch (command) {
+    case 'edit':
+      showEditWorker(row);
+      break;
+    case 'hours':
+      showAdjustHours(row);
+      break;
+    case 'delete':
+      confirmDelete(row);
+      break;
+  }
+};
+
+// 清除當前編輯的工讀生
+const clearCurrentEditingWorker = () => {
+  currentEditingWorker.value = null;
+};
+
+// 關閉工讀生對話框
+const closeWorkerDialog = () => {
+  showWorkerDialog.value = false;
+  if (isMobile.value) {
+    currentEditingWorker.value = null;
+  }
+  resetWorkerForm();
+};
+
+// 關閉工時對話框
+const closeHoursDialog = () => {
+  showHoursDialog.value = false;
+  if (isMobile.value) {
+    currentEditingWorker.value = null;
+  }
+};
 
 // 篩選方法
 const applyFilter = () => {
@@ -811,6 +903,12 @@ const confirmImport = async () => {
 // 工時
 const showAdjustHours = (worker: Worker) => {
   currentWorker.value = worker;
+  
+  // 在手機模式下設置當前編輯的工讀生
+  if (isMobile.value) {
+    currentEditingWorker.value = worker;
+  }
+  
   hoursForm.type = "add";
   hoursForm.hours = 1;
   hoursForm.reason = "";
@@ -838,6 +936,9 @@ const submitHoursAdjust = async () => {
     
     ElMessage.success(`工時調整成功: ${hoursForm.type === "add" ? "+" : "-"}${Math.abs(adjustedHours)}小時`);
     showHoursDialog.value = false;
+    if (isMobile.value) {
+      currentEditingWorker.value = null;
+    }
     
     // 重新獲取所有工讀生數據以確保更新正確
     await fetchWorkers();
@@ -856,6 +957,11 @@ const showAddWorker = () => {
 
 const showEditWorker = (worker: Worker) => {
   isEditing.value = true;
+  
+  // 在手機模式下設置當前編輯的工讀生
+  if (isMobile.value) {
+    currentEditingWorker.value = worker;
+  }
   
   console.log("編輯工讀生 - 原始數據:", worker);
   
@@ -901,6 +1007,9 @@ const submitWorker = async () => {
     }
 
     showWorkerDialog.value = false;
+    if (isMobile.value) {
+      currentEditingWorker.value = null;
+    }
     fetchWorkers();
   } catch (error) {
     ElMessage.error(
@@ -1125,5 +1234,63 @@ onMounted(async () => {
 .filter-container .el-col {
   display: flex;
   align-items: center;
+}
+
+/* 手機版當前編輯工讀生樣式 */
+.mobile-editing-worker {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.editing-worker-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.worker-basic {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.worker-name {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.worker-details {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.detail-item {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+/* 手機版表格樣式調整 */
+@media (max-width: 768px) {
+  .workers-container {
+    padding: 10px;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  
+  .actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 </style>

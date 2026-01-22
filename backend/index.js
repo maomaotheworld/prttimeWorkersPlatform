@@ -1726,11 +1726,9 @@ app.post("/api/salary-adjustments/total", (req, res) => {
       }
     });
 
-    // 計算基本薪資
+    // 計算基本薪資 - 直接使用實際總工時
     const actualTotalHours = totalRegularHours + totalAdditionalHours;
-    const guaranteedHours = workingDays * (worker.baseWorkingHours || 0);
-    const effectiveHours = Math.max(actualTotalHours, guaranteedHours);
-    const currentBaseSalary = effectiveHours * (worker.baseHourlyWage || 0);
+    const currentBaseSalary = actualTotalHours * (worker.baseHourlyWage || 0);
 
     // 計算需要的額外薪資調整
     const requiredExtraSalary = targetTotalSalary - currentBaseSalary;
@@ -1773,7 +1771,7 @@ app.post("/api/salary-adjustments/total", (req, res) => {
         targetTotalSalary,
         currentBaseSalary: Math.round(currentBaseSalary),
         extraSalaryAdjustment: Math.round(requiredExtraSalary),
-        effectiveHours: Math.round(effectiveHours * 100) / 100,
+        actualTotalHours: Math.round(actualTotalHours * 100) / 100,
       },
       message: "總薪資設定成功",
     });
@@ -1859,11 +1857,12 @@ app.get("/api/workers/:id/salary-calculation", (req, res) => {
     }
   });
 
-  // 計算基本薪資 - 考慮基本時數保證
+  // 計算基本薪資 - 直接使用實際總工時
   const actualTotalHours = totalRegularHours + totalAdditionalHours;
+  const baseSalary = actualTotalHours * (worker.baseHourlyWage || 0);
+
+  // 保留基本時數保證資訊供參考（但不用於薪資計算）
   const guaranteedHours = workingDays * (worker.baseWorkingHours || 0);
-  const effectiveHours = Math.max(actualTotalHours, guaranteedHours);
-  const baseSalary = effectiveHours * (worker.baseHourlyWage || 0);
 
   // 獲取薪資調整記錄（額外薪資）
   const salaryAdjustmentsInPeriod = salaryAdjustments.filter((adj) => {
@@ -1899,7 +1898,6 @@ app.get("/api/workers/:id/salary-calculation", (req, res) => {
         totalAdditionalHours: parseFloat(totalAdditionalHours.toFixed(2)),
         actualTotalHours: parseFloat(actualTotalHours.toFixed(2)),
         guaranteedHours: parseFloat(guaranteedHours.toFixed(2)),
-        effectiveHours: parseFloat(effectiveHours.toFixed(2)),
         workingDays,
       },
       salary: {

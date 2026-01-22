@@ -131,9 +131,9 @@
               </el-text>
             </el-descriptions-item>
             <el-descriptions-item label="薪資計算工時">
-              <strong>{{ salaryData.workTime.effectiveHours }} 小時</strong>
+              <strong>{{ salaryData.workTime.actualTotalHours }} 小時</strong>
               <el-text type="primary" size="small">
-                (取較大值)
+                (實際工時)
               </el-text>
             </el-descriptions-item>
           </el-descriptions>
@@ -147,7 +147,7 @@
                 <strong>{{ salaryData.salary.baseSalary }} 元</strong>
               </div>
               <div style="font-size: 12px; color: #666;">
-                時薪 {{ salaryData.worker.baseHourlyWage }} × 有效工時 {{ salaryData.workTime.effectiveHours }}
+                時薪 {{ salaryData.worker.baseHourlyWage }} × 實際工時 {{ salaryData.workTime.actualTotalHours }}
               </div>
             </el-descriptions-item>
             <el-descriptions-item label="額外薪資" v-if="salaryData.salary.extraSalary !== 0">
@@ -512,10 +512,10 @@ const totalWorkHours = computed(() => {
   return salaryData.value.workTime?.actualTotalHours || 0;
 });
 
-// 有效工時（考慮基本時數保證）
+// 實際工時（正常工時 + 加班工時）
 const effectiveWorkHours = computed(() => {
   if (!salaryData.value) return 0;
-  return salaryData.value.workTime?.effectiveHours || 0;
+  return salaryData.value.workTime?.actualTotalHours || 0;
 });
 
 // 目前時薪

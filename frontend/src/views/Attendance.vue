@@ -409,10 +409,12 @@ const handleQuickClock = async (worker, type) => {
       type === "in" ? "/time-records/clock-in" : "/time-records/clock-out";
     const action = type === "in" ? "上班" : "下班";
 
+    const token = localStorage.getItem("auth_token");
     const response = await fetch(getApiUrl(`/api${endpoint}`), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
       },
       body: JSON.stringify({ workerId: worker.id }),
     });
@@ -428,7 +430,7 @@ const handleQuickClock = async (worker, type) => {
     }
   } catch (error) {
     console.error(`${worker.name} 打卡失敗:`, error);
-    ElMessage.error(`${worker.name} 打卡失敗`);
+    ElMessage.error(`${worker.name} 打卡失敗: ` + (error.message || error));
   } finally {
     worker.clocking = false;
   }

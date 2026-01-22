@@ -177,17 +177,36 @@ const fetchLogs = async () => {
       params.action = filters.value.action;
     }
 
+    const token = localStorage.getItem("auth_token");
     const response = await fetch(
-      `${getApiUrl()}/activity-logs?` + new URLSearchParams(params),
+      getApiUrl("/api/activity-logs") + "?" + new URLSearchParams(params),
+      {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      }
     );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data = await response.json();
 
-    logs.value = data.data;
-    totalLogs.value = data.total;
-    totalPages.value = data.totalPages;
+    if (data.success) {
+      logs.value = data.data || [];
+      totalLogs.value = data.total || 0;
+      totalPages.value = data.totalPages || 1;
+    } else {
+      throw new Error(data.message || "獲取活動日誌失敗");
+    }
   } catch (error) {
-    ElMessage.error("獲取活動日誌失敗");
+    ElMessage.error("獲取活動日誌失敗: " + (error.message || error));
     console.error("獲取活動日誌失敗:", error);
+    logs.value = [];
+    totalLogs.value = 0;
+    totalPages.value = 1;
   } finally {
     loading.value = false;
   }

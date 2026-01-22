@@ -65,11 +65,21 @@
         />
         <el-table-column prop="workerNumber" label="編號" width="80" />
         <el-table-column prop="name" label="姓名" width="120" />
-        <el-table-column prop="group" label="組別" width="100" />
+        <el-table-column label="組別" width="100">
+          <template #default="{ row }">
+            <el-tag :color="getGroupColor(row.group)" effect="light">
+              {{ row.group }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="floor" label="樓層" width="80" />
         <el-table-column prop="hourlyWage" label="時薪" width="80" />
         <el-table-column prop="baseHours" label="基本時數" width="90" />
-        <el-table-column prop="totalHours" label="累積工時" width="90" />
+        <el-table-column label="累積工時" width="90">
+          <template #default="{ row }">
+            {{ row.baseHours + (row.additionalHours || 0) }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="200">
           <template #default="{ row }">
             <el-button size="small" type="primary" @click="showEditWorker(row)">
@@ -394,15 +404,21 @@ const fetchWorkers = async () => {
     const groupMapping = await getGroupIdToNameMapping();
     
     // 映射後端數據到前端顯示格式
-    workers.value = workersStore.workers.map(worker => ({
-      id: worker.id,
-      workerNumber: worker.number || worker.workerNumber || "",
-      name: worker.name || "",
-      group: groupMapping[worker.groupId] || worker.group || "",
-      floor: worker.floor || "",
-      hourlyWage: worker.baseHourlyWage || worker.hourlyWage || 0,
-      baseHours: worker.baseWorkingHours || worker.baseHours || 8,
-      totalHours: worker.totalHours || 0
+    workers.value = await Promise.all(workersStore.workers.map(async worker => {
+      // 獲取該工讀生的額外工時
+      const additionalHours = await getWorkerAdditionalHours(worker.id);
+      
+      return {
+        id: worker.id,
+        workerNumber: worker.number || worker.workerNumber || "",
+        name: worker.name || "",
+        group: groupMapping[worker.groupId] || worker.group || "",
+        floor: worker.floor || "",
+        hourlyWage: worker.baseHourlyWage || worker.hourlyWage || 0,
+        baseHours: worker.baseWorkingHours || worker.baseHours || 8,
+        additionalHours: additionalHours,
+        totalHours: (worker.baseWorkingHours || worker.baseHours || 8) + additionalHours
+      };
     }));
     
     console.log("Workers.vue: 原始工讀生數據", workersStore.workers);
@@ -442,6 +458,53 @@ const getGroupIdToNameMapping = async () => {
     console.error('獲取組別映射失敗:', error);
     return {};
   }
+};
+
+// 獲取工讀生額外工時
+const getWorkerAdditionalHours = async (workerId: string) => {
+  try {
+    const response = await fetch(getApiUrl(`/api/time-records/${workerId}/additional-hours`), {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
+      }
+    });
+    
+    if (!response.ok) {
+      return 0; // 如果獲取失敗，返回0
+    }
+    
+    const result = await response.json();
+    return result.success ? (result.data?.totalHours || 0) : 0;
+  } catch (error) {
+    console.error('獲取額外工時失敗:', error);
+    return 0;
+  }
+};
+
+// 馬卡龍色系組別顏色
+const macaronColors = [
+  '#FFB3BA', // 櫻花粉
+  '#BAFFC9', // 薄荷綠
+  '#BAE1FF', // 天空藍
+  '#FFFFBA', // 檸檬黃
+  '#FFD3BA', // 蜜桃橙
+  '#E1BAFF', // 薰衣草紫
+  '#C9FFBA', // 青草綠
+  '#FFBAF3', // 玫瑰粉
+  '#BAF3FF', // 青藍色
+  '#F3FFBA', // 淺綠黃
+];
+
+const getGroupColor = (groupName: string) => {
+  if (!groupName) return macaronColors[0];
+  
+  // 使用組別名稱生成一致的顏色索引
+  let hash = 0;
+  for (let i = 0; i < groupName.length; i++) {
+    hash = groupName.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % macaronColors.length;
+  return macaronColors[index];
 };
 
 const handleFileChange = (file: any) => {

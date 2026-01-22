@@ -212,6 +212,22 @@ export const useWorkersStore = defineStore("workers", () => {
     }
   };
 
+  const importWorkers = async (workersList) => {
+    try {
+      console.log("Workers store: 批量匯入工讀生", workersList);
+      
+      for (const worker of workersList) {
+        await addWorker(worker);
+      }
+      
+      console.log("Workers store: 批量匯入完成");
+      return true;
+    } catch (error) {
+      console.error("Workers store: 批量匯入失敗:", error);
+      throw error;
+    }
+  };
+
   return {
     workers,
     loading,
@@ -221,5 +237,6 @@ export const useWorkersStore = defineStore("workers", () => {
     deleteWorker,
     batchUpdateWage,
     addTimeRecord,
+    importWorkers,
   };
 });

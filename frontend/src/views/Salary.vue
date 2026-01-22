@@ -98,10 +98,7 @@
           <div class="salary-item">
             <div class="salary-label">總工時</div>
             <div class="salary-value">
-              {{
-                salaryData.workTime.totalRegularHours +
-                salaryData.workTime.totalAdditionalHours
-              }}
+              {{ salaryData.workTime.totalSalaryHours }}
               小時
             </div>
           </div>

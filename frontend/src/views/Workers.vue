@@ -58,10 +58,63 @@
       </div>
     </el-card>
 
+    <!-- 篩選器 -->
+    <el-card style="margin-bottom: 10px;">
+      <div class="filter-container">
+        <el-row :gutter="16" align="middle">
+          <el-col :span="6">
+            <el-select
+              v-model="filterType"
+              placeholder="篩選方式"
+              @change="applyFilter"
+              style="width: 100%"
+            >
+              <el-option label="全選" value="all" />
+              <el-option label="依組別篩選" value="group" />
+              <el-option label="依樓層篩選" value="floor" />
+            </el-select>
+          </el-col>
+          <el-col :span="6" v-if="filterType === 'group'">
+            <el-select
+              v-model="selectedGroup"
+              placeholder="選擇組別"
+              @change="applyFilter"
+              style="width: 100%"
+            >
+              <el-option
+                v-for="group in allGroups"
+                :key="group.id"
+                :label="group.name"
+                :value="group.name"
+              />
+            </el-select>
+          </el-col>
+          <el-col :span="6" v-if="filterType === 'floor'">
+            <el-select
+              v-model="selectedFloor"
+              placeholder="選擇樓層"
+              @change="applyFilter"
+              style="width: 100%"
+            >
+              <el-option
+                v-for="floor in allFloors"
+                :key="floor"
+                :label="floor"
+                :value="floor"
+              />
+            </el-select>
+          </el-col>
+          <el-col :span="6">
+            <el-button @click="resetFilter">重置篩選</el-button>
+          </el-col>
+        </el-row>
+      </div>
+    </el-card>
+
     <!-- Table -->
     <el-card>
       <el-table 
-        :data="workers" 
+        :data="filteredWorkers" 
         stripe 
         v-loading="loading"
         @selection-change="handleSelectionChange"
@@ -423,12 +476,40 @@ const workersStore = useWorkersStore();
 const workers = ref<Worker[]>([]);
 const loading = ref(false);
 
+// 篩選相關
+const filterType = ref('all'); // 'all', 'group', 'floor'
+const selectedGroup = ref('');
+const selectedFloor = ref('');
+
 const isMobile = computed(() => window.innerWidth <= 768);
 
 // 獲取選中工讀生的詳細資料
 const selectedWorkerDetails = computed(() => {
   const workerIds = selectedWorkers.value.map(w => w.id);
   return workers.value.filter(worker => workerIds.includes(worker.id));
+});
+
+// 獲取所有組別
+const allGroups = computed(() => {
+  return workersStore.groups || [];
+});
+
+// 獲取所有樓層
+const allFloors = computed(() => {
+  const floors = [...new Set(workers.value.map(worker => worker.floor))];
+  return floors.filter(floor => floor).sort();
+});
+
+// 篩選後的工讀生列表
+const filteredWorkers = computed(() => {
+  if (filterType.value === 'all') {
+    return workers.value;
+  } else if (filterType.value === 'group' && selectedGroup.value) {
+    return workers.value.filter(worker => worker.group === selectedGroup.value);
+  } else if (filterType.value === 'floor' && selectedFloor.value) {
+    return workers.value.filter(worker => worker.floor === selectedFloor.value);
+  }
+  return workers.value;
 });
 
 // Excel
@@ -485,6 +566,18 @@ const batchAccumulatedHoursForm = reactive({
   hours: 1,
   reason: '',
 });
+
+// 篩選方法
+const applyFilter = () => {
+  // 當篩選條件改變時，這個計算屬性會自動重新計算
+  console.log('應用篩選:', filterType.value, selectedGroup.value, selectedFloor.value);
+};
+
+const resetFilter = () => {
+  filterType.value = 'all';
+  selectedGroup.value = '';
+  selectedFloor.value = '';
+};
 
 const fetchWorkers = async () => {
   loading.value = true;
@@ -1002,7 +1095,11 @@ const submitBatchWage = async () => {
   }
 };
 
-onMounted(fetchWorkers);
+onMounted(async () => {
+  await fetchWorkers();
+  // 載入組別數據用於篩選
+  await workersStore.fetchGroups();
+});
 </script>
 
 <style scoped>
@@ -1019,5 +1116,14 @@ onMounted(fetchWorkers);
 .actions {
   display: flex;
   gap: 8px;
+}
+
+.filter-container {
+  padding: 10px 0;
+}
+
+.filter-container .el-col {
+  display: flex;
+  align-items: center;
 }
 </style>

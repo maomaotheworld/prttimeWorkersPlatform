@@ -42,16 +42,6 @@ const routes = [
     },
   },
   {
-    path: "/floors",
-    name: "Floors",
-    component: () => import("../views/Floors.vue"),
-    meta: {
-      title: "樓層管理",
-      requiresAuth: true,
-      allowedRoles: ["admin", "leader", "reader"],
-    },
-  },
-  {
     path: "/attendance",
     name: "Attendance",
     component: () => import("../views/Attendance.vue"),

@@ -4,6 +4,7 @@ import { getApiUrl } from "@/config/api";
 
 export const useWorkersStore = defineStore("workers", () => {
   const workers = ref([]);
+  const groups = ref([]);
   const loading = ref(false);
 
   const fetchWorkers = async () => {
@@ -42,6 +43,44 @@ export const useWorkersStore = defineStore("workers", () => {
       throw error;
     } finally {
       loading.value = false;
+    }
+  };
+
+  // 獲取組別列表
+  const fetchGroups = async () => {
+    try {
+      console.log("Workers store: 獲取組別列表");
+
+      const token = localStorage.getItem("auth_token");
+      const headers = {
+        "Content-Type": "application/json",
+      };
+      
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(getApiUrl("/api/groups"), {
+        method: "GET",
+        headers: headers,
+      });
+
+      if (!response.ok) {
+        throw new Error('獲取組別列表失敗');
+      }
+      
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        groups.value = result.data;
+        console.log("Workers store: 組別列表更新完成", groups.value.length);
+      } else {
+        console.error("Workers store: 獲取組別失敗", result.message);
+        throw new Error(result.message || "獲取組別列表失敗");
+      }
+    } catch (error) {
+      console.error("Workers store: 獲取組別列表失敗", error);
+      throw error;
     }
   };
 
@@ -364,8 +403,10 @@ export const useWorkersStore = defineStore("workers", () => {
 
   return {
     workers,
+    groups,
     loading,
     fetchWorkers,
+    fetchGroups,
     addWorker,
     updateWorker,
     deleteWorker,

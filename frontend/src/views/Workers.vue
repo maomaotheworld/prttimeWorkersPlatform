@@ -1,5 +1,5 @@
 <template>
-  <div class="workers-container">
+  <div class="workers-container" :class="{ 'has-fixed-editing': isMobile && currentEditingWorker }">
     <!-- Header -->
     <div class="page-header">
       <h2>工讀生管理</h2>
@@ -62,7 +62,6 @@
     <el-card 
       v-if="isMobile && currentEditingWorker" 
       class="mobile-editing-worker"
-      style="margin-bottom: 10px; position: sticky; top: 10px; z-index: 100;"
     >
       <div class="editing-worker-info">
         <div class="worker-basic">
@@ -147,10 +146,10 @@
       >
         <el-table-column 
           type="selection" 
-          width="55"
+          :width="isMobile ? '35' : '55'"
         />
-        <el-table-column prop="workerNumber" label="編號" width="80" />
-        <el-table-column prop="name" label="姓名" width="120" />
+        <el-table-column prop="workerNumber" label="編號" :width="isMobile ? '60' : '80'" />
+        <el-table-column prop="name" label="姓名" :width="isMobile ? '80' : '120'" />
         <el-table-column label="組別" width="100">
           <template #default="{ row }">
             <el-tag 
@@ -1242,6 +1241,13 @@ onMounted(async () => {
   color: white;
   border: none;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  margin: 0 !important;
+  border-radius: 0 !important;
 }
 
 .editing-worker-info {
@@ -1280,6 +1286,11 @@ onMounted(async () => {
 @media (max-width: 768px) {
   .workers-container {
     padding: 10px;
+  }
+  
+  /* 當有固定編輯欄位時，為頁面內容添加頂部邊距 */
+  .workers-container.has-fixed-editing {
+    padding-top: 100px;
   }
   
   .page-header {

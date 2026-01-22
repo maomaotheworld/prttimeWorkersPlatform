@@ -63,13 +63,44 @@
         :data="previewData"
         size="small"
         style="margin-top: 12px"
+        border
       >
-        <el-table-column prop="workerNumber" label="編號" />
-        <el-table-column prop="name" label="姓名" />
-        <el-table-column prop="group" label="組別" />
-        <el-table-column prop="floor" label="樓層" />
-        <el-table-column prop="hourlyWage" label="時薪" />
-        <el-table-column label="狀態">
+        <el-table-column prop="workerNumber" label="編號" width="80">
+          <template #default="{ row }">
+            <span :style="{ color: row.workerNumber ? 'inherit' : 'red' }">
+              {{ row.workerNumber || '缺失' }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="name" label="姓名" width="120">
+          <template #default="{ row }">
+            <span :style="{ color: row.name ? 'inherit' : 'red' }">
+              {{ row.name || '缺失' }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="group" label="組別" width="80">
+          <template #default="{ row }">
+            <span :style="{ color: row.group ? 'inherit' : 'red' }">
+              {{ row.group || '缺失' }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="floor" label="樓層" width="80">
+          <template #default="{ row }">
+            <span :style="{ color: row.floor ? 'inherit' : 'red' }">
+              {{ row.floor || '缺失' }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="hourlyWage" label="時薪" width="80">
+          <template #default="{ row }">
+            <span :style="{ color: row.hourlyWage > 0 ? 'inherit' : 'red' }">
+              {{ row.hourlyWage || '缺失' }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="狀態" width="80">
           <template #default="{ row }">
             <el-tag :type="row.valid ? 'success' : 'danger'">
               {{ row.valid ? "有效" : "錯誤" }}
@@ -264,16 +295,25 @@ const handleFileChange = (file: any) => {
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[];
 
+    console.log("Excel 原始數據:", rows);
+    console.log("Excel 標題行:", rows[0]);
+
     const result = [];
     for (let i = 1; i < rows.length; i++) {
       const r = rows[i];
-      if (!r) continue;
+      console.log(`Excel 第${i}行原始數據:`, r);
+      
+      if (!r || r.length === 0) {
+        console.log(`跳過空行 ${i}`);
+        continue;
+      }
 
-      const workerNumber = String(r[0] || "").trim();
-      const name = String(r[1] || "").trim();
-      const group = String(r[2] || "").trim();
-      const floor = String(r[3] || "").trim();
-      const hourlyWage = Number(r[4]) || 0;
+      // 更嚴格的數據處理
+      const workerNumber = String(r[0] != null ? r[0] : "").trim();
+      const name = String(r[1] != null ? r[1] : "").trim();
+      const group = String(r[2] != null ? r[2] : "").trim();
+      const floor = String(r[3] != null ? r[3] : "").trim();
+      const hourlyWage = r[4] != null ? Number(r[4]) : 0;
 
       // 確保數據格式正確
       const workerData = {
@@ -286,10 +326,20 @@ const handleFileChange = (file: any) => {
         valid: workerNumber && name && group && floor && hourlyWage > 0,
       };
 
-      console.log("Excel 解析數據:", workerData);
+      console.log(`Excel 第${i}行解析結果:`, workerData);
+      console.log(`Excel 第${i}行驗證:`, {
+        workerNumber: !!workerNumber,
+        name: !!name,
+        group: !!group,
+        floor: !!floor,
+        hourlyWage: hourlyWage > 0,
+        valid: workerData.valid
+      });
+
       result.push(workerData);
     }
 
+    console.log("Excel 最終解析結果:", result);
     previewData.value = result;
   };
   reader.readAsArrayBuffer(file.raw);

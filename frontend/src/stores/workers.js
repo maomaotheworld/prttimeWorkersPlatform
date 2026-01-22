@@ -45,18 +45,62 @@ export const useWorkersStore = defineStore("workers", () => {
     }
   };
 
+  // 獲取group名稱到ID的映射
+  const getGroupMapping = async () => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch(getApiUrl("/api/groups"), {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('獲取組別列表失敗');
+      }
+      
+      const result = await response.json();
+      const mapping = {};
+      
+      if (result.success && result.data) {
+        result.data.forEach(group => {
+          mapping[group.name] = group.id;
+        });
+      }
+      
+      return mapping;
+    } catch (error) {
+      console.error('獲取組別映射失敗:', error);
+      return {};
+    }
+  };
+
   const addWorker = async (workerData) => {
     try {
       console.log("Workers store: 新增工讀生", workerData);
 
-      // 確保數據格式正確
+      // 獲取group映射
+      const groupMapping = await getGroupMapping();
+      console.log("Workers store: Group映射", groupMapping);
+
+      // 根據後端API格式準備數據
       const requestData = {
-        workerNumber: String(workerData.workerNumber || "").trim(),
+        number: String(workerData.workerNumber || "").trim(),
         name: String(workerData.name || "").trim(),
-        group: String(workerData.group || "").trim(),
+        baseHourlyWage: Number(workerData.hourlyWage) || 0,
+        baseWorkingHours: Number(workerData.baseHours) || 8,
+        groupId: groupMapping[workerData.group] || 'group-1', // 如果找不到對應組別，使用預設值
         floor: String(workerData.floor || "").trim(),
-        hourlyWage: Number(workerData.hourlyWage) || 0,
-        baseHours: Number(workerData.baseHours) || 8,
+        // 設置預設值
+        gender: '男',
+        level: '工讀生',
+        phone: '',
+        email: '',
+        address: '',
+        emergencyContact: '',
+        bankAccount: '',
+        startDate: new Date().toISOString().split('T')[0],
+        status: 'active'
       };
 
       console.log("Workers store: 發送的數據", requestData);

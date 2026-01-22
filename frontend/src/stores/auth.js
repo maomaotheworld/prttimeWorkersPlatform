@@ -301,6 +301,37 @@ export const useAuthStore = defineStore("auth", {
       }
     },
 
+    // 建立管理員帳號（僅特定用戶可用）
+    async createAdmin(userData) {
+      // 只有 evelyn 可以創建管理員
+      const allowedUsers = ['evelyn', 'evelyn.pan'];
+      if (!allowedUsers.includes(this.user?.username)) {
+        return { success: false, message: "權限不足，只有Evelyn可以創建管理員帳號" };
+      }
+
+      try {
+        const response = await api.post("/auth/create-admin", userData);
+
+        if (response.data.success) {
+          // ?�新?�戶?�表
+          await this.fetchUsers();
+          return {
+            success: true,
+            message: "管理員帳號建立成功",
+            data: response.data.data,
+          };
+        }
+
+        return { success: false, message: response.data.message };
+      } catch (error) {
+        console.error("建立管理員帳號失敗", error);
+        return {
+          success: false,
+          message: error.response?.data?.message || "建立管理員帳號失敗",
+        };
+      }
+    },
+
     // 刪除用戶（僅admin）
     async deleteUser(userId) {
       if (!this.isAdmin) {

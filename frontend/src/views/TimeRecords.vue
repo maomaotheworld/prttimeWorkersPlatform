@@ -142,6 +142,7 @@
                 style="margin: 2px"
               >
                 {{ adj.hours > 0 ? "+" : "" }}{{ adj.hours }}h: {{ adj.reason }}
+                <small v-if="adj.operatorName" class="operator-info"> - by {{ adj.operatorName }}</small>
               </el-tag>
             </div>
             <span v-else class="info-text">-</span>
@@ -475,6 +476,12 @@ onMounted(() => {
   text-align: center;
   padding: 60px 20px;
   color: #909399;
+}
+
+.operator-info {
+  color: #909399;
+  font-size: 11px;
+  margin-left: 4px;
 }
 
 @media (max-width: 768px) {

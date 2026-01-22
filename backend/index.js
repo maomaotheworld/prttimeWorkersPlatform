@@ -522,6 +522,90 @@ app.post(
   },
 );
 
+// 新增admin用戶（僅evelyn用戶可用）
+app.post("/api/auth/create-admin", authenticateToken, (req, res) => {
+  try {
+    // 只有特定用戶可以創建管理員
+    const allowedUsers = ['evelyn', 'evelyn.pan'];
+    if (!allowedUsers.includes(req.user.username)) {
+      return res.status(403).json({
+        success: false,
+        message: "權限不足，只有Evelyn可以創建管理員帳號",
+      });
+    }
+
+    const { username, password, name, email } = req.body;
+
+    if (!username || !password || !name) {
+      return res.status(400).json({
+        success: false,
+        message: "請填寫完整資訊",
+      });
+    }
+
+    // 檢查用戶名是否已存在
+    if (usersData.users.find((u) => u.username === username)) {
+      return res.status(400).json({
+        success: false,
+        message: "用戶名已存在",
+      });
+    }
+
+    usersData.lastUserId++;
+    const newUser = {
+      id: `user-${usersData.lastUserId}`,
+      username,
+      password, // 實際專案中應該使用bcrypt加密
+      name,
+      email: email || "",
+      role: "admin",
+      permissions: {
+        canManageUsers: true,
+        canEditWorkers: true,
+        canImportData: true,
+        canClockIn: true,
+        canEditTime: true,
+        canViewReports: true,
+        canDeleteData: true,
+      },
+      isActive: true,
+      createdAt: new Date().toISOString(),
+    };
+
+    usersData.users.push(newUser);
+    saveUsers(usersData);
+
+    logActivity(
+      "create",
+      "user",
+      newUser.id,
+      newUser.username,
+      `創建管理員帳號: ${newUser.name}`,
+      req.user.id,
+    );
+
+    res.status(201).json({
+      success: true,
+      data: {
+        id: newUser.id,
+        username: newUser.username,
+        name: newUser.name,
+        role: newUser.role,
+        email: newUser.email,
+        isActive: newUser.isActive,
+        createdAt: newUser.createdAt,
+      },
+      message: "管理員帳號建立成功",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "建立管理員帳號失敗",
+      error: error.message,
+    });
+  }
+});
+
 // 刪除用戶（僅admin，不可刪除自己）
 app.delete(
   "/api/auth/users/:id",
@@ -1138,6 +1222,41 @@ app.post("/api/time-records/clock-out", (req, res) => {
     data: timeRecords[recordIndex],
     message: "下班打卡成功",
   });
+});
+
+// 獲取所有工讀生的額外工時
+app.get("/api/time-records/additional-hours", authenticateToken, (req, res) => {
+  try {
+    // 計算每個工讀生的總額外工時
+    const additionalHoursMap = {};
+    
+    timeRecords.forEach(record => {
+      if (record.additionalHours && record.additionalHours !== 0) {
+        if (!additionalHoursMap[record.workerId]) {
+          additionalHoursMap[record.workerId] = 0;
+        }
+        additionalHoursMap[record.workerId] += record.additionalHours;
+      }
+    });
+    
+    // 轉換為陣列格式
+    const result = Object.keys(additionalHoursMap).map(workerId => ({
+      workerId: workerId,
+      totalHours: additionalHoursMap[workerId]
+    }));
+    
+    res.json({
+      success: true,
+      data: result,
+      message: "額外工時統計獲取成功",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "獲取額外工時統計失敗",
+      error: error.message,
+    });
+  }
 });
 
 // 新增額外工時（支持疊加模式）

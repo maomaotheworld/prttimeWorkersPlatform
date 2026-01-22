@@ -306,7 +306,8 @@ export const useWorkersStore = defineStore("workers", () => {
       const token = localStorage.getItem("auth_token") || "";
 
       // 獲取當前登入用戶信息
-      const userInfo = JSON.parse(localStorage.getItem("user") || "{}");
+      const userInfo = JSON.parse(localStorage.getItem("auth_user") || "{}");
+      console.log("Workers store: 用戶信息", userInfo);
       
       const response = await fetch(
         getApiUrl("/api/time-records/additional-hours"),

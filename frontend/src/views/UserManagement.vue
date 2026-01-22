@@ -9,6 +9,9 @@
         <p class="page-description">管理系統用戶帳號，新增小組長帳號</p>
       </div>
       <div class="header-actions">
+        <el-button type="danger" :icon="Plus" @click="showCreateAdminDialog = true" v-if="isEvelyn">
+          新增管理員
+        </el-button>
         <el-button type="primary" :icon="Plus" @click="showCreateDialog = true">
           新增小組長
         </el-button>
@@ -151,6 +154,76 @@
         </div>
       </template>
     </el-dialog>
+
+    <!-- 創建管理員對話框 -->
+    <el-dialog
+      v-model="showCreateAdminDialog"
+      title="創建管理員帳號"
+      :width="isMobile ? '95%' : '500px'"
+      :before-close="handleCloseAdminDialog"
+    >
+      <el-alert
+        title="警告：此操作將創建具有完全權限的管理員帳號"
+        type="warning"
+        show-icon
+        :closable="false"
+        style="margin-bottom: 20px"
+      />
+      
+      <el-form
+        ref="createAdminFormRef"
+        :model="createAdminForm"
+        :rules="createRules"
+        label-width="80px"
+      >
+        <el-form-item label="帳號" prop="username">
+          <el-input
+            v-model="createAdminForm.username"
+            placeholder="請輸入帳號"
+            clearable
+          />
+        </el-form-item>
+
+        <el-form-item label="密碼" prop="password">
+          <el-input
+            v-model="createAdminForm.password"
+            type="password"
+            placeholder="請輸入密碼"
+            show-password
+            clearable
+          />
+        </el-form-item>
+
+        <el-form-item label="姓名" prop="name">
+          <el-input
+            v-model="createAdminForm.name"
+            placeholder="請輸入姓名"
+            clearable
+          />
+        </el-form-item>
+
+        <el-form-item label="信箱" prop="email">
+          <el-input
+            v-model="createAdminForm.email"
+            placeholder="請輸入郵箱（可選填）"
+            clearable
+          />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="handleCloseAdminDialog">取消</el-button>
+          <el-button
+            type="danger"
+            @click="handleCreateAdmin"
+            :loading="creatingAdmin"
+          >
+            建立管理員
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -166,11 +239,20 @@ const authStore = useAuthStore();
 // 響應式數據
 const loading = ref(false);
 const creating = ref(false);
+const creatingAdmin = ref(false);
 const showCreateDialog = ref(false);
+const showCreateAdminDialog = ref(false);
 const users = ref([]);
 
 // 表單數據
 const createForm = reactive({
+  username: "",
+  password: "",
+  name: "",
+  email: "",
+});
+
+const createAdminForm = reactive({
   username: "",
   password: "",
   name: "",
@@ -198,9 +280,15 @@ const createRules = {
 
 // 引用
 const createFormRef = ref();
+const createAdminFormRef = ref();
 
 // 計算屬性
 const isMobile = computed(() => window.innerWidth <= 768);
+
+// 只有evelyn可以創建管理員
+const isEvelyn = computed(() => {
+  return authStore.user?.username === 'evelyn' || authStore.user?.username === 'evelyn.pan';
+});
 
 // 方法
 const getRoleText = (role) => {
@@ -269,6 +357,48 @@ const handleCreateUser = async () => {
   }
 };
 
+// 創建管理員
+const handleCreateAdmin = async () => {
+  try {
+    // 表單驗證
+    const valid = await createAdminFormRef.value.validate();
+    if (!valid) return;
+
+    // 二次確認
+    try {
+      await ElMessageBox.confirm(
+        '創建管理員將賦予該用戶完全的系統權限，確定要繼續嗎？',
+        '創建管理員確認',
+        {
+          confirmButtonText: '確認創建',
+          cancelButtonText: '取消',
+          type: 'warning',
+        }
+      );
+    } catch (error) {
+      return; // 用戶取消
+    }
+
+    creatingAdmin.value = true;
+
+    const result = await authStore.createAdmin(createAdminForm);
+
+    if (result.success) {
+      ElMessage.success(result.message);
+      showCreateAdminDialog.value = false;
+      resetCreateAdminForm();
+      await loadUsers();
+    } else {
+      ElMessage.error(result.message);
+    }
+  } catch (error) {
+    console.error("創建管理員錯誤:", error);
+    ElMessage.error("創建管理員失敗");
+  } finally {
+    creatingAdmin.value = false;
+  }
+};
+
 // 確認刪除用戶
 const confirmDelete = async (user) => {
   try {
@@ -317,10 +447,26 @@ const resetCreateForm = () => {
   }
 };
 
+// 重置管理員表單
+const resetCreateAdminForm = () => {
+  Object.keys(createAdminForm).forEach((key) => {
+    createAdminForm[key] = "";
+  });
+  if (createAdminFormRef.value) {
+    createAdminFormRef.value.clearValidate();
+  }
+};
+
 // 關閉對話框
 const handleCloseDialog = () => {
   showCreateDialog.value = false;
   resetCreateForm();
+};
+
+// 關閉管理員對話框
+const handleCloseAdminDialog = () => {
+  showCreateAdminDialog.value = false;
+  resetCreateAdminForm();
 };
 
 // 組件掛載

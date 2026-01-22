@@ -67,7 +67,10 @@
         <el-table-column prop="name" label="姓名" width="120" />
         <el-table-column label="組別" width="100">
           <template #default="{ row }">
-            <el-tag :color="getGroupColor(row.group)" effect="light">
+            <el-tag 
+              :style="getGroupTagStyle(row.group)" 
+              effect="light"
+            >
               {{ row.group }}
             </el-tag>
           </template>
@@ -403,10 +406,12 @@ const fetchWorkers = async () => {
     // 獲取group映射（ID到名稱）
     const groupMapping = await getGroupIdToNameMapping();
     
+    // 嘗試批量獲取所有工讀生的額外工時
+    const additionalHoursMap = await getAllWorkersAdditionalHours();
+    
     // 映射後端數據到前端顯示格式
-    workers.value = await Promise.all(workersStore.workers.map(async worker => {
-      // 獲取該工讀生的額外工時
-      const additionalHours = await getWorkerAdditionalHours(worker.id);
+    workers.value = workersStore.workers.map(worker => {
+      const additionalHours = additionalHoursMap[worker.id] || 0;
       
       return {
         id: worker.id,
@@ -419,7 +424,7 @@ const fetchWorkers = async () => {
         additionalHours: additionalHours,
         totalHours: (worker.baseWorkingHours || worker.baseHours || 8) + additionalHours
       };
-    }));
+    });
     
     console.log("Workers.vue: 原始工讀生數據", workersStore.workers);
     console.log("Workers.vue: 映射後工讀生數據", workers.value);
@@ -460,43 +465,53 @@ const getGroupIdToNameMapping = async () => {
   }
 };
 
-// 獲取工讀生額外工時
-const getWorkerAdditionalHours = async (workerId: string) => {
+// 批量獲取所有工讀生的額外工時
+const getAllWorkersAdditionalHours = async () => {
   try {
-    const response = await fetch(getApiUrl(`/api/time-records/${workerId}/additional-hours`), {
+    const response = await fetch(getApiUrl("/api/time-records/additional-hours"), {
       headers: {
         "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
       }
     });
     
     if (!response.ok) {
-      return 0; // 如果獲取失敗，返回0
+      console.warn('批量獲取額外工時API不可用，使用預設值0');
+      return {};
     }
     
     const result = await response.json();
-    return result.success ? (result.data?.totalHours || 0) : 0;
+    if (result.success && result.data) {
+      // 轉換為 workerId -> additionalHours 的映射
+      const hoursMap = {};
+      result.data.forEach(item => {
+        hoursMap[item.workerId] = item.totalHours || 0;
+      });
+      return hoursMap;
+    }
+    
+    return {};
   } catch (error) {
-    console.error('獲取額外工時失敗:', error);
-    return 0;
+    console.warn('批量獲取額外工時失敗，使用預設值:', error);
+    return {};
   }
 };
 
-// 馬卡龍色系組別顏色
+// 馬卡龍色系組別顏色 - 高對比度版本  
 const macaronColors = [
-  '#FFB3BA', // 櫻花粉
-  '#BAFFC9', // 薄荷綠
-  '#BAE1FF', // 天空藍
-  '#FFFFBA', // 檸檬黃
-  '#FFD3BA', // 蜜桃橙
-  '#E1BAFF', // 薰衣草紫
-  '#C9FFBA', // 青草綠
-  '#FFBAF3', // 玫瑰粉
-  '#BAF3FF', // 青藍色
-  '#F3FFBA', // 淺綠黃
+  { bg: '#FFE1E6', text: '#B91C7C' }, // 櫻花粉配深紫紅
+  { bg: '#E6F7ED', text: '#059669' }, // 薄荷綠配深綠
+  { bg: '#E1F0FF', text: '#1E40AF' }, // 天空藍配深藍  
+  { bg: '#FEF3C7', text: '#D97706' }, // 檸檬黃配橙
+  { bg: '#FFE4D1', text: '#EA580C' }, // 蜜桃橙配深橙
+  { bg: '#F3E8FF', text: '#7C3AED' }, // 薰衣草紫配深紫
+  { bg: '#ECFDF5', text: '#047857' }, // 青草綠配深綠
+  { bg: '#FDEAEF', text: '#BE185D' }, // 玫瑰粉配深紫紅
+  { bg: '#E0F2FE', text: '#0369A1' }, // 青藍色配深青
+  { bg: '#F7FEE7', text: '#65A30D' }, // 淺綠黃配深綠
 ];
 
-const getGroupColor = (groupName: string) => {
-  if (!groupName) return macaronColors[0];
+const getGroupTagStyle = (groupName: string) => {
+  if (!groupName) return { backgroundColor: macaronColors[0].bg, color: macaronColors[0].text };
   
   // 使用組別名稱生成一致的顏色索引
   let hash = 0;
@@ -504,7 +519,20 @@ const getGroupColor = (groupName: string) => {
     hash = groupName.charCodeAt(i) + ((hash << 5) - hash);
   }
   const index = Math.abs(hash) % macaronColors.length;
-  return macaronColors[index];
+  const colors = macaronColors[index];
+  
+  return {
+    backgroundColor: colors.bg,
+    color: colors.text,
+    border: `1px solid ${colors.text}20`,
+    fontWeight: '500'
+  };
+};
+
+// 保留舊的函數用於向後兼容
+const getGroupColor = (groupName: string) => {
+  const style = getGroupTagStyle(groupName);
+  return style.backgroundColor;
 };
 
 const handleFileChange = (file: any) => {
@@ -630,13 +658,8 @@ const submitHoursAdjust = async () => {
     ElMessage.success(`工時調整成功: ${hoursForm.type === "add" ? "+" : "-"}${Math.abs(adjustedHours)}小時`);
     showHoursDialog.value = false;
     
-    // 立即更新該工讀生的額外工時
-    const workerIndex = workers.value.findIndex(w => w.id === currentWorker.value.id);
-    if (workerIndex !== -1) {
-      const newAdditionalHours = await getWorkerAdditionalHours(currentWorker.value.id);
-      workers.value[workerIndex].additionalHours = newAdditionalHours;
-      workers.value[workerIndex].totalHours = workers.value[workerIndex].baseHours + newAdditionalHours;
-    }
+    // 重新獲取所有工讀生數據以確保更新正確
+    await fetchWorkers();
     
   } catch (error) {
     ElMessage.error("工時調整失敗: " + (error.message || error));

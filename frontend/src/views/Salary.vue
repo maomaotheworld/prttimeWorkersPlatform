@@ -53,6 +53,13 @@
           >
             計算薪資
           </el-button>
+          <el-button
+            @click="refreshData"
+            :loading="calculating"
+            style="margin-left: 10px"
+          >
+            重新載入
+          </el-button>
         </el-col>
       </el-row>
     </el-card>
@@ -113,16 +120,19 @@
 
       <el-row :gutter="16">
         <el-col :xs="24" :sm="12">
-          <h3>工作詳情</h3>
+          <h3>工時明細</h3>
           <el-descriptions :column="1" border>
             <el-descriptions-item label="正常工時">
-              {{ salaryData.workTime.totalRegularHours }} 小時
+              <strong>{{ salaryData.workTime.totalRegularHours }} 小時</strong>
             </el-descriptions-item>
             <el-descriptions-item label="加班工時">
-              {{ salaryData.workTime.totalAdditionalHours }} 小時
+              <strong>{{ salaryData.workTime.totalAdditionalHours }} 小時</strong>
             </el-descriptions-item>
             <el-descriptions-item label="實際總工時">
-              {{ salaryData.workTime.actualTotalHours }} 小時
+              <strong style="color: #409eff;">{{ salaryData.workTime.actualTotalHours }} 小時</strong>
+              <el-text type="info" size="small">
+                ({{ salaryData.workTime.totalRegularHours }} + {{ salaryData.workTime.totalAdditionalHours }})
+              </el-text>
             </el-descriptions-item>
             <el-descriptions-item label="基本時數保證">
               {{ salaryData.workTime.guaranteedHours }} 小時
@@ -144,10 +154,10 @@
           <el-descriptions :column="1" border>
             <el-descriptions-item label="基本薪資">
               <div>
-                <strong>{{ salaryData.salary.baseSalary }} 元</strong>
+                <strong style="font-size: 16px; color: #67c23a;">{{ salaryData.salary.baseSalary }} 元</strong>
               </div>
-              <div style="font-size: 12px; color: #666;">
-                時薪 {{ salaryData.worker.baseHourlyWage }} × 實際工時 {{ salaryData.workTime.actualTotalHours }}
+              <div style="font-size: 14px; color: #409eff; margin-top: 4px;">
+                {{ salaryData.worker.baseHourlyWage }} 元/時 × {{ salaryData.workTime.actualTotalHours }} 小時 = {{ salaryData.salary.baseSalary }} 元
               </div>
             </el-descriptions-item>
             <el-descriptions-item label="額外薪資" v-if="salaryData.salary.extraSalary !== 0">
@@ -163,9 +173,12 @@
               </span>
             </el-descriptions-item>
             <el-descriptions-item label="總薪資">
-              <strong style="font-size: 16px; color: #409eff;">
+              <strong style="font-size: 18px; color: #f56c6c;">
                 {{ salaryData.salary.totalSalary }} 元
               </strong>
+              <div style="font-size: 12px; color: #666; margin-top: 4px;">
+                基本薪資 {{ salaryData.salary.baseSalary }} 元{{ salaryData.salary.extraSalary !== 0 ? ` + 額外薪資 ${salaryData.salary.extraSalary} 元` : '' }}
+              </div>
             </el-descriptions-item>
           </el-descriptions>
         </el-col>
@@ -579,6 +592,16 @@ const calculateSalary = async () => {
     ElMessage.error(error.message || "薪資計算失敗");
   } finally {
     calculating.value = false;
+  }
+};
+
+// 重新載入數據
+const refreshData = async () => {
+  if (selectedWorker.value) {
+    await Promise.all([calculateSalary(), fetchAdjustments()]);
+    ElMessage.success("數據已重新載入");
+  } else {
+    ElMessage.warning("請先選擇工讀生");
   }
 };
 

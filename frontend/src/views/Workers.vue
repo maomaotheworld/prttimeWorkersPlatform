@@ -1,5 +1,8 @@
 <template>
-  <div class="workers-container" :class="{ 'has-fixed-editing': isMobile && currentEditingWorker }">
+  <div
+    class="workers-container"
+    :class="{ 'has-fixed-editing': isMobile && currentEditingWorker }"
+  >
     <!-- Header -->
     <div class="page-header">
       <h2>工讀生管理</h2>
@@ -18,14 +21,10 @@
     </div>
 
     <!-- 批次操作 -->
-    <el-card v-if="selectedWorkers.length > 0" style="margin-bottom: 10px;">
-      <div style="display: flex; align-items: center; gap: 10px;">
+    <el-card v-if="selectedWorkers.length > 0" style="margin-bottom: 10px">
+      <div style="display: flex; align-items: center; gap: 10px">
         <span>已選擇 {{ selectedWorkers.length }} 位工讀生</span>
-        <el-button
-          size="small"
-          type="warning"
-          @click="showBatchEditHours"
-        >
+        <el-button size="small" type="warning" @click="showBatchEditHours">
           批次編輯基本時數
         </el-button>
         <el-button
@@ -35,48 +34,40 @@
         >
           批次調整累積工時
         </el-button>
-        <el-button
-          size="small"
-          type="primary"
-          @click="showBatchEditWage"
-        >
+        <el-button size="small" type="primary" @click="showBatchEditWage">
           批次編輯時薪
         </el-button>
-        <el-button
-          size="small"
-          type="danger"
-          @click="confirmBatchDelete"
-        >
+        <el-button size="small" type="danger" @click="confirmBatchDelete">
           批次刪除
         </el-button>
-        <el-button
-          size="small"
-          @click="clearSelection"
-        >
-          清除選擇
-        </el-button>
+        <el-button size="small" @click="clearSelection"> 清除選擇 </el-button>
       </div>
     </el-card>
 
     <!-- 手機版當前編輯工讀生顯示 -->
-    <el-card 
-      v-if="isMobile && currentEditingWorker" 
+    <el-card
+      v-if="isMobile && currentEditingWorker"
       class="mobile-editing-worker"
     >
       <div class="editing-worker-info">
         <div class="worker-basic">
           <el-tag type="info" size="small">正在編輯</el-tag>
-          <span class="worker-name">{{ currentEditingWorker.workerNumber }} - {{ currentEditingWorker.name }}</span>
+          <span class="worker-name"
+            >{{ currentEditingWorker.workerNumber }} -
+            {{ currentEditingWorker.name }}</span
+          >
         </div>
         <div class="worker-details">
           <span class="detail-item">{{ currentEditingWorker.group }}</span>
           <span class="detail-item">{{ currentEditingWorker.floor }}樓</span>
-          <span class="detail-item">{{ currentEditingWorker.hourlyWage }}元/時</span>
+          <span class="detail-item"
+            >{{ currentEditingWorker.hourlyWage }}元/時</span
+          >
         </div>
-        <el-button 
-          size="small" 
+        <el-button
+          size="small"
           @click="clearCurrentEditingWorker"
-          style="margin-left: auto;"
+          style="margin-left: auto"
         >
           收起
         </el-button>
@@ -84,7 +75,7 @@
     </el-card>
 
     <!-- 篩選器 -->
-    <el-card style="margin-bottom: 10px;">
+    <el-card style="margin-bottom: 10px">
       <div class="filter-container">
         <el-row :gutter="16" align="middle">
           <el-col :span="6">
@@ -138,24 +129,26 @@
 
     <!-- Table -->
     <el-card>
-      <el-table 
-        :data="filteredWorkers" 
-        stripe 
+      <el-table
+        :data="filteredWorkers"
+        stripe
         v-loading="loading"
         @selection-change="handleSelectionChange"
       >
-        <el-table-column 
-          type="selection" 
-          :width="isMobile ? '35' : '55'"
+        <el-table-column type="selection" :width="isMobile ? '35' : '55'" />
+        <el-table-column
+          prop="workerNumber"
+          label="編號"
+          :width="isMobile ? '60' : '80'"
         />
-        <el-table-column prop="workerNumber" label="編號" :width="isMobile ? '60' : '80'" />
-        <el-table-column prop="name" label="姓名" :width="isMobile ? '80' : '120'" />
+        <el-table-column
+          prop="name"
+          label="姓名"
+          :width="isMobile ? '80' : '120'"
+        />
         <el-table-column label="組別" width="100">
           <template #default="{ row }">
-            <el-tag 
-              :style="getGroupTagStyle(row.group)" 
-              effect="light"
-            >
+            <el-tag :style="getGroupTagStyle(row.group)" effect="light">
               {{ row.group }}
             </el-tag>
           </template>
@@ -168,11 +161,19 @@
             {{ row.baseHours + (row.additionalHours || 0) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" :width="isMobile ? '100' : '200'">
+        <el-table-column
+          fixed="right"
+          label="操作"
+          :width="isMobile ? '100' : '200'"
+        >
           <template #default="{ row }">
             <!-- 桌面版：顯示所有按鈕 -->
             <template v-if="!isMobile">
-              <el-button size="small" type="primary" @click="showEditWorker(row)">
+              <el-button
+                size="small"
+                type="primary"
+                @click="showEditWorker(row)"
+              >
                 編輯
               </el-button>
               <el-button
@@ -186,10 +187,12 @@
                 刪除
               </el-button>
             </template>
-            
+
             <!-- 手機版：下拉選單 -->
             <template v-else>
-              <el-dropdown @command="(command) => handleMobileAction(command, row)">
+              <el-dropdown
+                @command="(command) => handleMobileAction(command, row)"
+              >
                 <el-button size="small" type="primary">
                   操作<el-icon class="el-icon--right"><arrow-down /></el-icon>
                 </el-button>
@@ -234,35 +237,35 @@
         <el-table-column prop="workerNumber" label="編號" width="80">
           <template #default="{ row }">
             <span :style="{ color: row.workerNumber ? 'inherit' : 'red' }">
-              {{ row.workerNumber || '缺失' }}
+              {{ row.workerNumber || "缺失" }}
             </span>
           </template>
         </el-table-column>
         <el-table-column prop="name" label="姓名" width="120">
           <template #default="{ row }">
             <span :style="{ color: row.name ? 'inherit' : 'red' }">
-              {{ row.name || '缺失' }}
+              {{ row.name || "缺失" }}
             </span>
           </template>
         </el-table-column>
         <el-table-column prop="group" label="組別" width="80">
           <template #default="{ row }">
             <span :style="{ color: row.group ? 'inherit' : 'red' }">
-              {{ row.group || '缺失' }}
+              {{ row.group || "缺失" }}
             </span>
           </template>
         </el-table-column>
         <el-table-column prop="floor" label="樓層" width="80">
           <template #default="{ row }">
             <span :style="{ color: row.floor ? 'inherit' : 'red' }">
-              {{ row.floor || '缺失' }}
+              {{ row.floor || "缺失" }}
             </span>
           </template>
         </el-table-column>
         <el-table-column prop="hourlyWage" label="時薪" width="80">
           <template #default="{ row }">
             <span :style="{ color: row.hourlyWage > 0 ? 'inherit' : 'red' }">
-              {{ row.hourlyWage || '缺失' }}
+              {{ row.hourlyWage || "缺失" }}
             </span>
           </template>
         </el-table-column>
@@ -381,10 +384,12 @@
       title="批次編輯基本時數"
       width="400px"
     >
-      <div style="margin-bottom: 15px;">
-        <span>即將為 {{ selectedWorkers.length }} 位工讀生設定統一的基本時數</span>
+      <div style="margin-bottom: 15px">
+        <span
+          >即將為 {{ selectedWorkers.length }} 位工讀生設定統一的基本時數</span
+        >
       </div>
-      
+
       <el-form label-width="80px">
         <el-form-item label="基本時數">
           <el-input-number
@@ -405,15 +410,11 @@
     </el-dialog>
 
     <!-- 批次編輯時薪對話框 -->
-    <el-dialog
-      v-model="showBatchWageDialog"
-      title="批次編輯時薪"
-      width="400px"
-    >
-      <div style="margin-bottom: 15px;">
+    <el-dialog v-model="showBatchWageDialog" title="批次編輯時薪" width="400px">
+      <div style="margin-bottom: 15px">
         <span>即將為 {{ selectedWorkers.length }} 位工讀生設定統一的時薪</span>
       </div>
-      
+
       <el-form label-width="80px">
         <el-form-item label="時薪">
           <el-input-number
@@ -491,9 +492,11 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="showBatchAccumulatedHoursDialog = false">取消</el-button>
-        <el-button 
-          type="primary" 
+        <el-button @click="showBatchAccumulatedHoursDialog = false"
+          >取消</el-button
+        >
+        <el-button
+          type="primary"
           @click="submitBatchAccumulatedHours"
           :loading="submitting"
         >
@@ -528,9 +531,9 @@ const workers = ref<Worker[]>([]);
 const loading = ref(false);
 
 // 篩選相關
-const filterType = ref('all'); // 'all', 'group', 'floor'
-const selectedGroup = ref('');
-const selectedFloor = ref('');
+const filterType = ref("all"); // 'all', 'group', 'floor'
+const selectedGroup = ref("");
+const selectedFloor = ref("");
 
 // 手機版當前編輯工讀生
 const currentEditingWorker = ref<Worker | null>(null);
@@ -539,8 +542,8 @@ const isMobile = computed(() => window.innerWidth <= 768);
 
 // 獲取選中工讀生的詳細資料
 const selectedWorkerDetails = computed(() => {
-  const workerIds = selectedWorkers.value.map(w => w.id);
-  return workers.value.filter(worker => workerIds.includes(worker.id));
+  const workerIds = selectedWorkers.value.map((w) => w.id);
+  return workers.value.filter((worker) => workerIds.includes(worker.id));
 });
 
 // 獲取所有組別
@@ -550,18 +553,22 @@ const allGroups = computed(() => {
 
 // 獲取所有樓層
 const allFloors = computed(() => {
-  const floors = [...new Set(workers.value.map(worker => worker.floor))];
-  return floors.filter(floor => floor).sort();
+  const floors = [...new Set(workers.value.map((worker) => worker.floor))];
+  return floors.filter((floor) => floor).sort();
 });
 
 // 篩選後的工讀生列表
 const filteredWorkers = computed(() => {
-  if (filterType.value === 'all') {
+  if (filterType.value === "all") {
     return workers.value;
-  } else if (filterType.value === 'group' && selectedGroup.value) {
-    return workers.value.filter(worker => worker.group === selectedGroup.value);
-  } else if (filterType.value === 'floor' && selectedFloor.value) {
-    return workers.value.filter(worker => worker.floor === selectedFloor.value);
+  } else if (filterType.value === "group" && selectedGroup.value) {
+    return workers.value.filter(
+      (worker) => worker.group === selectedGroup.value,
+    );
+  } else if (filterType.value === "floor" && selectedFloor.value) {
+    return workers.value.filter(
+      (worker) => worker.floor === selectedFloor.value,
+    );
   }
   return workers.value;
 });
@@ -616,21 +623,21 @@ const batchWageForm = reactive({
   hourlyWage: 200,
 });
 const batchAccumulatedHoursForm = reactive({
-  type: 'add',
+  type: "add",
   hours: 1,
-  reason: '',
+  reason: "",
 });
 
 // 手機版操作處理
 const handleMobileAction = (command: string, row: Worker) => {
   switch (command) {
-    case 'edit':
+    case "edit":
       showEditWorker(row);
       break;
-    case 'hours':
+    case "hours":
       showAdjustHours(row);
       break;
-    case 'delete':
+    case "delete":
       confirmDelete(row);
       break;
   }
@@ -661,30 +668,35 @@ const closeHoursDialog = () => {
 // 篩選方法
 const applyFilter = () => {
   // 當篩選條件改變時，這個計算屬性會自動重新計算
-  console.log('應用篩選:', filterType.value, selectedGroup.value, selectedFloor.value);
+  console.log(
+    "應用篩選:",
+    filterType.value,
+    selectedGroup.value,
+    selectedFloor.value,
+  );
 };
 
 const resetFilter = () => {
-  filterType.value = 'all';
-  selectedGroup.value = '';
-  selectedFloor.value = '';
+  filterType.value = "all";
+  selectedGroup.value = "";
+  selectedFloor.value = "";
 };
 
 const fetchWorkers = async () => {
   loading.value = true;
   try {
     await workersStore.fetchWorkers();
-    
+
     // 獲取group映射（ID到名稱）
     const groupMapping = await getGroupIdToNameMapping();
-    
+
     // 嘗試批量獲取所有工讀生的額外工時
     const additionalHoursMap = await getAllWorkersAdditionalHours();
-    
+
     // 映射後端數據到前端顯示格式
-    workers.value = workersStore.workers.map(worker => {
+    workers.value = workersStore.workers.map((worker) => {
       const additionalHours = additionalHoursMap[worker.id] || 0;
-      
+
       return {
         id: worker.id,
         workerNumber: worker.number || worker.workerNumber || "",
@@ -694,10 +706,11 @@ const fetchWorkers = async () => {
         hourlyWage: worker.baseHourlyWage || worker.hourlyWage || 0,
         baseHours: worker.baseWorkingHours || worker.baseHours || 8,
         additionalHours: additionalHours,
-        totalHours: (worker.baseWorkingHours || worker.baseHours || 8) + additionalHours
+        totalHours:
+          (worker.baseWorkingHours || worker.baseHours || 8) + additionalHours,
       };
     });
-    
+
     console.log("Workers.vue: 原始工讀生數據", workersStore.workers);
     console.log("Workers.vue: 映射後工讀生數據", workers.value);
   } catch (error) {
@@ -713,26 +726,26 @@ const getGroupIdToNameMapping = async () => {
   try {
     const response = await fetch(getApiUrl("/api/groups"), {
       headers: {
-        "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
-      }
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      },
     });
-    
+
     if (!response.ok) {
-      throw new Error('獲取組別列表失敗');
+      throw new Error("獲取組別列表失敗");
     }
-    
+
     const result = await response.json();
     const mapping = {};
-    
+
     if (result.success && result.data) {
-      result.data.forEach(group => {
+      result.data.forEach((group) => {
         mapping[group.id] = group.name;
       });
     }
-    
+
     return mapping;
   } catch (error) {
-    console.error('獲取組別映射失敗:', error);
+    console.error("獲取組別映射失敗:", error);
     return {};
   }
 };
@@ -740,51 +753,58 @@ const getGroupIdToNameMapping = async () => {
 // 批量獲取所有工讀生的額外工時
 const getAllWorkersAdditionalHours = async () => {
   try {
-    const response = await fetch(getApiUrl("/api/time-records/additional-hours"), {
-      headers: {
-        "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
-      }
-    });
-    
+    const response = await fetch(
+      getApiUrl("/api/time-records/additional-hours"),
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        },
+      },
+    );
+
     if (!response.ok) {
-      console.warn('批量獲取額外工時API不可用，使用預設值0');
+      console.warn("批量獲取額外工時API不可用，使用預設值0");
       return {};
     }
-    
+
     const result = await response.json();
     if (result.success && result.data) {
       // 轉換為 workerId -> additionalHours 的映射
       const hoursMap = {};
-      result.data.forEach(item => {
+      result.data.forEach((item) => {
         hoursMap[item.workerId] = item.totalHours || 0;
       });
       return hoursMap;
     }
-    
+
     return {};
   } catch (error) {
-    console.warn('批量獲取額外工時失敗，使用預設值:', error);
+    console.warn("批量獲取額外工時失敗，使用預設值:", error);
     return {};
   }
 };
 
-// 馬卡龍色系組別顏色 - 高對比度版本  
+// 馬卡龍色系組別顏色 - 高對比度版本
 const macaronColors = [
-  { bg: '#FFE1E6', text: '#B91C7C' }, // 櫻花粉配深紫紅
-  { bg: '#E6F7ED', text: '#059669' }, // 薄荷綠配深綠
-  { bg: '#E1F0FF', text: '#1E40AF' }, // 天空藍配深藍  
-  { bg: '#FEF3C7', text: '#D97706' }, // 檸檬黃配橙
-  { bg: '#FFE4D1', text: '#EA580C' }, // 蜜桃橙配深橙
-  { bg: '#F3E8FF', text: '#7C3AED' }, // 薰衣草紫配深紫
-  { bg: '#ECFDF5', text: '#047857' }, // 青草綠配深綠
-  { bg: '#FDEAEF', text: '#BE185D' }, // 玫瑰粉配深紫紅
-  { bg: '#E0F2FE', text: '#0369A1' }, // 青藍色配深青
-  { bg: '#F7FEE7', text: '#65A30D' }, // 淺綠黃配深綠
+  { bg: "#FFE1E6", text: "#B91C7C" }, // 櫻花粉配深紫紅
+  { bg: "#E6F7ED", text: "#059669" }, // 薄荷綠配深綠
+  { bg: "#E1F0FF", text: "#1E40AF" }, // 天空藍配深藍
+  { bg: "#FEF3C7", text: "#D97706" }, // 檸檬黃配橙
+  { bg: "#FFE4D1", text: "#EA580C" }, // 蜜桃橙配深橙
+  { bg: "#F3E8FF", text: "#7C3AED" }, // 薰衣草紫配深紫
+  { bg: "#ECFDF5", text: "#047857" }, // 青草綠配深綠
+  { bg: "#FDEAEF", text: "#BE185D" }, // 玫瑰粉配深紫紅
+  { bg: "#E0F2FE", text: "#0369A1" }, // 青藍色配深青
+  { bg: "#F7FEE7", text: "#65A30D" }, // 淺綠黃配深綠
 ];
 
 const getGroupTagStyle = (groupName: string) => {
-  if (!groupName) return { backgroundColor: macaronColors[0].bg, color: macaronColors[0].text };
-  
+  if (!groupName)
+    return {
+      backgroundColor: macaronColors[0].bg,
+      color: macaronColors[0].text,
+    };
+
   // 使用組別名稱生成一致的顏色索引
   let hash = 0;
   for (let i = 0; i < groupName.length; i++) {
@@ -792,12 +812,12 @@ const getGroupTagStyle = (groupName: string) => {
   }
   const index = Math.abs(hash) % macaronColors.length;
   const colors = macaronColors[index];
-  
+
   return {
     backgroundColor: colors.bg,
     color: colors.text,
     border: `1px solid ${colors.text}20`,
-    fontWeight: '500'
+    fontWeight: "500",
   };
 };
 
@@ -822,7 +842,7 @@ const handleFileChange = (file: any) => {
     for (let i = 1; i < rows.length; i++) {
       const r = rows[i];
       console.log(`Excel 第${i}行原始數據:`, r);
-      
+
       if (!r || r.length === 0) {
         console.log(`跳過空行 ${i}`);
         continue;
@@ -853,7 +873,7 @@ const handleFileChange = (file: any) => {
         group: !!group,
         floor: !!floor,
         hourlyWage: hourlyWage > 0,
-        valid: workerData.valid
+        valid: workerData.valid,
       });
 
       result.push(workerData);
@@ -872,9 +892,9 @@ const validCount = computed(
 const confirmImport = async () => {
   importing.value = true;
   const validData = previewData.value.filter((i) => i.valid);
-  
+
   // 清理數據格式，移除不需要的欄位
-  const cleanData = validData.map(item => ({
+  const cleanData = validData.map((item) => ({
     workerNumber: item.workerNumber,
     name: item.name,
     group: item.group,
@@ -902,12 +922,12 @@ const confirmImport = async () => {
 // 工時
 const showAdjustHours = (worker: Worker) => {
   currentWorker.value = worker;
-  
+
   // 在手機模式下設置當前編輯的工讀生
   if (isMobile.value) {
     currentEditingWorker.value = worker;
   }
-  
+
   hoursForm.type = "add";
   hoursForm.hours = 1;
   hoursForm.reason = "";
@@ -922,26 +942,28 @@ const submitHoursAdjust = async () => {
   }
 
   try {
-    const adjustedHours = hoursForm.type === "add" ? hoursForm.hours : -hoursForm.hours;
-    
+    const adjustedHours =
+      hoursForm.type === "add" ? hoursForm.hours : -hoursForm.hours;
+
     await workersStore.addTimeRecord({
       workerId: currentWorker.value.id,
       date: new Date().toISOString().split("T")[0],
       hours: adjustedHours,
       description: hoursForm.reason,
       adjustmentType: hoursForm.type,
-      workerName: currentWorker.value.name
+      workerName: currentWorker.value.name,
     });
-    
-    ElMessage.success(`工時調整成功: ${hoursForm.type === "add" ? "+" : "-"}${Math.abs(adjustedHours)}小時`);
+
+    ElMessage.success(
+      `工時調整成功: ${hoursForm.type === "add" ? "+" : "-"}${Math.abs(adjustedHours)}小時`,
+    );
     showHoursDialog.value = false;
     if (isMobile.value) {
       currentEditingWorker.value = null;
     }
-    
+
     // 重新獲取所有工讀生數據以確保更新正確
     await fetchWorkers();
-    
   } catch (error) {
     ElMessage.error("工時調整失敗: " + (error.message || error));
   }
@@ -956,25 +978,26 @@ const showAddWorker = () => {
 
 const showEditWorker = (worker: Worker) => {
   isEditing.value = true;
-  
+
   // 在手機模式下設置當前編輯的工讀生
   if (isMobile.value) {
     currentEditingWorker.value = worker;
   }
-  
+
   console.log("編輯工讀生 - 原始數據:", worker);
-  
+
   // 確保所有字段都正確映射，處理可能的字段名差異
   workerForm.id = worker.id || worker._id || "";
   workerForm.workerNumber = worker.workerNumber || worker.worker_number || "";
   workerForm.name = worker.name || "";
   workerForm.group = worker.group || "";
   workerForm.floor = worker.floor || "";
-  workerForm.hourlyWage = Number(worker.hourlyWage || worker.hourly_wage) || 200;
+  workerForm.hourlyWage =
+    Number(worker.hourlyWage || worker.hourly_wage) || 200;
   workerForm.baseHours = Number(worker.baseHours || worker.base_hours) || 8;
-  
+
   console.log("編輯工讀生 - 表單數據:", workerForm);
-  
+
   showWorkerDialog.value = true;
 };
 
@@ -1072,14 +1095,16 @@ const showBatchAdjustAccumulatedHours = () => {
     return;
   }
   // 重置表單
-  batchAccumulatedHoursForm.type = 'add';
+  batchAccumulatedHoursForm.type = "add";
   batchAccumulatedHoursForm.hours = 1;
-  batchAccumulatedHoursForm.reason = '';
+  batchAccumulatedHoursForm.reason = "";
   showBatchAccumulatedHoursDialog.value = true;
 };
 
 const removeFromBatchSelection = (workerId: string) => {
-  selectedWorkers.value = selectedWorkers.value.filter(w => w.id !== workerId);
+  selectedWorkers.value = selectedWorkers.value.filter(
+    (w) => w.id !== workerId,
+  );
   if (selectedWorkers.value.length === 0) {
     showBatchAccumulatedHoursDialog.value = false;
   }
@@ -1090,7 +1115,7 @@ const confirmBatchDelete = async () => {
     ElMessage.warning("請先選擇要刪除的工讀生");
     return;
   }
-  
+
   try {
     await ElMessageBox.confirm(
       `確定要刪除選中的 ${selectedWorkers.value.length} 位工讀生嗎？此操作無法撤銷。`,
@@ -1099,13 +1124,13 @@ const confirmBatchDelete = async () => {
         confirmButtonText: "確定",
         cancelButtonText: "取消",
         type: "warning",
-      }
+      },
     );
-    
+
     for (const worker of selectedWorkers.value) {
       await workersStore.deleteWorker(worker.id);
     }
-    
+
     ElMessage.success(`成功刪除 ${selectedWorkers.value.length} 位工讀生`);
     selectedWorkers.value = [];
     fetchWorkers();
@@ -1121,11 +1146,13 @@ const submitBatchHours = async () => {
     for (const worker of selectedWorkers.value) {
       await workersStore.updateWorker(worker.id, {
         ...worker,
-        baseHours: batchHoursForm.baseHours
+        baseHours: batchHoursForm.baseHours,
       });
     }
-    
-    ElMessage.success(`成功更新 ${selectedWorkers.value.length} 位工讀生的基本時數`);
+
+    ElMessage.success(
+      `成功更新 ${selectedWorkers.value.length} 位工讀生的基本時數`,
+    );
     showBatchHoursDialog.value = false;
     selectedWorkers.value = [];
     fetchWorkers();
@@ -1140,7 +1167,7 @@ const submitBatchAccumulatedHours = async () => {
     ElMessage.warning("請填寫調整原因");
     return;
   }
-  
+
   if (batchAccumulatedHoursForm.hours <= 0) {
     ElMessage.warning("調整時數必須大於0");
     return;
@@ -1148,36 +1175,39 @@ const submitBatchAccumulatedHours = async () => {
 
   try {
     submitting.value = true;
-    
+
     // 批次調整每個選中的工讀生
     for (const worker of selectedWorkerDetails.value) {
-      const response = await fetch(`${getApiUrl()}/workers/${worker.id}/additional-hours`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${getApiUrl()}/workers/${worker.id}/additional-hours`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            type: batchAccumulatedHoursForm.type,
+            hours: batchAccumulatedHoursForm.hours,
+            reason: `[批次調整] ${batchAccumulatedHoursForm.reason}`,
+          }),
         },
-        body: JSON.stringify({
-          type: batchAccumulatedHoursForm.type,
-          hours: batchAccumulatedHoursForm.hours,
-          reason: `[批次調整] ${batchAccumulatedHoursForm.reason}`,
-        }),
-      });
+      );
 
       if (!response.ok) {
         const result = await response.json();
         throw new Error(result.message || `調整 ${worker.name} 的工時失敗`);
       }
     }
-    
-    const actionText = batchAccumulatedHoursForm.type === 'add' ? '增加' : '減少';
+
+    const actionText =
+      batchAccumulatedHoursForm.type === "add" ? "增加" : "減少";
     ElMessage.success(
-      `成功為 ${selectedWorkerDetails.value.length} 位工讀生${actionText} ${batchAccumulatedHoursForm.hours} 小時`
+      `成功為 ${selectedWorkerDetails.value.length} 位工讀生${actionText} ${batchAccumulatedHoursForm.hours} 小時`,
     );
-    
+
     showBatchAccumulatedHoursDialog.value = false;
     selectedWorkers.value = [];
     await fetchWorkers(); // 重新載入數據
-    
   } catch (error: any) {
     ElMessage.error("批次調整工時失敗: " + (error.message || error));
   } finally {
@@ -1190,11 +1220,13 @@ const submitBatchWage = async () => {
     for (const worker of selectedWorkers.value) {
       await workersStore.updateWorker(worker.id, {
         ...worker,
-        hourlyWage: batchWageForm.hourlyWage
+        hourlyWage: batchWageForm.hourlyWage,
       });
     }
-    
-    ElMessage.success(`成功更新 ${selectedWorkers.value.length} 位工讀生的時薪`);
+
+    ElMessage.success(
+      `成功更新 ${selectedWorkers.value.length} 位工讀生的時薪`,
+    );
     showBatchWageDialog.value = false;
     selectedWorkers.value = [];
     fetchWorkers();
@@ -1287,18 +1319,18 @@ onMounted(async () => {
   .workers-container {
     padding: 10px;
   }
-  
+
   /* 當有固定編輯欄位時，為頁面內容添加頂部邊距 */
   .workers-container.has-fixed-editing {
     padding-top: 100px;
   }
-  
+
   .page-header {
     flex-direction: column;
     gap: 10px;
     align-items: flex-start;
   }
-  
+
   .actions {
     width: 100%;
     justify-content: flex-end;

@@ -942,6 +942,7 @@ const confirmImport = async () => {
     name: item.name,
     group: item.group,
     floor: item.floor,
+    job: item.job, // 新增工作欄位
     hourlyWage: item.hourlyWage,
     baseHours: item.baseHours || 8,
   }));

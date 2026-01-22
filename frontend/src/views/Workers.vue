@@ -17,9 +17,52 @@
       </div>
     </div>
 
+    <!-- 批次操作 -->
+    <el-card v-if="selectedWorkers.length > 0" style="margin-bottom: 10px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span>已選擇 {{ selectedWorkers.length }} 位工讀生</span>
+        <el-button
+          size="small"
+          type="warning"
+          @click="showBatchEditHours"
+        >
+          批次編輯基本時數
+        </el-button>
+        <el-button
+          size="small"
+          type="primary"
+          @click="showBatchEditWage"
+        >
+          批次編輯時薪
+        </el-button>
+        <el-button
+          size="small"
+          type="danger"
+          @click="confirmBatchDelete"
+        >
+          批次刪除
+        </el-button>
+        <el-button
+          size="small"
+          @click="clearSelection"
+        >
+          清除選擇
+        </el-button>
+      </div>
+    </el-card>
+
     <!-- Table -->
     <el-card>
-      <el-table :data="workers" stripe v-loading="loading">
+      <el-table 
+        :data="workers" 
+        stripe 
+        v-loading="loading"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column 
+          type="selection" 
+          width="55"
+        />
         <el-table-column prop="workerNumber" label="編號" width="80" />
         <el-table-column prop="name" label="姓名" width="120" />
         <el-table-column prop="group" label="組別" width="100" />
@@ -208,6 +251,64 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 批次編輯基本時數對話框 -->
+    <el-dialog
+      v-model="showBatchHoursDialog"
+      title="批次編輯基本時數"
+      width="400px"
+    >
+      <div style="margin-bottom: 15px;">
+        <span>即將為 {{ selectedWorkers.length }} 位工讀生設定統一的基本時數</span>
+      </div>
+      
+      <el-form label-width="80px">
+        <el-form-item label="基本時數">
+          <el-input-number
+            v-model="batchHoursForm.baseHours"
+            :min="1"
+            :max="12"
+            style="width: 100%"
+          />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="showBatchHoursDialog = false">取消</el-button>
+        <el-button type="primary" @click="submitBatchHours">
+          確定更新
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 批次編輯時薪對話框 -->
+    <el-dialog
+      v-model="showBatchWageDialog"
+      title="批次編輯時薪"
+      width="400px"
+    >
+      <div style="margin-bottom: 15px;">
+        <span>即將為 {{ selectedWorkers.length }} 位工讀生設定統一的時薪</span>
+      </div>
+      
+      <el-form label-width="80px">
+        <el-form-item label="時薪">
+          <el-input-number
+            v-model="batchWageForm.hourlyWage"
+            :min="100"
+            :step="5"
+            style="width: 100%"
+          />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="showBatchWageDialog = false">取消</el-button>
+        <el-button type="primary" @click="submitBatchWage">
+          確定更新
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -271,6 +372,17 @@ const workerRules = {
   hourlyWage: [{ required: true, message: "請輸入時薪", trigger: "blur" }],
   baseHours: [{ required: true, message: "請輸入基本時數", trigger: "blur" }],
 };
+
+// 批次編輯相關變數
+const selectedWorkers = ref<Worker[]>([]);
+const showBatchHoursDialog = ref(false);
+const showBatchWageDialog = ref(false);
+const batchHoursForm = reactive({
+  baseHours: 8,
+});
+const batchWageForm = reactive({
+  hourlyWage: 200,
+});
 
 const fetchWorkers = async () => {
   loading.value = true;
@@ -494,6 +606,98 @@ const confirmDelete = async (worker: Worker) => {
     if (error !== "cancel") {
       ElMessage.error("刪除失敗: " + error.message);
     }
+  }
+};
+
+// 批次編輯相關函數
+const handleSelectionChange = (selection: Worker[]) => {
+  selectedWorkers.value = selection;
+};
+
+const clearSelection = () => {
+  selectedWorkers.value = [];
+};
+
+const showBatchEditHours = () => {
+  if (selectedWorkers.value.length === 0) {
+    ElMessage.warning("請先選擇要編輯的工讀生");
+    return;
+  }
+  showBatchHoursDialog.value = true;
+};
+
+const showBatchEditWage = () => {
+  if (selectedWorkers.value.length === 0) {
+    ElMessage.warning("請先選擇要編輯的工讀生");
+    return;
+  }
+  showBatchWageDialog.value = true;
+};
+
+const confirmBatchDelete = async () => {
+  if (selectedWorkers.value.length === 0) {
+    ElMessage.warning("請先選擇要刪除的工讀生");
+    return;
+  }
+  
+  try {
+    await ElMessageBox.confirm(
+      `確定要刪除選中的 ${selectedWorkers.value.length} 位工讀生嗎？此操作無法撤銷。`,
+      "批次刪除確認",
+      {
+        confirmButtonText: "確定",
+        cancelButtonText: "取消",
+        type: "warning",
+      }
+    );
+    
+    for (const worker of selectedWorkers.value) {
+      await workersStore.deleteWorker(worker.id);
+    }
+    
+    ElMessage.success(`成功刪除 ${selectedWorkers.value.length} 位工讀生`);
+    selectedWorkers.value = [];
+    fetchWorkers();
+  } catch (error: any) {
+    if (error !== "cancel") {
+      ElMessage.error("批次刪除失敗: " + (error.message || error));
+    }
+  }
+};
+
+const submitBatchHours = async () => {
+  try {
+    for (const worker of selectedWorkers.value) {
+      await workersStore.updateWorker(worker.id, {
+        ...worker,
+        baseHours: batchHoursForm.baseHours
+      });
+    }
+    
+    ElMessage.success(`成功更新 ${selectedWorkers.value.length} 位工讀生的基本時數`);
+    showBatchHoursDialog.value = false;
+    selectedWorkers.value = [];
+    fetchWorkers();
+  } catch (error: any) {
+    ElMessage.error("批次更新時數失敗: " + (error.message || error));
+  }
+};
+
+const submitBatchWage = async () => {
+  try {
+    for (const worker of selectedWorkers.value) {
+      await workersStore.updateWorker(worker.id, {
+        ...worker,
+        hourlyWage: batchWageForm.hourlyWage
+      });
+    }
+    
+    ElMessage.success(`成功更新 ${selectedWorkers.value.length} 位工讀生的時薪`);
+    showBatchWageDialog.value = false;
+    selectedWorkers.value = [];
+    fetchWorkers();
+  } catch (error: any) {
+    ElMessage.error("批次更新時薪失敗: " + (error.message || error));
   }
 };
 

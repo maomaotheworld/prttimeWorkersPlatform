@@ -6,7 +6,7 @@ const routes = [
     name: "Login",
     component: () => import("../views/Login.vue"),
     meta: {
-      title: "?�入",
+      title: "登入",
       requiresAuth: false,
       hideFromGuests: false,
     },
@@ -16,7 +16,7 @@ const routes = [
     name: "Home",
     component: () => import("../views/Home.vue"),
     meta: {
-      title: "首�?",
+      title: "首頁",
       requiresAuth: true,
       allowedRoles: ["admin", "leader", "reader"],
     },
@@ -56,7 +56,7 @@ const routes = [
     name: "Attendance",
     component: () => import("../views/Attendance.vue"),
     meta: {
-      title: "?�卡系統",
+      title: "打卡系統",
       requiresAuth: true,
       allowedRoles: ["admin", "leader"],
       requiredPermission: "canClockIn",
@@ -67,7 +67,7 @@ const routes = [
     name: "TimeRecords",
     component: () => import("../views/TimeRecords.vue"),
     meta: {
-      title: "工�?記�?",
+      title: "工時記錄",
       requiresAuth: true,
       allowedRoles: ["admin", "leader", "reader"],
     },
@@ -77,7 +77,7 @@ const routes = [
     name: "Salary",
     component: () => import("../views/Salary.vue"),
     meta: {
-      title: "?��?管�?",
+      title: "薪資管理",
       requiresAuth: true,
       allowedRoles: ["admin", "leader", "reader"],
     },
@@ -87,7 +87,7 @@ const routes = [
     name: "ActivityLogs",
     component: () => import("../views/ActivityLogs.vue"),
     meta: {
-      title: "活�??��?",
+      title: "活動日誌",
       requiresAuth: true,
       allowedRoles: ["admin", "leader", "reader"],
     },
@@ -97,7 +97,7 @@ const routes = [
     name: "UserManagement",
     component: () => import("../views/UserManagement.vue"),
     meta: {
-      title: "?�戶管�?",
+      title: "用戶管理",
       requiresAuth: true,
       allowedRoles: ["admin"],
       requiredPermission: "canManageUsers",

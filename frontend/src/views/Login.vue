@@ -56,7 +56,7 @@
             <el-icon class="mr-2">
               <Key />
             </el-icon>
-            ?�入
+            登入
           </el-button>
         </el-form-item>
       </el-form>
@@ -109,7 +109,7 @@ import { useAuthStore } from "../stores/auth";
 const router = useRouter();
 const authStore = useAuthStore();
 
-// 表單?��?
+// 表單資料
 const loginForm = reactive({
   username: "",
   password: "",
@@ -325,7 +325,7 @@ onMounted(() => {
   margin-right: 8px;
 }
 
-/* ?��??�適??*/
+/* 響應式適配 */
 @media (max-width: 480px) {
   .login-container {
     padding: 15px;
@@ -346,7 +346,7 @@ onMounted(() => {
   }
 }
 
-/* Element Plus �??覆�? */
+/* Element Plus 樣式覆蓋 */
 .login-form :deep(.el-input) {
   --el-input-border-radius: 12px;
   margin-bottom: 8px;

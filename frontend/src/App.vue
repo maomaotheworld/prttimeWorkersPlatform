@@ -16,7 +16,7 @@
               <span>工讀生管理平台</span>
             </div>
             <div class="header-actions">
-              <div v-if="authStore.isAuthenticated" class="user-info">
+              <div v-if="authStore.isLoggedIn" class="user-info">
                 <el-avatar :size="32" class="user-avatar">
                   {{ authStore.displayName[0] }}
                 </el-avatar>
@@ -26,7 +26,7 @@
                 </el-tag>
               </div>
               <div class="action-buttons">
-                <el-button v-if="authStore.isAuthenticated" type="danger" @click="handleLogout" plain>
+                <el-button v-if="authStore.isLoggedIn" type="danger" @click="handleLogout" plain>
                   <el-icon><SwitchButton /></el-icon>
                   登出
                 </el-button>
@@ -107,7 +107,7 @@
         <!-- 移動端導航 -->
         <el-header v-if="isMobile && showNavigation" height="50px" class="mobile-header">
           <div class="mobile-header-content">
-            <div v-if="authStore.isAuthenticated" class="mobile-user-info">
+            <div v-if="authStore.isLoggedIn" class="mobile-user-info">
               <el-avatar :size="24">{{ authStore.displayName[0] }}</el-avatar>
               <span class="mobile-user-name">{{ authStore.displayName }}</span>
               <el-tag :type="userRoleTagType" size="small">{{
@@ -118,7 +118,7 @@
               <span class="mobile-user-name">訪客模式</span>
             </div>
             <el-button
-              v-if="authStore.isAuthenticated"
+              v-if="authStore.isLoggedIn"
               type="danger"
               size="small"
               @click="handleLogout"
@@ -188,11 +188,11 @@ const isMobile = computed(() => windowWidth.value <= 768);
 const showNavigation = computed(() => {
   const currentRoute = router.currentRoute.value;
   // 如果是不需要認證的頁面，總是顯示導航
-  if (currentRoute.meta.requiresAuth === false) {
+  if (currentRoute.meta?.requiresAuth === false) {
     return true;
   }
   // 對於需要認證的頁面，檢查是否已認證
-  return authStore.isAuthenticated;
+  return authStore.isLoggedIn;
 });
 
 // 用戶角色顯示
@@ -263,7 +263,7 @@ const visibleMobileNavs = computed(() => {
     }
     
     // 如果用戶沒有認證，只顯示不需要認證的項目
-    if (!authStore.isAuthenticated) {
+    if (!authStore.isLoggedIn) {
       return false;
     }
     

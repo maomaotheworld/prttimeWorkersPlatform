@@ -1264,7 +1264,7 @@ app.post(
   "/api/time-records/additional-hours",
   authenticateToken,
   (req, res) => {
-    const { workerId, date, hours, reason, adjustmentType } = req.body;
+    const { workerId, date, hours, reason, adjustmentType, adjustedBy } = req.body;
 
     if (
       !workerId ||
@@ -1312,9 +1312,11 @@ app.post(
         moment(r.date).format("YYYY-MM-DD") === targetDate,
     );
 
-    // 獲取操作者資訊
+    // 獲取操作者資訊 - 優先使用前端傳來的信息
     const operatorId = req.user ? req.user.id : "system";
-    const operatorName = req.user ? req.user.name || req.user.username : "系統";
+    const operatorName = adjustedBy || (req.user ? req.user.name || req.user.username : "系統");
+
+    console.log("操作者信息:", { operatorId, operatorName, adjustedBy, userFromToken: req.user });
 
     // 創建調整記錄
     const adjustmentRecord = {
@@ -1337,6 +1339,8 @@ app.post(
         totalHours: 0,
         additionalHours: actualHours,
         adjustments: [adjustmentRecord], // 儲存所有調整記錄
+        adjustedBy: operatorName, // 最新的操作者
+        adjustedAt: new Date().toISOString(), // 最新的操作時間
         createdAt: new Date().toISOString(),
       };
       timeRecords.push(record);
@@ -1355,6 +1359,10 @@ app.post(
       // 疊加時數
       timeRecords[recordIndex].additionalHours =
         (timeRecords[recordIndex].additionalHours || 0) + actualHours;
+      
+      // 更新最新的操作者信息  
+      timeRecords[recordIndex].adjustedBy = operatorName;
+      timeRecords[recordIndex].adjustedAt = new Date().toISOString();
 
       record = timeRecords[recordIndex];
     }

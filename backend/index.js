@@ -900,6 +900,116 @@ app.delete("/api/workers/:id", (req, res) => {
   });
 });
 
+// 調整個別工讀生的累積工時
+app.post("/api/workers/:id/additional-hours", authenticateToken, (req, res) => {
+  const workerId = req.params.id;
+  const { type, hours, reason } = req.body;
+
+  // 檢查工讀生是否存在
+  const worker = workers.find((w) => w.id === workerId);
+  if (!worker) {
+    return res.status(404).json({
+      success: false,
+      message: "工讀生不存在",
+    });
+  }
+
+  // 驗證輸入
+  if (!type || !["add", "subtract"].includes(type)) {
+    return res.status(400).json({
+      success: false,
+      message: "調整類型必須是 add 或 subtract",
+    });
+  }
+
+  if (!hours || isNaN(hours) || hours <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "調整時數必須是正數",
+    });
+  }
+
+  if (!reason || reason.trim() === "") {
+    return res.status(400).json({
+      success: false,
+      message: "調整原因不能為空",
+    });
+  }
+
+  const adjustHours = type === "add" ? parseFloat(hours) : -parseFloat(hours);
+  const today = new Date().toISOString().split("T")[0];
+
+  // 查找今日記錄
+  let record = timeRecords.find(
+    (r) => r.workerId === workerId && r.date.startsWith(today)
+  );
+
+  const operatorId = req.user?.userId || "system";
+  const operatorName = req.user?.username || "系統";
+
+  // 創建調整記錄
+  const adjustmentRecord = {
+    id: uuidv4(),
+    hours: adjustHours,
+    reason: reason,
+    operatorId: operatorId,
+    operatorName: operatorName,
+    createdAt: new Date().toISOString(),
+  };
+
+  if (!record) {
+    // 如果沒有今日記錄，創建一個新的記錄
+    record = {
+      id: uuidv4(),
+      workerId,
+      date: new Date().toISOString(),
+      clockIn: null,
+      clockOut: null,
+      totalHours: 0,
+      additionalHours: adjustHours,
+      adjustments: [adjustmentRecord],
+      adjustedBy: operatorName,
+      adjustedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+    };
+    timeRecords.push(record);
+  } else {
+    // 更新現有記錄
+    const recordIndex = timeRecords.findIndex((r) => r.id === record.id);
+    timeRecords[recordIndex].additionalHours += adjustHours;
+    
+    // 添加調整記錄
+    if (!timeRecords[recordIndex].adjustments) {
+      timeRecords[recordIndex].adjustments = [];
+    }
+    timeRecords[recordIndex].adjustments.push(adjustmentRecord);
+    timeRecords[recordIndex].adjustedBy = operatorName;
+    timeRecords[recordIndex].adjustedAt = new Date().toISOString();
+  }
+
+  saveTimeRecords();
+
+  // 記錄活動日誌
+  const actionText = type === "add" ? "增加" : "減少";
+  logActivity(
+    "hours-adjust",
+    "worker",
+    workerId,
+    worker.name,
+    `${actionText}累積工時 ${Math.abs(adjustHours)} 小時，原因：${reason}`
+  );
+
+  res.json({
+    success: true,
+    data: {
+      workerId,
+      adjustmentHours: adjustHours,
+      newTotalAdditionalHours: record.additionalHours,
+    },
+    message: `成功${actionText} ${Math.abs(adjustHours)} 小時`,
+  });
+});
+
 // 批次更新工讀生薪資時數
 app.put("/api/workers/batch-update-wage", (req, res) => {
   const { workerIds, baseHourlyWage, baseWorkingHours } = req.body;

@@ -30,6 +30,13 @@
         </el-button>
         <el-button
           size="small"
+          type="info"
+          @click="showBatchAdjustAccumulatedHours"
+        >
+          批次調整累積工時
+        </el-button>
+        <el-button
+          size="small"
           type="primary"
           @click="showBatchEditWage"
         >
@@ -322,6 +329,75 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 批次調整累積工時對話框 -->
+    <el-dialog
+      v-model="showBatchAccumulatedHoursDialog"
+      title="批次調整累積工時"
+      width="500px"
+    >
+      <el-alert
+        title="注意"
+        type="warning"
+        :closable="false"
+        style="margin-bottom: 20px"
+      >
+        此功能將調整所選工讀生的累積工時，會新增工時記錄並記錄操作日誌
+      </el-alert>
+
+      <el-form>
+        <el-form-item label="調整類型">
+          <el-radio-group v-model="batchAccumulatedHoursForm.type">
+            <el-radio label="add">增加工時</el-radio>
+            <el-radio label="subtract">減少工時</el-radio>
+          </el-radio-group>
+        </el-form-item>
+
+        <el-form-item label="調整時數">
+          <el-input-number
+            v-model="batchAccumulatedHoursForm.hours"
+            :min="0.5"
+            :step="0.5"
+            style="width: 100%"
+          />
+          <span style="color: #909399; font-size: 12px; margin-left: 8px">
+            小時
+          </span>
+        </el-form-item>
+
+        <el-form-item label="調整原因">
+          <el-input
+            v-model="batchAccumulatedHoursForm.reason"
+            type="textarea"
+            :rows="3"
+            placeholder="請說明調整原因，例如：補登漏打卡、活動加班、錯誤修正等"
+          />
+        </el-form-item>
+
+        <el-form-item label="影響工讀生">
+          <el-tag
+            v-for="worker in selectedWorkerDetails"
+            :key="worker.id"
+            style="margin: 2px"
+            closable
+            @close="removeFromBatchSelection(worker.id)"
+          >
+            {{ worker.number }} - {{ worker.name }}
+          </el-tag>
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="showBatchAccumulatedHoursDialog = false">取消</el-button>
+        <el-button 
+          type="primary" 
+          @click="submitBatchAccumulatedHours"
+          :loading="submitting"
+        >
+          確定調整
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -348,6 +424,12 @@ const workers = ref<Worker[]>([]);
 const loading = ref(false);
 
 const isMobile = computed(() => window.innerWidth <= 768);
+
+// 獲取選中工讀生的詳細資料
+const selectedWorkerDetails = computed(() => {
+  const workerIds = selectedWorkers.value.map(w => w.id);
+  return workers.value.filter(worker => workerIds.includes(worker.id));
+});
 
 // Excel
 const showImportDialog = ref(false);
@@ -391,11 +473,17 @@ const workerRules = {
 const selectedWorkers = ref<Worker[]>([]);
 const showBatchHoursDialog = ref(false);
 const showBatchWageDialog = ref(false);
+const showBatchAccumulatedHoursDialog = ref(false);
 const batchHoursForm = reactive({
   baseHours: 8,
 });
 const batchWageForm = reactive({
   hourlyWage: 200,
+});
+const batchAccumulatedHoursForm = reactive({
+  type: 'add',
+  hours: 1,
+  reason: '',
 });
 
 const fetchWorkers = async () => {
@@ -777,6 +865,25 @@ const showBatchEditWage = () => {
   showBatchWageDialog.value = true;
 };
 
+const showBatchAdjustAccumulatedHours = () => {
+  if (selectedWorkers.value.length === 0) {
+    ElMessage.warning("請先選擇要調整的工讀生");
+    return;
+  }
+  // 重置表單
+  batchAccumulatedHoursForm.type = 'add';
+  batchAccumulatedHoursForm.hours = 1;
+  batchAccumulatedHoursForm.reason = '';
+  showBatchAccumulatedHoursDialog.value = true;
+};
+
+const removeFromBatchSelection = (workerId: string) => {
+  selectedWorkers.value = selectedWorkers.value.filter(w => w.id !== workerId);
+  if (selectedWorkers.value.length === 0) {
+    showBatchAccumulatedHoursDialog.value = false;
+  }
+};
+
 const confirmBatchDelete = async () => {
   if (selectedWorkers.value.length === 0) {
     ElMessage.warning("請先選擇要刪除的工讀生");
@@ -823,6 +930,57 @@ const submitBatchHours = async () => {
     fetchWorkers();
   } catch (error: any) {
     ElMessage.error("批次更新時數失敗: " + (error.message || error));
+  }
+};
+
+const submitBatchAccumulatedHours = async () => {
+  // 表單驗證
+  if (!batchAccumulatedHoursForm.reason.trim()) {
+    ElMessage.warning("請填寫調整原因");
+    return;
+  }
+  
+  if (batchAccumulatedHoursForm.hours <= 0) {
+    ElMessage.warning("調整時數必須大於0");
+    return;
+  }
+
+  try {
+    submitting.value = true;
+    
+    // 批次調整每個選中的工讀生
+    for (const worker of selectedWorkerDetails.value) {
+      const response = await fetch(`${getApiUrl()}/workers/${worker.id}/additional-hours`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: batchAccumulatedHoursForm.type,
+          hours: batchAccumulatedHoursForm.hours,
+          reason: `[批次調整] ${batchAccumulatedHoursForm.reason}`,
+        }),
+      });
+
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.message || `調整 ${worker.name} 的工時失敗`);
+      }
+    }
+    
+    const actionText = batchAccumulatedHoursForm.type === 'add' ? '增加' : '減少';
+    ElMessage.success(
+      `成功為 ${selectedWorkerDetails.value.length} 位工讀生${actionText} ${batchAccumulatedHoursForm.hours} 小時`
+    );
+    
+    showBatchAccumulatedHoursDialog.value = false;
+    selectedWorkers.value = [];
+    await fetchWorkers(); // 重新載入數據
+    
+  } catch (error: any) {
+    ElMessage.error("批次調整工時失敗: " + (error.message || error));
+  } finally {
+    submitting.value = false;
   }
 };
 

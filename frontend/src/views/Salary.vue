@@ -335,9 +335,25 @@
 
         <el-divider />
 
-        <el-form-item label="本月工作時數">
+        <el-form-item label="實際工作時數">
           <el-input
-            :value="currentPeriodHours + ' 小時'"
+            :value="actualWorkHours + ' 小時'"
+            disabled
+            style="width: 100%"
+          />
+        </el-form-item>
+
+        <el-form-item label="基本時數保證">
+          <el-input
+            :value="guaranteedHours + ' 小時'"
+            disabled
+            style="width: 100%"
+          />
+        </el-form-item>
+
+        <el-form-item label="薪資計算基準">
+          <el-input
+            :value="effectiveHours + ' 小時（' + salaryCalculationMethod + '）'"
             disabled
             style="width: 100%"
           />
@@ -486,6 +502,39 @@ const currentPeriodHours = computed(() => {
   return regular + additional;
 });
 
+// 實際工作時數（只包含正常工時）
+const actualWorkHours = computed(() => {
+  if (!salaryData.value) return 0;
+  return salaryData.value.workTime?.totalRegularHours || 0;
+});
+
+// 基本時數保證（工作天數 × 基本時數）
+const guaranteedHours = computed(() => {
+  if (!salaryData.value || !totalSalaryForm.value.workerId) return 0;
+  const worker = workers.value.find(w => w.id === totalSalaryForm.value.workerId);
+  const workingDays = salaryData.value.workTime?.workingDays || 0;
+  const baseHours = worker?.baseWorkingHours || 0;
+  return workingDays * baseHours;
+});
+
+// 有效時數（取較大值）
+const effectiveHours = computed(() => {
+  return Math.max(actualWorkHours.value, guaranteedHours.value);
+});
+
+// 薪資計算方式
+const salaryCalculationMethod = computed(() => {
+  const actual = actualWorkHours.value;
+  const guaranteed = guaranteedHours.value;
+  if (actual > guaranteed) {
+    return "按實際工時";
+  } else if (guaranteed > 0) {
+    return "按基本時數保證";
+  } else {
+    return "按實際工時";
+  }
+});
+
 // 目前時薪
 const currentWage = computed(() => {
   if (!totalSalaryForm.value.workerId) return 0;
@@ -495,9 +544,15 @@ const currentWage = computed(() => {
   return worker ? worker.baseHourlyWage || 0 : 0;
 });
 
-// 目前預估薪資
+// 目前預估薪資（使用有效時數 + 額外工時）
 const currentEstimatedSalary = computed(() => {
-  return Math.round(currentPeriodHours.value * currentWage.value);
+  if (!salaryData.value) return 0;
+  
+  const baseSalary = effectiveHours.value * currentWage.value;
+  const additionalHours = salaryData.value.workTime?.totalAdditionalHours || 0;
+  const additionalSalary = additionalHours * currentWage.value;
+  
+  return Math.round(baseSalary + additionalSalary);
 });
 
 // 薪資調整金額（目標總薪資與目前預估薪資的差額）

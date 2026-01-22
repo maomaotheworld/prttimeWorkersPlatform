@@ -146,17 +146,17 @@
           label="姓名"
           :width="isMobile ? '80' : '120'"
         />
-        <el-table-column label="組別" width="100">
+        <el-table-column label="組別" :width="isMobile ? '60' : '100'">
           <template #default="{ row }">
             <el-tag :style="getGroupTagStyle(row.group)" effect="light">
               {{ row.group }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="floor" label="樓層" width="80" />
-        <el-table-column prop="hourlyWage" label="時薪" width="80" />
-        <el-table-column prop="baseHours" label="基本時數" width="90" />
-        <el-table-column label="累積工時" width="90">
+        <el-table-column prop="floor" label="樓層" :width="isMobile ? '50' : '80'" />
+        <el-table-column prop="hourlyWage" label="時薪" :width="isMobile ? '60' : '80'" />
+        <el-table-column prop="baseHours" label="基本時數" :width="isMobile ? '60' : '90'" />
+        <el-table-column label="累積工時" :width="isMobile ? '60' : '90'">
           <template #default="{ row }">
             {{ row.baseHours + (row.additionalHours || 0) }}
           </template>
@@ -1338,6 +1338,15 @@ onMounted(async () => {
   /* 當有固定編輯欄位時，為頁面內容添加頂部邊距 */
   .workers-container.has-fixed-editing {
     padding-top: 100px;
+  }
+
+  /* 確保表格可以橫向滾動 */
+  .el-table {
+    overflow-x: auto;
+  }
+  
+  .el-table .el-table__body-wrapper {
+    overflow-x: auto;
   }
 
   .page-header {

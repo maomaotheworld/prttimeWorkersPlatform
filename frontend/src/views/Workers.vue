@@ -616,18 +616,30 @@ const submitHoursAdjust = async () => {
   }
 
   try {
+    const adjustedHours = hoursForm.type === "add" ? hoursForm.hours : -hoursForm.hours;
+    
     await workersStore.addTimeRecord({
       workerId: currentWorker.value.id,
-      date: new Date().toISOString().split("T")[0], // 今天日期
-      hours: hoursForm.hours,
+      date: new Date().toISOString().split("T")[0],
+      hours: adjustedHours,
       description: hoursForm.reason,
       adjustmentType: hoursForm.type,
+      workerName: currentWorker.value.name
     });
-    ElMessage.success("工時調整成功");
+    
+    ElMessage.success(`工時調整成功: ${hoursForm.type === "add" ? "+" : "-"}${Math.abs(adjustedHours)}小時`);
     showHoursDialog.value = false;
-    fetchWorkers();
+    
+    // 立即更新該工讀生的額外工時
+    const workerIndex = workers.value.findIndex(w => w.id === currentWorker.value.id);
+    if (workerIndex !== -1) {
+      const newAdditionalHours = await getWorkerAdditionalHours(currentWorker.value.id);
+      workers.value[workerIndex].additionalHours = newAdditionalHours;
+      workers.value[workerIndex].totalHours = workers.value[workerIndex].baseHours + newAdditionalHours;
+    }
+    
   } catch (error) {
-    ElMessage.error("工時調整失敗: " + error.message);
+    ElMessage.error("工時調整失敗: " + (error.message || error));
   }
 };
 

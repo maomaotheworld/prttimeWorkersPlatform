@@ -113,6 +113,24 @@
           </template>
         </el-table-column>
 
+        <el-table-column label="操作者" width="120">
+          <template #default="{ row }">
+            <span v-if="row.adjustedBy" class="info-text">
+              {{ row.adjustedBy }}
+            </span>
+            <span v-else class="info-text">-</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="操作時間" width="140">
+          <template #default="{ row }">
+            <span v-if="row.adjustedAt" class="info-text">
+              {{ formatDateTime(row.adjustedAt) }}
+            </span>
+            <span v-else class="info-text">-</span>
+          </template>
+        </el-table-column>
+
         <el-table-column label="調整記錄" min-width="200">
           <template #default="{ row }">
             <div v-if="row.adjustments && row.adjustments.length > 0">
@@ -272,6 +290,7 @@ const additionalFormRef = ref();
 // 工具函數
 const formatDate = (date) => moment(date).format("MM/DD");
 const formatTime = (time) => moment(time).format("HH:mm");
+const formatDateTime = (datetime) => moment(datetime).format("MM/DD HH:mm");
 
 const getWorkerName = (workerId) => {
   const worker = workers.value.find((w) => w.id === workerId);
@@ -318,7 +337,22 @@ const fetchRecords = async () => {
     }
 
     // 後端返回格式：{ success: true, data: [...], message: "..." }
-    records.value = result.data || [];
+    const rawRecords = result.data || [];
+    
+    // 按日期和創建時間降序排序，新記錄在上
+    records.value = rawRecords.sort((a, b) => {
+      // 首先按日期降序排序
+      const dateComparison = new Date(b.date) - new Date(a.date);
+      if (dateComparison !== 0) {
+        return dateComparison;
+      }
+      
+      // 如果日期相同，按創建時間降序排序
+      const createdAtA = new Date(a.createdAt || a.date);
+      const createdAtB = new Date(b.createdAt || b.date);
+      return createdAtB - createdAtA;
+    });
+    
   } catch (error) {
     console.error("載入工作記錄失敗:", error);
     ElMessage.error(error.message || "載入工作記錄失敗");

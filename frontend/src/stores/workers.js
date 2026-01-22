@@ -305,6 +305,9 @@ export const useWorkersStore = defineStore("workers", () => {
       // 從localStorage 獲取 token（用於身份驗證）
       const token = localStorage.getItem("auth_token") || "";
 
+      // 獲取當前登入用戶信息
+      const userInfo = JSON.parse(localStorage.getItem("user") || "{}");
+      
       const response = await fetch(
         getApiUrl("/api/time-records/additional-hours"),
         {
@@ -315,10 +318,13 @@ export const useWorkersStore = defineStore("workers", () => {
           },
           body: JSON.stringify({
             workerId: timeRecord.workerId,
+            workerName: timeRecord.workerName,
             date: timeRecord.date,
-            hours: Math.abs(timeRecord.hours),
+            hours: timeRecord.hours, // 已經處理正負號
             reason: timeRecord.description,
-            adjustmentType: timeRecord.adjustmentType || "add", // 預設調整類型：add 或 subtract
+            adjustmentType: timeRecord.adjustmentType,
+            adjustedBy: userInfo.username || userInfo.name || "系統管理員",
+            adjustedAt: new Date().toISOString(),
           }),
         },
       );

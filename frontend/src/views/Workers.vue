@@ -161,6 +161,13 @@
             {{ row.baseHours + (row.additionalHours || 0) }}
           </template>
         </el-table-column>
+        <el-table-column label="薪資總額" :width="isMobile ? '80' : '100'">
+          <template #default="{ row }">
+            <span style="color: #67c23a; font-weight: bold;">
+              {{ calculateTotalSalary(row) }}元
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column
           fixed="right"
           label="操作"
@@ -647,6 +654,13 @@ const handleMobileAction = (command: string, row: Worker) => {
 // 清除當前編輯的工讀生
 const clearCurrentEditingWorker = () => {
   currentEditingWorker.value = null;
+};
+
+// 計算薪資總額
+const calculateTotalSalary = (worker) => {
+  const totalHours = worker.baseHours + (worker.additionalHours || 0);
+  const totalSalary = totalHours * (worker.hourlyWage || 0);
+  return totalSalary.toLocaleString(); // 格式化數字，加上千分位符號
 };
 
 // 關閉工讀生對話框

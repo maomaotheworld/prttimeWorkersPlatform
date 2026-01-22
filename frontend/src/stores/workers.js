@@ -40,12 +40,24 @@ export const useWorkersStore = defineStore("workers", () => {
     try {
       console.log("Workers store: 新增工讀生", workerData);
 
+      // 確保數據格式正確
+      const requestData = {
+        workerNumber: String(workerData.workerNumber || "").trim(),
+        name: String(workerData.name || "").trim(),
+        group: String(workerData.group || "").trim(),
+        floor: String(workerData.floor || "").trim(),
+        hourlyWage: Number(workerData.hourlyWage) || 0,
+        baseHours: Number(workerData.baseHours) || 8,
+      };
+
+      console.log("Workers store: 發送的數據", requestData);
+
       const response = await fetch(getApiUrl("/api/workers"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(workerData),
+        body: JSON.stringify(requestData),
       });
 
       const data = await response.json();
@@ -215,11 +227,11 @@ export const useWorkersStore = defineStore("workers", () => {
   const importWorkers = async (workersList) => {
     try {
       console.log("Workers store: 批量匯入工讀生", workersList);
-      
+
       for (const worker of workersList) {
         await addWorker(worker);
       }
-      
+
       console.log("Workers store: 批量匯入完成");
       return true;
     } catch (error) {

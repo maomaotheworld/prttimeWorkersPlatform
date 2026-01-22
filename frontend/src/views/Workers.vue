@@ -11,10 +11,7 @@
         >
           Excel 匯入
         </el-button>
-        <el-button
-          type="primary"
-          @click="showAddWorker"
-        >
+        <el-button type="primary" @click="showAddWorker">
           新增工讀生
         </el-button>
       </div>
@@ -32,11 +29,7 @@
         <el-table-column prop="totalHours" label="累積工時" width="90" />
         <el-table-column label="操作" width="200">
           <template #default="{ row }">
-            <el-button
-              size="small"
-              type="primary"
-              @click="showEditWorker(row)"
-            >
+            <el-button size="small" type="primary" @click="showEditWorker(row)">
               編輯
             </el-button>
             <el-button
@@ -46,11 +39,7 @@
             >
               工時
             </el-button>
-            <el-button
-              size="small"
-              type="danger"
-              @click="confirmDelete(row)"
-            >
+            <el-button size="small" type="danger" @click="confirmDelete(row)">
               刪除
             </el-button>
           </template>
@@ -133,10 +122,22 @@
     </el-dialog>
 
     <!-- 編輯工讀生 Dialog -->
-    <el-dialog v-model="showWorkerDialog" :title="isEditing ? '編輯工讀生' : '新增工讀生'" width="500px">
-      <el-form ref="workerFormRef" :model="workerForm" :rules="workerRules" label-width="100px">
+    <el-dialog
+      v-model="showWorkerDialog"
+      :title="isEditing ? '編輯工讀生' : '新增工讀生'"
+      width="500px"
+    >
+      <el-form
+        ref="workerFormRef"
+        :model="workerForm"
+        :rules="workerRules"
+        label-width="100px"
+      >
         <el-form-item label="編號" prop="workerNumber">
-          <el-input v-model="workerForm.workerNumber" placeholder="請輸入編號" />
+          <el-input
+            v-model="workerForm.workerNumber"
+            placeholder="請輸入編號"
+          />
         </el-form-item>
         <el-form-item label="姓名" prop="name">
           <el-input v-model="workerForm.name" placeholder="請輸入姓名" />
@@ -148,17 +149,31 @@
           <el-input v-model="workerForm.floor" placeholder="請輸入樓層" />
         </el-form-item>
         <el-form-item label="時薪" prop="hourlyWage">
-          <el-input-number v-model="workerForm.hourlyWage" :min="100" :step="5" style="width: 100%" />
+          <el-input-number
+            v-model="workerForm.hourlyWage"
+            :min="100"
+            :step="5"
+            style="width: 100%"
+          />
         </el-form-item>
         <el-form-item label="基本時數" prop="baseHours">
-          <el-input-number v-model="workerForm.baseHours" :min="1" :max="12" style="width: 100%" />
+          <el-input-number
+            v-model="workerForm.baseHours"
+            :min="1"
+            :max="12"
+            style="width: 100%"
+          />
         </el-form-item>
       </el-form>
 
       <template #footer>
         <el-button @click="showWorkerDialog = false">取消</el-button>
-        <el-button type="primary" @click="submitWorker" :loading="submittingWorker">
-          {{ isEditing ? '更新' : '新增' }}
+        <el-button
+          type="primary"
+          @click="submitWorker"
+          :loading="submittingWorker"
+        >
+          {{ isEditing ? "更新" : "新增" }}
         </el-button>
       </template>
     </el-dialog>
@@ -252,16 +267,19 @@ const handleFileChange = (file: any) => {
       const floor = String(r[3] || "").trim();
       const hourlyWage = Number(r[4]) || 0;
 
-      result.push({
+      // 確保數據格式正確
+      const workerData = {
         workerNumber,
         name,
         group,
         floor,
-        hourlyWage,
+        hourlyWage: hourlyWage,
         baseHours: 8,
-        totalHours: 0,
         valid: workerNumber && name && group && floor && hourlyWage > 0,
-      });
+      };
+
+      console.log("Excel 解析數據:", workerData);
+      result.push(workerData);
     }
 
     previewData.value = result;
@@ -275,13 +293,32 @@ const validCount = computed(
 
 const confirmImport = async () => {
   importing.value = true;
-  const list = previewData.value.filter((i) => i.valid);
-  await workersStore.importWorkers(list);
-  ElMessage.success(`成功匯入 ${list.length} 筆`);
-  showImportDialog.value = false;
-  previewData.value = [];
-  importing.value = false;
-  fetchWorkers();
+  const validData = previewData.value.filter((i) => i.valid);
+  
+  // 清理數據格式，移除不需要的欄位
+  const cleanData = validData.map(item => ({
+    workerNumber: item.workerNumber,
+    name: item.name,
+    group: item.group,
+    floor: item.floor,
+    hourlyWage: item.hourlyWage,
+    baseHours: item.baseHours || 8,
+  }));
+
+  console.log("準備匯入的數據:", cleanData);
+
+  try {
+    await workersStore.importWorkers(cleanData);
+    ElMessage.success(`成功匯入 ${cleanData.length} 筆`);
+    showImportDialog.value = false;
+    previewData.value = [];
+    fetchWorkers();
+  } catch (error) {
+    console.error("匯入失敗:", error);
+    ElMessage.error("匯入失敗: " + error.message);
+  } finally {
+    importing.value = false;
+  }
 };
 
 // 工時
@@ -296,14 +333,14 @@ const showAdjustHours = (worker: Worker) => {
 const submitHoursAdjust = async () => {
   if (!currentWorker.value) return;
   if (!hoursForm.reason.trim()) {
-    ElMessage.error('請填寫調整原因');
+    ElMessage.error("請填寫調整原因");
     return;
   }
-  
+
   try {
     await workersStore.addTimeRecord({
       workerId: currentWorker.value.id,
-      date: new Date().toISOString().split('T')[0], // 今天日期
+      date: new Date().toISOString().split("T")[0], // 今天日期
       hours: hoursForm.hours,
       description: hoursForm.reason,
       adjustmentType: hoursForm.type,
@@ -359,7 +396,9 @@ const submitWorker = async () => {
     showWorkerDialog.value = false;
     fetchWorkers();
   } catch (error) {
-    ElMessage.error((isEditing.value ? "更新" : "新增") + "失敗: " + error.message);
+    ElMessage.error(
+      (isEditing.value ? "更新" : "新增") + "失敗: " + error.message,
+    );
   } finally {
     submittingWorker.value = false;
   }
@@ -374,7 +413,7 @@ const confirmDelete = async (worker: Worker) => {
         confirmButtonText: "確認刪除",
         cancelButtonText: "取消",
         type: "warning",
-      }
+      },
     );
 
     await workersStore.deleteWorker(worker.id);

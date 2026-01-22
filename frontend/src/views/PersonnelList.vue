@@ -88,13 +88,13 @@
             empty-text="暫無人員資料"
             v-loading="loading"
           >
-            <el-table-column prop="id" label="編號" width="80" sortable />
+            <el-table-column prop="workerNumber" label="編號" width="80" sortable />
             
             <el-table-column prop="name" label="姓名" width="120" sortable />
             
             <el-table-column prop="groupName" label="組別" width="150" sortable>
               <template #default="scope">
-                <el-tag type="info" size="small">
+                <el-tag :style="getGroupTagStyle(scope.row.groupName)" effect="light">
                   {{ scope.row.groupName || '未分配' }}
                 </el-tag>
               </template>
@@ -195,7 +195,7 @@ export default defineComponent({
     const filteredWorkers = computed(() => {
       let result = workers.value.map(worker => ({
         ...worker,
-        groupName: groups.value.find(g => g.id === worker.group_id)?.name || ''
+        groupName: groups.value.find(g => g.id === worker.groupId)?.name || ''
       }));
 
       // 姓名搜尋
@@ -212,7 +212,7 @@ export default defineComponent({
 
       // 組別篩選
       if (filterGroup.value) {
-        result = result.filter(worker => worker.group_id === filterGroup.value);
+        result = result.filter(worker => worker.groupId === filterGroup.value);
       }
 
       return result;
@@ -222,7 +222,7 @@ export default defineComponent({
     const totalWorkers = computed(() => workers.value.length);
     
     const groupsWithWorkers = computed(() => {
-      const groupIds = [...new Set(workers.value.map(w => w.group_id).filter(Boolean))];
+      const groupIds = [...new Set(workers.value.map(w => w.groupId).filter(Boolean))];
       return groupIds.length;
     });
     
@@ -254,6 +254,43 @@ export default defineComponent({
       // 篩選會觸發計算屬性自動更新
     };
 
+    // 馬卡龍色系組別顏色 - 高對比度版本
+    const macaronColors = [
+      { bg: "#FFE1E6", text: "#B91C7C" }, // 櫻花粉配深紫紅
+      { bg: "#E6F7ED", text: "#059669" }, // 薄荷綠配深綠
+      { bg: "#E1F0FF", text: "#1E40AF" }, // 天空藍配深藍
+      { bg: "#FEF3C7", text: "#D97706" }, // 檸檬黃配橙
+      { bg: "#FFE4D1", text: "#EA580C" }, // 蜜桃橙配深橙
+      { bg: "#F3E8FF", text: "#7C3AED" }, // 薰衣草紫配深紫
+      { bg: "#ECFDF5", text: "#047857" }, // 青草綠配深綠
+      { bg: "#FDEAEF", text: "#BE185D" }, // 玫瑰粉配深紫紅
+      { bg: "#E0F2FE", text: "#0369A1" }, // 青藍色配深青
+      { bg: "#F7FEE7", text: "#65A30D" }, // 淺綠黃配深綠
+    ];
+
+    const getGroupTagStyle = (groupName) => {
+      if (!groupName)
+        return {
+          backgroundColor: macaronColors[0].bg,
+          color: macaronColors[0].text,
+        };
+
+      // 使用組別名稱生成一致的顏色索引
+      let hash = 0;
+      for (let i = 0; i < groupName.length; i++) {
+        hash = groupName.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const index = Math.abs(hash) % macaronColors.length;
+      const colors = macaronColors[index];
+
+      return {
+        backgroundColor: colors.bg,
+        color: colors.text,
+        border: `1px solid ${colors.text}20`,
+        fontWeight: "500",
+      };
+    };
+
     // 生命周期
     onMounted(() => {
       loadData();
@@ -277,7 +314,8 @@ export default defineComponent({
       
       // 方法
       handleSearch,
-      applyFilters
+      applyFilters,
+      getGroupTagStyle
     };
   }
 });

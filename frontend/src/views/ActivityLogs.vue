@@ -225,7 +225,7 @@ const handleClearLogs = async () => {
       },
     );
 
-    await fetch(`${getApiUrl()}/activity-logs`, {
+    await fetch(`${getApiUrl()}/api/activity-logs`, {
       method: "DELETE",
     });
     ElMessage.success("活動日誌已清空");

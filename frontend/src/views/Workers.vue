@@ -164,7 +164,7 @@
         <el-table-column
           fixed="right"
           label="操作"
-          :width="isMobile ? '100' : '200'"
+          :width="isMobile ? '60' : '200'"
         >
           <template #default="{ row }">
             <!-- 桌面版：顯示所有按鈕 -->
@@ -188,13 +188,14 @@
               </el-button>
             </template>
 
-            <!-- 手機版：下拉選單 -->
+            <!-- 手機版：緊湊下拉選單 -->
             <template v-else>
               <el-dropdown
                 @command="(command) => handleMobileAction(command, row)"
+                trigger="click"
               >
-                <el-button size="small" type="primary">
-                  操作<el-icon class="el-icon--right"><arrow-down /></el-icon>
+                <el-button size="small" type="primary" style="padding: 4px 8px;">
+                  ⋯
                 </el-button>
                 <template #dropdown>
                   <el-dropdown-menu>

@@ -122,28 +122,19 @@
         <el-col :xs="24" :sm="12">
           <h3>工時明細</h3>
           <el-descriptions :column="1" border>
-            <el-descriptions-item label="正常工時">
-              <strong>{{ salaryData.workTime.totalRegularHours }} 小時</strong>
+            <el-descriptions-item label="基本工時">
+              <strong style="color: #67c23a;">{{ salaryData.workTime.baseWorkingHours }} 小時</strong>
+              <el-text type="success" size="small">
+                ({{ salaryData.workTime.workingDays }} 天 × {{ salaryData.worker.baseWorkingHours }} 小時/天)
+              </el-text>
             </el-descriptions-item>
             <el-descriptions-item label="加班工時">
-              <strong>{{ salaryData.workTime.totalAdditionalHours }} 小時</strong>
-            </el-descriptions-item>
-            <el-descriptions-item label="實際總工時">
-              <strong style="color: #409eff;">{{ salaryData.workTime.actualTotalHours }} 小時</strong>
-              <el-text type="info" size="small">
-                ({{ salaryData.workTime.totalRegularHours }} + {{ salaryData.workTime.totalAdditionalHours }})
-              </el-text>
-            </el-descriptions-item>
-            <el-descriptions-item label="基本時數保證">
-              {{ salaryData.workTime.guaranteedHours }} 小時
-              <el-text type="info" size="small">
-                ({{ salaryData.workTime.workingDays }} 天 × {{ salaryData.worker.baseWorkingHours }} 小時)
-              </el-text>
+              <strong style="color: #e6a23c;">{{ salaryData.workTime.totalAdditionalHours }} 小時</strong>
             </el-descriptions-item>
             <el-descriptions-item label="薪資計算工時">
-              <strong>{{ salaryData.workTime.actualTotalHours }} 小時</strong>
+              <strong style="color: #409eff;">{{ salaryData.workTime.totalSalaryHours }} 小時</strong>
               <el-text type="primary" size="small">
-                (實際工時)
+                ({{ salaryData.workTime.baseWorkingHours }} + {{ salaryData.workTime.totalAdditionalHours }})
               </el-text>
             </el-descriptions-item>
           </el-descriptions>
@@ -157,7 +148,7 @@
                 <strong style="font-size: 16px; color: #67c23a;">{{ salaryData.salary.baseSalary }} 元</strong>
               </div>
               <div style="font-size: 14px; color: #409eff; margin-top: 4px;">
-                {{ salaryData.worker.baseHourlyWage }} 元/時 × {{ salaryData.workTime.actualTotalHours }} 小時 = {{ salaryData.salary.baseSalary }} 元
+                {{ salaryData.worker.baseHourlyWage }} 元/時 × {{ salaryData.workTime.totalSalaryHours }} 小時 = {{ salaryData.salary.baseSalary }} 元
               </div>
             </el-descriptions-item>
             <el-descriptions-item label="額外薪資" v-if="salaryData.salary.extraSalary !== 0">
@@ -519,16 +510,16 @@ const actualWorkHours = computed(() => {
   return salaryData.value.workTime?.totalRegularHours || 0;
 });
 
-// 累積工時（正常工時 + 加班工時）
+// 薪資計算工時（基本工時 + 加班工時）
 const totalWorkHours = computed(() => {
   if (!salaryData.value) return 0;
-  return salaryData.value.workTime?.actualTotalHours || 0;
+  return salaryData.value.workTime?.totalSalaryHours || 0;
 });
 
-// 實際工時（正常工時 + 加班工時）
+// 薪資計算工時（基本工時 + 加班工時）
 const effectiveWorkHours = computed(() => {
   if (!salaryData.value) return 0;
-  return salaryData.value.workTime?.actualTotalHours || 0;
+  return salaryData.value.workTime?.totalSalaryHours || 0;
 });
 
 // 目前時薪

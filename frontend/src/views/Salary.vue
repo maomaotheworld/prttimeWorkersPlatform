@@ -118,8 +118,11 @@
             <el-descriptions-item label="正常工時">
               {{ salaryData.workTime.totalRegularHours }} 小時
             </el-descriptions-item>
-            <el-descriptions-item label="額外工時">
+            <el-descriptions-item label="加班工時">
               {{ salaryData.workTime.totalAdditionalHours }} 小時
+            </el-descriptions-item>
+            <el-descriptions-item label="累積工時">
+              <strong>{{ salaryData.workTime.totalHours }} 小時</strong>
             </el-descriptions-item>
             <el-descriptions-item label="工作天數">
               {{ salaryData.workTime.workingDays }} 天
@@ -131,25 +134,27 @@
           <h3>薪資計算</h3>
           <el-descriptions :column="1" border>
             <el-descriptions-item label="基本薪資">
-              {{ salaryData.salary.baseSalary }} 元
+              <div>
+                <strong>{{ salaryData.salary.baseSalary }} 元</strong>
+              </div>
+              <div style="font-size: 12px; color: #666;">
+                時薪 {{ salaryData.worker.baseHourlyWage }} × 累積工時 {{ salaryData.workTime.totalHours }}
+              </div>
             </el-descriptions-item>
-            <el-descriptions-item label="額外薪資">
-              {{ salaryData.salary.additionalSalary }} 元
-            </el-descriptions-item>
-            <el-descriptions-item label="薪資調整">
+            <el-descriptions-item label="額外薪資" v-if="salaryData.salary.extraSalary !== 0">
               <span
                 :class="
-                  salaryData.salary.totalAdjustments >= 0
+                  salaryData.salary.extraSalary >= 0
                     ? 'success-text'
                     : 'error-text'
                 "
               >
-                {{ salaryData.salary.totalAdjustments >= 0 ? "+" : ""
-                }}{{ salaryData.salary.totalAdjustments }} 元
+                {{ salaryData.salary.extraSalary >= 0 ? "+" : ""
+                }}{{ salaryData.salary.extraSalary }} 元
               </span>
             </el-descriptions-item>
             <el-descriptions-item label="總薪資">
-              <strong style="font-size: 18px; color: #409eff">
+              <strong style="font-size: 16px; color: #409eff;">
                 {{ salaryData.salary.totalSalary }} 元
               </strong>
             </el-descriptions-item>
@@ -335,25 +340,9 @@
 
         <el-divider />
 
-        <el-form-item label="實際工作時數">
+        <el-form-item label="累積工時">
           <el-input
-            :value="actualWorkHours + ' 小時'"
-            disabled
-            style="width: 100%"
-          />
-        </el-form-item>
-
-        <el-form-item label="基本時數保證">
-          <el-input
-            :value="guaranteedHours + ' 小時'"
-            disabled
-            style="width: 100%"
-          />
-        </el-form-item>
-
-        <el-form-item label="薪資計算基準">
-          <el-input
-            :value="effectiveHours + ' 小時（' + salaryCalculationMethod + '）'"
+            :value="totalWorkHours + ' 小時'"
             disabled
             style="width: 100%"
           />
@@ -508,6 +497,12 @@ const actualWorkHours = computed(() => {
   return salaryData.value.workTime?.totalRegularHours || 0;
 });
 
+// 累積工時（正常工時 + 加班工時）
+const totalWorkHours = computed(() => {
+  if (!salaryData.value) return 0;
+  return salaryData.value.workTime?.totalHours || 0;
+});
+
 // 基本時數保證（工作天數 × 基本時數）
 const guaranteedHours = computed(() => {
   if (!salaryData.value || !totalSalaryForm.value.workerId) return 0;
@@ -544,15 +539,12 @@ const currentWage = computed(() => {
   return worker ? worker.baseHourlyWage || 0 : 0;
 });
 
-// 目前預估薪資（使用有效時數 + 額外工時）
+// 目前預估薪資（使用後端相同邏輯）
 const currentEstimatedSalary = computed(() => {
   if (!salaryData.value) return 0;
   
-  const baseSalary = effectiveHours.value * currentWage.value;
-  const additionalHours = salaryData.value.workTime?.totalAdditionalHours || 0;
-  const additionalSalary = additionalHours * currentWage.value;
-  
-  return Math.round(baseSalary + additionalSalary);
+  // 直接使用後端計算的總薪資
+  return salaryData.value.salary?.totalSalary || 0;
 });
 
 // 薪資調整金額（目標總薪資與目前預估薪資的差額）

@@ -1883,12 +1883,11 @@ app.get("/api/workers/:id/salary-calculation", (req, res) => {
   });
 
   // 計算基本薪資和額外薪資
-  const baseSalaryFromHours = totalRegularHours * (worker.baseHourlyWage || 0);
-  const baseSalaryFromDays =
-    workingDays * (worker.baseWorkingHours || 0) * (worker.baseHourlyWage || 0);
-  const additionalSalary = totalAdditionalHours * (worker.baseHourlyWage || 0);
+  const totalHours = totalRegularHours + totalAdditionalHours;
+  const baseSalaryFromTotalHours = totalHours * (worker.baseHourlyWage || 0);
+  const baseSalaryFromDays = workingDays * (worker.baseWorkingHours || 0) * (worker.baseHourlyWage || 0);
 
-  // 獲取薪資調整記錄
+  // 獲取薪資調整記錄（額外薪資）
   const salaryAdjustmentsInPeriod = salaryAdjustments.filter((adj) => {
     const adjDate = moment(adj.date);
     return (
@@ -1900,9 +1899,11 @@ app.get("/api/workers/:id/salary-calculation", (req, res) => {
     return total + (adj.type === "increase" ? adj.amount : -adj.amount);
   }, 0);
 
-  // 計算總薪資（選擇較高的基本薪資計算方式）
-  const baseSalary = Math.max(baseSalaryFromHours, baseSalaryFromDays);
-  const totalSalary = baseSalary + additionalSalary + totalAdjustments;
+  // 計算總薪資
+  // 基本薪資：取總工時計算 vs 基本時數保證的較大值
+  const baseSalary = Math.max(baseSalaryFromTotalHours, baseSalaryFromDays);
+  // 總薪資：基本薪資 + 額外薪資調整
+  const totalSalary = baseSalary + totalAdjustments;
 
   res.json({
     success: true,
@@ -1921,14 +1922,14 @@ app.get("/api/workers/:id/salary-calculation", (req, res) => {
       workTime: {
         totalRegularHours: parseFloat(totalRegularHours.toFixed(2)),
         totalAdditionalHours: parseFloat(totalAdditionalHours.toFixed(2)),
+        totalHours: parseFloat(totalHours.toFixed(2)),
         workingDays,
       },
       salary: {
-        baseSalaryFromHours: parseFloat(baseSalaryFromHours.toFixed(2)),
+        baseSalaryFromTotalHours: parseFloat(baseSalaryFromTotalHours.toFixed(2)),
         baseSalaryFromDays: parseFloat(baseSalaryFromDays.toFixed(2)),
         baseSalary: parseFloat(baseSalary.toFixed(2)),
-        additionalSalary: parseFloat(additionalSalary.toFixed(2)),
-        totalAdjustments: parseFloat(totalAdjustments.toFixed(2)),
+        extraSalary: parseFloat(totalAdjustments.toFixed(2)),
         totalSalary: parseFloat(totalSalary.toFixed(2)),
       },
       records: periodRecords,

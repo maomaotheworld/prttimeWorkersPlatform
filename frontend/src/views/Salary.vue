@@ -1,23 +1,23 @@
 <template>
   <div class="salary-container">
     <div class="page-header">
-      <h1 class="page-title">?ªè?ç®¡ç?</h1>
+      <h1 class="page-title">?ï¿½ï¿½?ç®¡ï¿½?</h1>
     </div>
 
-    <!-- ?ªè?è¨ˆç??€??-->
+    <!-- ?ï¿½ï¿½?è¨ˆï¿½??ï¿½??-->
     <el-card class="calculation-card mb-20">
       <template #header>
         <div class="card-header">
-          <span>?ªè?è¨ˆç?</span>
+          <span>?ï¿½ï¿½?è¨ˆï¿½?</span>
         </div>
       </template>
 
       <el-row :gutter="16">
         <el-col :xs="24" :sm="8">
-          <el-form-item label="?¸æ?å·¥è???>
+          <el-form-item label="?ï¿½ï¿½?å·¥ï¿½???>
             <el-select
               v-model="selectedWorker"
-              placeholder="è«‹é¸?‡å·¥è®€??
+              placeholder="è«‹é¸?ï¿½å·¥è®€??
               style="width: 100%"
               @change="handleWorkerChange"
             >
@@ -31,13 +31,13 @@
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="8">
-          <el-form-item label="è¨ˆç??Ÿé?">
+          <el-form-item label="è¨ˆï¿½??ï¿½ï¿½?">
             <el-date-picker
               v-model="dateRange"
               type="monthrange"
               range-separator="??
-              start-placeholder="?‹å??ˆä»½"
-              end-placeholder="çµæ??ˆä»½"
+              start-placeholder="?ï¿½ï¿½??ï¿½ä»½"
+              end-placeholder="çµï¿½??ï¿½ä»½"
               format="YYYY/MM"
               value-format="YYYY-MM"
               @change="handleDateChange"
@@ -51,18 +51,18 @@
             :loading="calculating"
             :disabled="!selectedWorker"
           >
-            è¨ˆç??ªè?
+            è¨ˆï¿½??ï¿½ï¿½?
           </el-button>
         </el-col>
       </el-row>
     </el-card>
 
-    <!-- ?ªè?è©³ç´°è³‡è? -->
+    <!-- ?ï¿½ï¿½?è©³ç´°è³‡ï¿½? -->
     <el-card v-if="salaryData" class="salary-detail-card mb-20">
       <template #header>
         <div class="card-header">
           <span
-            >?ªè?è©³æ? - {{ salaryData.worker.name }} ({{
+            >?ï¿½ï¿½?è©³ï¿½? - {{ salaryData.worker.name }} ({{
               salaryData.period.startDate
             }}
             ??{{ salaryData.period.endDate }})</span
@@ -73,7 +73,7 @@
       <el-row :gutter="16" class="salary-overview">
         <el-col :xs="24" :sm="6">
           <div class="salary-item">
-            <div class="salary-label">?ºæœ¬?‚è–ª</div>
+            <div class="salary-label">?ï¿½æœ¬?ï¿½è–ª</div>
             <div class="salary-value">
               {{ salaryData.worker.baseHourlyWage }} ??
             </div>
@@ -81,9 +81,9 @@
         </el-col>
         <el-col :xs="24" :sm="6">
           <div class="salary-item">
-            <div class="salary-label">å·¥ä?å¤©æ•¸</div>
+            <div class="salary-label">å·¥ï¿½?å¤©æ•¸</div>
             <div class="salary-value">
-              {{ salaryData.workTime.workingDays }} å¤?
+              {{ salaryData.workTime.workingDays }} ï¿½?
             </div>
           </div>
         </el-col>
@@ -95,13 +95,13 @@
                 salaryData.workTime.totalRegularHours +
                 salaryData.workTime.totalAdditionalHours
               }}
-              å°æ?
+              å°ï¿½?
             </div>
           </div>
         </el-col>
         <el-col :xs="24" :sm="6">
           <div class="salary-item total">
-            <div class="salary-label">ç¸½è–ªè³?/div>
+            <div class="salary-label">ç¸½è–ªï¿½?/div>
             <div class="salary-value">
               {{ salaryData.salary.totalSalary }} ??
             </div>
@@ -113,30 +113,30 @@
 
       <el-row :gutter="16">
         <el-col :xs="24" :sm="12">
-          <h3>å·¥æ?è©³æ?</h3>
+          <h3>å·¥ï¿½?è©³ï¿½?</h3>
           <el-descriptions :column="1" border>
-            <el-descriptions-item label="æ­?¸¸å·¥æ?">
-              {{ salaryData.workTime.totalRegularHours }} å°æ?
+            <el-descriptions-item label="ï¿½?ï¿½ï¿½å·¥ï¿½?">
+              {{ salaryData.workTime.totalRegularHours }} å°ï¿½?
             </el-descriptions-item>
-            <el-descriptions-item label="é¡å?å·¥æ?">
-              {{ salaryData.workTime.totalAdditionalHours }} å°æ?
+            <el-descriptions-item label="é¡ï¿½?å·¥ï¿½?">
+              {{ salaryData.workTime.totalAdditionalHours }} å°ï¿½?
             </el-descriptions-item>
-            <el-descriptions-item label="å·¥ä?å¤©æ•¸">
-              {{ salaryData.workTime.workingDays }} å¤?
+            <el-descriptions-item label="å·¥ï¿½?å¤©æ•¸">
+              {{ salaryData.workTime.workingDays }} ï¿½?
             </el-descriptions-item>
           </el-descriptions>
         </el-col>
 
         <el-col :xs="24" :sm="12">
-          <h3>?ªè?è¨ˆç?</h3>
+          <h3>?ï¿½ï¿½?è¨ˆï¿½?</h3>
           <el-descriptions :column="1" border>
-            <el-descriptions-item label="?ºæœ¬?ªè?">
+            <el-descriptions-item label="?ï¿½æœ¬?ï¿½ï¿½?">
               {{ salaryData.salary.baseSalary }} ??
             </el-descriptions-item>
-            <el-descriptions-item label="é¡å??ªè?">
+            <el-descriptions-item label="é¡ï¿½??ï¿½ï¿½?">
               {{ salaryData.salary.additionalSalary }} ??
             </el-descriptions-item>
-            <el-descriptions-item label="?ªè?èª¿æ•´">
+            <el-descriptions-item label="?ï¿½ï¿½?èª¿æ•´">
               <span
                 :class="
                   salaryData.salary.totalAdjustments >= 0
@@ -148,7 +148,7 @@
                 }}{{ salaryData.salary.totalAdjustments }} ??
               </span>
             </el-descriptions-item>
-            <el-descriptions-item label="ç¸½è–ªè³?>
+            <el-descriptions-item label="ç¸½è–ªï¿½?>
               <strong style="font-size: 18px; color: #409eff">
                 {{ salaryData.salary.totalSalary }} ??
               </strong>
@@ -158,11 +158,11 @@
       </el-row>
     </el-card>
 
-    <!-- ?ªè?èª¿æ•´ -->
+    <!-- ?ï¿½ï¿½?èª¿æ•´ -->
     <el-card class="adjustment-card mb-20">
       <template #header>
         <div class="card-header">
-          <span>?ªè?èª¿æ•´</span>
+          <span>?ï¿½ï¿½?èª¿æ•´</span>
           <div>
             <el-button
               type="success"
@@ -171,7 +171,7 @@
               :disabled="!selectedWorker"
               style="margin-right: 8px;"
             >
-              èª¿æ•´ç¸½è–ªè³?
+              èª¿æ•´ç¸½è–ªï¿½?
             </el-button>
             <el-button
               type="primary"
@@ -179,37 +179,37 @@
               @click="showAdjustmentDialog"
               :disabled="!selectedWorker"
             >
-              ?°å?èª¿æ•´
+              ?ï¿½ï¿½?èª¿æ•´
             </el-button>
           </div>
         </div>
       </template>
 
       <el-table v-loading="loadingAdjustments" :data="adjustments" stripe>
-        <el-table-column prop="date" label="?¥æ?" width="120">
+        <el-table-column prop="date" label="?ï¿½ï¿½?" width="120">
           <template #default="{ row }">
             {{ formatDate(row.date) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="å·¥è??? min-width="120">
+        <el-table-column label="å·¥ï¿½??? min-width="120">
           <template #default="{ row }">
             {{ getWorkerName(row.workerId) }}
           </template>
         </el-table-column>
 
-        <el-table-column prop="type" label="é¡å?" width="100">
+        <el-table-column prop="type" label="é¡ï¿½?" width="100">
           <template #default="{ row }">
             <el-tag
               :type="row.type === 'increase' ? 'success' : 'danger'"
               size="small"
             >
-              {{ row.type === "increase" ? "? è–ª" : "æ¸›è–ª" }}
+              {{ row.type === "increase" ? "?ï¿½è–ª" : "æ¸›è–ª" }}
             </el-tag>
           </template>
         </el-table-column>
 
-        <el-table-column prop="amount" label="?‘é?" width="100">
+        <el-table-column prop="amount" label="?ï¿½ï¿½?" width="100">
           <template #default="{ row }">
             <span
               :class="row.type === 'increase' ? 'success-text' : 'error-text'"
@@ -219,7 +219,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="reason" label="?†ç”±" min-width="150" />
+        <el-table-column prop="reason" label="?ï¿½ç”±" min-width="150" />
       </el-table>
 
       <div
@@ -227,14 +227,14 @@
         class="empty-state"
       >
         <el-icon size="48"><DocumentRemove /></el-icon>
-        <p>?«ç„¡?ªè?èª¿æ•´è¨˜é?</p>
+        <p>?ï¿½ç„¡?ï¿½ï¿½?èª¿æ•´è¨˜ï¿½?</p>
       </div>
     </el-card>
 
-    <!-- ?ªè?èª¿æ•´å°è©±æ¡?-->
+    <!-- ?ï¿½ï¿½?èª¿æ•´å°è©±ï¿½?-->
     <el-dialog
       v-model="adjustmentDialogVisible"
-      title="?°å??ªè?èª¿æ•´"
+      title="?ï¿½ï¿½??ï¿½ï¿½?èª¿æ•´"
       :width="isMobile ? '95%' : '500px'"
     >
       <el-form
@@ -243,10 +243,10 @@
         :rules="adjustmentFormRules"
         label-width="80px"
       >
-        <el-form-item label="å·¥è??? prop="workerId">
+        <el-form-item label="å·¥ï¿½??? prop="workerId">
           <el-select
             v-model="adjustmentForm.workerId"
-            placeholder="è«‹é¸?‡å·¥è®€??
+            placeholder="è«‹é¸?ï¿½å·¥è®€??
             style="width: 100%"
           >
             <el-option
@@ -258,14 +258,14 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="èª¿æ•´é¡å?" prop="type">
+        <el-form-item label="èª¿æ•´é¡ï¿½?" prop="type">
           <el-radio-group v-model="adjustmentForm.type">
-            <el-radio label="increase">? è–ª</el-radio>
+            <el-radio label="increase">?ï¿½è–ª</el-radio>
             <el-radio label="decrease">æ¸›è–ª</el-radio>
           </el-radio-group>
         </el-form-item>
 
-        <el-form-item label="èª¿æ•´?‘é?" prop="amount">
+        <el-form-item label="èª¿æ•´?ï¿½ï¿½?" prop="amount">
           <el-input-number
             v-model="adjustmentForm.amount"
             :min="1"
@@ -274,41 +274,41 @@
           />
         </el-form-item>
 
-        <el-form-item label="èª¿æ•´?†ç”±" prop="reason">
+        <el-form-item label="èª¿æ•´?ï¿½ç”±" prop="reason">
           <el-input
             v-model="adjustmentForm.reason"
             type="textarea"
             :rows="3"
-            placeholder="è«‹èªª?è–ªè³‡èª¿?´ç??†ç”±"
+            placeholder="è«‹èªª?ï¿½è–ªè³‡èª¿?ï¿½ï¿½??ï¿½ç”±"
           />
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="adjustmentDialogVisible = false">?–æ?</el-button>
+        <el-button @click="adjustmentDialogVisible = false">?ï¿½ï¿½?</el-button>
         <el-button
           type="primary"
           @click="handleAddAdjustment"
           :loading="submitting"
         >
-          ?°å?
+          ?ï¿½ï¿½?
         </el-button>
       </template>
     </el-dialog>
 
-    <!-- èª¿æ•´ç¸½è–ªè³‡å?è©±æ? -->
+    <!-- èª¿æ•´ç¸½è–ªè³‡ï¿½?è©±ï¿½? -->
     <el-dialog
       v-model="totalSalaryDialogVisible"
-      title="èª¿æ•´ç¸½è–ªè³?
+      title="èª¿æ•´ç¸½è–ªï¿½?
       :width="isMobile ? '95%' : '600px'"
     >
       <el-alert
-        title="èªªæ?"
+        title="èªªï¿½?"
         type="info"
         :closable="false"
         style="margin-bottom: 20px;"
       >
-        è¼¸å…¥è¦æ”¯ä»˜çµ¦å·¥è??Ÿç?ç¸½è–ªè³?ç³»çµ±å°‡æ ¹?šå·¥ä½œæ??¸è‡ª?•è?ç®—æ–°?„æ???
+        è¼¸å…¥è¦æ”¯ä»˜çµ¦å·¥ï¿½??ï¿½ï¿½?ç¸½è–ªï¿½?ç³»çµ±å°‡æ ¹?ï¿½å·¥ä½œï¿½??ï¿½è‡ª?ï¿½ï¿½?ç®—æ–°?ï¿½ï¿½???
       </el-alert>
 
       <el-form
@@ -317,10 +317,10 @@
         :rules="totalSalaryFormRules"
         label-width="120px"
       >
-        <el-form-item label="å·¥è??? prop="workerId">
+        <el-form-item label="å·¥ï¿½??? prop="workerId">
           <el-select
             v-model="totalSalaryForm.workerId"
-            placeholder="è«‹é¸?‡å·¥è®€??
+            placeholder="è«‹é¸?ï¿½å·¥è®€??
             style="width: 100%"
             @change="handleTotalSalaryWorkerChange"
           >
@@ -335,23 +335,23 @@
 
         <el-divider />
 
-        <el-form-item label="?¬æ?å·¥ä??‚æ•¸">
+        <el-form-item label="?ï¿½ï¿½?å·¥ï¿½??ï¿½æ•¸">
           <el-input
-            :value="currentPeriodHours + ' å°æ?'"
+            :value="currentPeriodHours + ' å°ï¿½?'"
             disabled
             style="width: 100%"
           />
         </el-form-item>
 
-        <el-form-item label="?®å??‚è–ª">
+        <el-form-item label="?ï¿½ï¿½??ï¿½è–ª">
           <el-input
-            :value="currentWage + ' ??å°æ?'"
+            :value="currentWage + ' ??å°ï¿½?'"
             disabled
             style="width: 100%"
           />
         </el-form-item>
 
-        <el-form-item label="?®å??ä¼°?ªè?">
+        <el-form-item label="?ï¿½ï¿½??ï¿½ä¼°?ï¿½ï¿½?">
           <el-input
             :value="currentEstimatedSalary + ' ??"
             disabled
@@ -361,7 +361,7 @@
 
         <el-divider />
 
-        <el-form-item label="èª¿æ•´å¾Œç¸½?ªè?" prop="targetTotalSalary">
+        <el-form-item label="èª¿æ•´å¾Œç¸½?ï¿½ï¿½?" prop="targetTotalSalary">
           <el-input-number
             v-model="totalSalaryForm.targetTotalSalary"
             :min="0"
@@ -375,24 +375,24 @@
           </span>
         </el-form-item>
 
-        <el-form-item label="è¨ˆç?å¾Œæ–°?‚è–ª" v-if="calculatedNewWage > 0">
+        <el-form-item label="è¨ˆï¿½?å¾Œæ–°?ï¿½è–ª" v-if="calculatedNewWage > 0">
           <el-tag type="primary" size="large" style="padding: 10px 15px;">
-            {{ calculatedNewWage }} ??å°æ?
+            {{ calculatedNewWage }} ??å°ï¿½?
           </el-tag>
         </el-form-item>
 
-        <el-form-item label="?‚è–ªèª¿æ•´" v-if="calculatedNewWage > 0">
+        <el-form-item label="?ï¿½è–ªèª¿æ•´" v-if="calculatedNewWage > 0">
           <el-tag
             :type="wageAdjustment >= 0 ? 'success' : 'danger'"
             size="large"
             style="padding: 10px 15px;"
           >
-            {{ wageAdjustment >= 0 ? '+' : '' }}{{ wageAdjustment }} ??å°æ?
+            {{ wageAdjustment >= 0 ? '+' : '' }}{{ wageAdjustment }} ??å°ï¿½?
             ({{ wageAdjustmentPercent }})
           </el-tag>
         </el-form-item>
 
-        <el-form-item label="?ªè?èª¿æ•´" v-if="calculatedNewWage > 0">
+        <el-form-item label="?ï¿½ï¿½?èª¿æ•´" v-if="calculatedNewWage > 0">
           <el-tag
             :type="salaryAdjustment >= 0 ? 'success' : 'danger'"
             size="large"
@@ -402,25 +402,25 @@
           </el-tag>
         </el-form-item>
 
-        <el-form-item label="èª¿æ•´?†ç”±" prop="reason">
+        <el-form-item label="èª¿æ•´?ï¿½ç”±" prop="reason">
           <el-input
             v-model="totalSalaryForm.reason"
             type="textarea"
             :rows="3"
-            placeholder="è«‹èªª?èª¿?´ç¸½?ªè??„ç??±ï?ä¾‹å?ï¼šæœ¬?ˆç¸¾?ˆç??µã€å?æ¡ˆç??‘ç?ï¼?
+            placeholder="è«‹èªª?ï¿½èª¿?ï¿½ç¸½?ï¿½ï¿½??ï¿½ï¿½??ï¿½ï¿½?ä¾‹ï¿½?ï¼šæœ¬?ï¿½ç¸¾?ï¿½ï¿½??ï¿½ã€ï¿½?æ¡ˆï¿½??ï¿½ï¿½?ï¿½?
           />
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="totalSalaryDialogVisible = false">?–æ?</el-button>
+        <el-button @click="totalSalaryDialogVisible = false">?ï¿½ï¿½?</el-button>
         <el-button
           type="primary"
           @click="handleTotalSalaryAdjust"
           :loading="submitting"
           :disabled="calculatedNewWage <= 0"
         >
-          ç¢ºè?èª¿æ•´
+          ç¢ºï¿½?èª¿æ•´
         </el-button>
       </template>
     </el-dialog>
@@ -450,7 +450,7 @@ const calculating = ref(false);
 const loadingAdjustments = ref(false);
 const submitting = ref(false);
 
-// ?ªè?èª¿æ•´å°è©±æ¡?
+// ?ï¿½ï¿½?èª¿æ•´å°è©±ï¿½?
 const adjustmentDialogVisible = ref(false);
 const adjustmentForm = ref({
   workerId: "",
@@ -460,15 +460,15 @@ const adjustmentForm = ref({
 });
 
 const adjustmentFormRules = {
-  workerId: [{ required: true, message: "è«‹é¸?‡å·¥è®€??, trigger: "change" }],
-  type: [{ required: true, message: "è«‹é¸?‡èª¿?´é???, trigger: "change" }],
-  amount: [{ required: true, message: "è«‹è¼¸?¥èª¿?´é?é¡?, trigger: "blur" }],
-  reason: [{ required: true, message: "è«‹èªª?ç???, trigger: "blur" }],
+  workerId: [{ required: true, message: "è«‹é¸æ“‡å·¥è®€ç”Ÿ", trigger: "change" }],
+  type: [{ required: true, message: "è«‹é¸æ“‡èª¿æ•´é¡å‹", trigger: "change" }],
+  amount: [{ required: true, message: "è«‹è¼¸å…¥èª¿æ•´é‡‘é¡", trigger: "blur" }],
+  reason: [{ required: true, message: "è«‹èªªæ˜åŸå› ", trigger: "blur" }],
 };
 
 const adjustmentFormRef = ref();
 
-// èª¿æ•´ç¸½è–ªè³‡å?è©±æ?
+// èª¿æ•´ç¸½è–ªè³‡ï¿½?è©±ï¿½?
 const totalSalaryDialogVisible = ref(false);
 const totalSalaryForm = ref({
   workerId: "",
@@ -477,14 +477,14 @@ const totalSalaryForm = ref({
 });
 
 const totalSalaryFormRules = {
-  workerId: [{ required: true, message: "è«‹é¸?‡å·¥è®€??, trigger: "change" }],
-  targetTotalSalary: [{ required: true, message: "è«‹è¼¸?¥ç›®æ¨™ç¸½?ªè?", trigger: "blur" }],
-  reason: [{ required: true, message: "è«‹èªª?èª¿?´ç???, trigger: "blur" }],
+  workerId: [{ required: true, message: "è«‹é¸æ“‡å·¥è®€ç”Ÿ", trigger: "change" }],
+  targetTotalSalary: [{ required: true, message: "è«‹è¼¸å…¥ç›®æ¨™ç¸½è–ªè³‡", trigger: "blur" }],
+  reason: [{ required: true, message: "è«‹èªªæ˜èª¿æ•´åŸå› ", trigger: "blur" }],
 };
 
 const totalSalaryFormRef = ref();
 
-// ?¬æ?å·¥ä??‚æ•¸
+// è¨ˆç®—å·¥æ™‚æ•¸æ“š
 const currentPeriodHours = computed(() => {
   if (!salaryData.value) return 0;
   const regular = salaryData.value.workTime?.totalRegularHours || 0;
@@ -492,50 +492,50 @@ const currentPeriodHours = computed(() => {
   return regular + additional;
 });
 
-// ?®å??‚è–ª
+// ?ï¿½ï¿½??ï¿½è–ª
 const currentWage = computed(() => {
   if (!totalSalaryForm.value.workerId) return 0;
   const worker = workers.value.find(w => w.id === totalSalaryForm.value.workerId);
   return worker ? (worker.baseHourlyWage || 0) : 0;
 });
 
-// ?®å??ä¼°?ªè?
+// ?ï¿½ï¿½??ï¿½ä¼°?ï¿½ï¿½?
 const currentEstimatedSalary = computed(() => {
   return Math.round(currentPeriodHours.value * currentWage.value);
 });
 
-// è¨ˆç?å¾Œç??°æ???
+// è¨ˆï¿½?å¾Œï¿½??ï¿½ï¿½???
 const calculatedNewWage = computed(() => {
   if (!totalSalaryForm.value.targetTotalSalary || currentPeriodHours.value === 0) return 0;
   return Math.round(totalSalaryForm.value.targetTotalSalary / currentPeriodHours.value);
 });
 
-// ?‚è–ªèª¿æ•´
+// ?ï¿½è–ªèª¿æ•´
 const wageAdjustment = computed(() => {
   return calculatedNewWage.value - currentWage.value;
 });
 
-// ?‚è–ªèª¿æ•´?¾å?æ¯?
+// ?ï¿½è–ªèª¿æ•´?ï¿½ï¿½?ï¿½?
 const wageAdjustmentPercent = computed(() => {
   if (currentWage.value === 0) return '0%';
   const percent = ((wageAdjustment.value / currentWage.value) * 100).toFixed(1);
   return `${percent >= 0 ? '+' : ''}${percent}%`;
 });
 
-// ?ªè?èª¿æ•´?‘é?
+// ?ï¿½ï¿½?èª¿æ•´?ï¿½ï¿½?
 const salaryAdjustment = computed(() => {
   return totalSalaryForm.value.targetTotalSalary - currentEstimatedSalary.value;
 });
 
-// å·¥å…·?½æ•¸
+// å·¥å…·?ï¿½æ•¸
 const formatDate = (date) => moment(date).format("YYYY/MM/DD");
 
 const getWorkerName = (workerId) => {
   const worker = workers.value.find((w) => w.id === workerId);
-  return worker ? worker.name : "?ªçŸ¥";
+  return worker ? worker.name : "?ï¿½çŸ¥";
 };
 
-// ?ªè?è¨ˆç?
+// ?ï¿½ï¿½?è¨ˆï¿½?
 const calculateSalary = async () => {
   if (!selectedWorker.value || !dateRange.value) return;
 
@@ -555,20 +555,20 @@ const calculateSalary = async () => {
     const result = await response.json();
     
     if (!response.ok) {
-      throw new Error(result.message || "?ªè?è¨ˆç?å¤±æ?");
+      throw new Error(result.message || "?ï¿½ï¿½?è¨ˆï¿½?å¤±ï¿½?");
     }
 
-    // å¾Œç«¯è¿”å??¼å???{ success: true, data: {...}, message: "..." }
+    // å¾Œç«¯è¿”ï¿½??ï¿½ï¿½???{ success: true, data: {...}, message: "..." }
     salaryData.value = result.data;
   } catch (error) {
-    console.error("?ªè?è¨ˆç?å¤±æ?:", error);
-    ElMessage.error(error.message || "?ªè?è¨ˆç?å¤±æ?");
+    console.error("?ï¿½ï¿½?è¨ˆï¿½?å¤±ï¿½?:", error);
+    ElMessage.error(error.message || "?ï¿½ï¿½?è¨ˆï¿½?å¤±ï¿½?");
   } finally {
     calculating.value = false;
   }
 };
 
-// è¼‰å…¥?ªè?èª¿æ•´è¨˜é?
+// è¼‰å…¥?ï¿½ï¿½?èª¿æ•´è¨˜ï¿½?
 const fetchAdjustments = async () => {
   try {
     loadingAdjustments.value = true;
@@ -581,19 +581,19 @@ const fetchAdjustments = async () => {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.message || "è¼‰å…¥?ªè?èª¿æ•´è¨˜é?å¤±æ?");
+      throw new Error(result.message || "è¼‰å…¥?ï¿½ï¿½?èª¿æ•´è¨˜ï¿½?å¤±ï¿½?");
     }
 
-    // å¾Œç«¯è¿”å??¼å???{ success: true, data: [...], message: "..." }
+    // å¾Œç«¯è¿”ï¿½??ï¿½ï¿½???{ success: true, data: [...], message: "..." }
     adjustments.value = result.data || [];
   } catch (error) {
-    console.error("è¼‰å…¥?ªè?èª¿æ•´è¨˜é?å¤±æ?:", error);
+    console.error("è¼‰å…¥?ï¿½ï¿½?èª¿æ•´è¨˜ï¿½?å¤±ï¿½?:", error);
   } finally {
     loadingAdjustments.value = false;
   }
 };
 
-// äº‹ä»¶?•ç?
+// äº‹ä»¶?ï¿½ï¿½?
 const handleWorkerChange = () => {
   salaryData.value = null;
   if (selectedWorker.value) {
@@ -619,7 +619,7 @@ const showAdjustmentDialog = () => {
 
 const showTotalSalaryDialog = () => {
   if (!salaryData.value) {
-    ElMessage.warning("è«‹å?è¨ˆç??ªè?ä»¥ç²?–å·¥ä½œæ???);
+    ElMessage.warning("è«‹ï¿½?è¨ˆï¿½??ï¿½ï¿½?ä»¥ç²?ï¿½å·¥ä½œï¿½???);
     return;
   }
   
@@ -632,14 +632,14 @@ const showTotalSalaryDialog = () => {
 };
 
 const handleTotalSalaryWorkerChange = async () => {
-  // ?¶é¸?‡å·¥è®€?Ÿæ?,?æ–°è¨ˆç?è©²å·¥è®€?Ÿç??ªè??¸æ?
+  // ?ï¿½é¸?ï¿½å·¥è®€?ï¿½ï¿½?,?ï¿½æ–°è¨ˆï¿½?è©²å·¥è®€?ï¿½ï¿½??ï¿½ï¿½??ï¿½ï¿½?
   if (totalSalaryForm.value.workerId && dateRange.value) {
     await calculateSalaryForWorker(totalSalaryForm.value.workerId);
   }
 };
 
 const calculateNewWage = () => {
-  // ?¶è¼¸?¥ç›®æ¨™ç¸½?ªè????ƒè‡ª?•è§¸??computed è¨ˆç??°æ???
+  // ?ï¿½è¼¸?ï¿½ç›®æ¨™ç¸½?ï¿½ï¿½????ï¿½è‡ª?ï¿½è§¸??computed è¨ˆï¿½??ï¿½ï¿½???
 };
 
 const calculateSalaryForWorker = async (workerId) => {
@@ -661,13 +661,13 @@ const calculateSalaryForWorker = async (workerId) => {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.message || "?ªè?è¨ˆç?å¤±æ?");
+      throw new Error(result.message || "?ï¿½ï¿½?è¨ˆï¿½?å¤±ï¿½?");
     }
 
     salaryData.value = result.data;
   } catch (error) {
-    console.error("?ªè?è¨ˆç?å¤±æ?:", error);
-    ElMessage.error(error.message || "?ªè?è¨ˆç?å¤±æ?");
+    console.error("?ï¿½ï¿½?è¨ˆï¿½?å¤±ï¿½?:", error);
+    ElMessage.error(error.message || "?ï¿½ï¿½?è¨ˆï¿½?å¤±ï¿½?");
   } finally {
     calculating.value = false;
   }
@@ -695,22 +695,22 @@ const handleTotalSalaryAdjust = async () => {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.message || "ç¸½è–ªè³‡èª¿?´å¤±??);
+      throw new Error(result.message || "ç¸½è–ªè³‡èª¿?ï¿½å¤±??);
     }
 
-    ElMessage.success(`ç¸½è–ªè³‡èª¿?´æ??Ÿï??°æ??ªï?${calculatedNewWage.value} ??å°æ?`);
+    ElMessage.success(`ç¸½è–ªè³‡èª¿?ï¿½ï¿½??ï¿½ï¿½??ï¿½ï¿½??ï¿½ï¿½?${calculatedNewWage.value} ??å°ï¿½?`);
     totalSalaryDialogVisible.value = false;
     
-    // ?æ–°è¼‰å…¥å·¥è??Ÿè???
+    // ?ï¿½æ–°è¼‰å…¥å·¥ï¿½??ï¿½ï¿½???
     await workersStore.fetchWorkers();
 
-    // ?æ–°è¨ˆç??ªè?
+    // ?ï¿½æ–°è¨ˆï¿½??ï¿½ï¿½?
     if (selectedWorker.value) {
       await calculateSalary();
     }
   } catch (error) {
-    console.error("ç¸½è–ªè³‡èª¿?´å¤±??", error);
-    ElMessage.error(error.message || "ç¸½è–ªè³‡èª¿?´å¤±??);
+    console.error("ç¸½è–ªè³‡èª¿?ï¿½å¤±??", error);
+    ElMessage.error(error.message || "ç¸½è–ªè³‡èª¿?ï¿½å¤±??);
   } finally {
     submitting.value = false;
   }
@@ -732,20 +732,20 @@ const handleAddAdjustment = async () => {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.message || "?ªè?èª¿æ•´?°å?å¤±æ?");
+      throw new Error(result.message || "?ï¿½ï¿½?èª¿æ•´?ï¿½ï¿½?å¤±ï¿½?");
     }
 
-    ElMessage.success("?ªè?èª¿æ•´?°å??å?");
+    ElMessage.success("?ï¿½ï¿½?èª¿æ•´?ï¿½ï¿½??ï¿½ï¿½?");
     adjustmentDialogVisible.value = false;
     await fetchAdjustments();
 
-    // ?æ–°è¨ˆç??ªè?
+    // ?ï¿½æ–°è¨ˆï¿½??ï¿½ï¿½?
     if (selectedWorker.value) {
       await calculateSalary();
     }
   } catch (error) {
-    console.error("?ªè?èª¿æ•´?°å?å¤±æ?:", error);
-    ElMessage.error(error.message || "?ªè?èª¿æ•´?°å?å¤±æ?");
+    console.error("?ï¿½ï¿½?èª¿æ•´?ï¿½ï¿½?å¤±ï¿½?:", error);
+    ElMessage.error(error.message || "?ï¿½ï¿½?èª¿æ•´?ï¿½ï¿½?å¤±ï¿½?");
   } finally {
     submitting.value = false;
   }
@@ -763,7 +763,7 @@ onMounted(() => {
   overflow: auto;
 }
 
-/* ?ªå?ç¾©æ»¾?•æ?æ¨?? */
+/* ?ï¿½ï¿½?ç¾©æ»¾?ï¿½ï¿½?ï¿½?? */
 .salary-container::-webkit-scrollbar {
   width: 6px;
   height: 6px;

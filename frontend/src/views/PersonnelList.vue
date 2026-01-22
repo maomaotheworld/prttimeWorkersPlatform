@@ -1,20 +1,6 @@
 <template>
   <div class="personnel-list-page">
     <!-- 頁面頭部 -->
-    <div class="page-header">
-      <div class="header-content">
-        <div class="logo">
-          <el-icon size="24"><Management /></el-icon>
-          <span>人員列表</span>
-        </div>
-        <div class="header-actions">
-          <el-button type="primary" @click="$router.push('/login')" plain>
-            <el-icon><User /></el-icon>
-            登入系統
-          </el-button>
-        </div>
-      </div>
-    </div>
 
     <!-- 主要內容 -->
     <div class="page-content">
@@ -88,29 +74,23 @@
             empty-text="暫無人員資料"
             v-loading="loading"
           >
-            <el-table-column prop="workerNumber" label="編號" width="80" sortable />
-            
+            <el-table-column prop="number" label="編號" width="80" sortable />
+
             <el-table-column prop="name" label="姓名" width="120" sortable />
-            
-            <el-table-column prop="groupName" label="組別" width="150" sortable>
-              <template #default="scope">
-                <el-tag :style="getGroupTagStyle(scope.row.groupName)" effect="light">
-                  {{ scope.row.groupName || '未分配' }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            
+
+            <el-table-column prop="groupId" label="姓名" width="120" sortable />
+
             <el-table-column prop="floor" label="樓層" width="100" sortable>
               <template #default="scope">
                 <el-tag type="primary" size="small">
-                  {{ scope.row.floor || '未設定' }}
+                  {{ scope.row.floor || "未設定" }}
                 </el-tag>
               </template>
             </el-table-column>
-            
+
             <el-table-column prop="job" label="工作" sortable>
               <template #default="scope">
-                <span>{{ scope.row.job || '未設定' }}</span>
+                <span>{{ scope.row.job || "未設定" }}</span>
               </template>
             </el-table-column>
           </el-table>
@@ -159,13 +139,14 @@
 </template>
 
 <script>
-import { defineComponent, ref, onMounted, computed } from 'vue';
-import { useWorkersStore } from '../stores/workers';
-import { useGroupsStore } from '../stores/groups';
-import { Management, User, Search } from '@element-plus/icons-vue';
+import { defineComponent, ref, onMounted, computed } from "vue";
+import { useWorkersStore } from "../stores/workers";
+import { useGroupsStore } from "../stores/groups";
+import { Management, User, Search } from "@element-plus/icons-vue";
+import { getApiUrl } from "../config/api";
 
 export default defineComponent({
-  name: 'PersonnelList',
+  name: "PersonnelList",
   components: {
     Management,
     User,
@@ -176,43 +157,50 @@ export default defineComponent({
     const groupsStore = useGroupsStore();
 
     // 響應式數據
-    const searchName = ref('');
-    const filterFloor = ref('');
-    const filterGroup = ref('');
+    const searchName = ref("");
+    const filterFloor = ref("");
+    const filterGroup = ref("");
     const loading = ref(false);
+    const groupMapping = ref({});
 
     // 計算屬性
     const workers = computed(() => workersStore.workers);
     const groups = computed(() => groupsStore.groups);
-    
+
     // 可用樓層列表
     const availableFloors = computed(() => {
-      const floors = [...new Set(workers.value.map(w => w.floor).filter(Boolean))];
+      const floors = [
+        ...new Set(workers.value.map((w) => w.floor).filter(Boolean)),
+      ];
       return floors.sort();
     });
 
     // 篩選後的工讀生列表
     const filteredWorkers = computed(() => {
-      let result = workers.value.map(worker => ({
+      let result = workers.value.map((worker) => ({
         ...worker,
-        groupName: groups.value.find(g => g.id === worker.groupId)?.name || ''
+        groupName: groupMapping.value[worker.groupId] || worker.group || "",
       }));
 
       // 姓名搜尋
       if (searchName.value.trim()) {
-        result = result.filter(worker => 
-          worker.name.toLowerCase().includes(searchName.value.trim().toLowerCase())
+        result = result.filter((worker) =>
+          worker.name
+            .toLowerCase()
+            .includes(searchName.value.trim().toLowerCase()),
         );
       }
 
       // 樓層篩選
       if (filterFloor.value) {
-        result = result.filter(worker => worker.floor === filterFloor.value);
+        result = result.filter((worker) => worker.floor === filterFloor.value);
       }
 
       // 組別篩選
       if (filterGroup.value) {
-        result = result.filter(worker => worker.groupId === filterGroup.value);
+        result = result.filter(
+          (worker) => worker.groupId === filterGroup.value,
+        );
       }
 
       return result;
@@ -220,14 +208,18 @@ export default defineComponent({
 
     // 統計數據
     const totalWorkers = computed(() => workers.value.length);
-    
+
     const groupsWithWorkers = computed(() => {
-      const groupIds = [...new Set(workers.value.map(w => w.groupId).filter(Boolean))];
+      const groupIds = [
+        ...new Set(workers.value.map((w) => w.groupId).filter(Boolean)),
+      ];
       return groupIds.length;
     });
-    
+
     const floorsWithWorkers = computed(() => {
-      const floors = [...new Set(workers.value.map(w => w.floor).filter(Boolean))];
+      const floors = [
+        ...new Set(workers.value.map((w) => w.floor).filter(Boolean)),
+      ];
       return floors.length;
     });
 
@@ -235,14 +227,50 @@ export default defineComponent({
     const loadData = async () => {
       loading.value = true;
       try {
-        await Promise.all([
+        // 同時載入工讀生數據和組別映射
+        const [_, groupMappingData] = await Promise.all([
           workersStore.loadWorkers(),
-          groupsStore.loadGroups()
+          getGroupIdToNameMapping(),
         ]);
+        
+        // 更新組別映射
+        groupMapping.value = groupMappingData;
+        
+        // 也載入組別數據用於篩選器
+        await groupsStore.loadGroups();
       } catch (error) {
-        console.error('載入數據時發生錯誤:', error);
+        console.error("載入數據時發生錯誤:", error);
       } finally {
         loading.value = false;
+      }
+    };
+
+    // 獲取group ID到名稱的映射
+    const getGroupIdToNameMapping = async () => {
+      try {
+        const response = await fetch(getApiUrl("/api/groups"), {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("獲取組別列表失敗");
+        }
+
+        const result = await response.json();
+        const mapping = {};
+
+        if (result.success && result.data) {
+          result.data.forEach((group) => {
+            mapping[group.id] = group.name;
+          });
+        }
+
+        return mapping;
+      } catch (error) {
+        console.error("獲取組別映射失敗:", error);
+        return {};
       }
     };
 
@@ -302,7 +330,7 @@ export default defineComponent({
       filterFloor,
       filterGroup,
       loading,
-      
+
       // 計算屬性
       workers,
       groups,
@@ -311,13 +339,13 @@ export default defineComponent({
       totalWorkers,
       groupsWithWorkers,
       floorsWithWorkers,
-      
+
       // 方法
       handleSearch,
       applyFilters,
-      getGroupTagStyle
+      getGroupTagStyle,
     };
-  }
+  },
 });
 </script>
 
@@ -502,7 +530,7 @@ h1 {
   .table-section {
     overflow-x: auto;
   }
-  
+
   :deep(.el-table) {
     min-width: 600px;
   }

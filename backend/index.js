@@ -68,7 +68,13 @@ function loadWorkers() {
       path.join(__dirname, "data", "workers.json"),
       "utf8",
     );
-    return JSON.parse(data);
+    const loadedWorkers = JSON.parse(data);
+    
+    // 確保每個工讀生都有 job 欄位
+    return loadedWorkers.map(worker => ({
+      ...worker,
+      job: worker.job || "" // 如果沒有 job 欄位，設為空字串
+    }));
   } catch (err) {
     console.log("無法載入工作人員數據，使用空陣列:", err.message);
     return [];

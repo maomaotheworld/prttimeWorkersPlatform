@@ -1668,13 +1668,11 @@ app.post("/api/salary-adjustments", (req, res) => {
   });
 });
 
-// 調整總薪資（根據目標總薪資計算新時薪）
+// 調整總薪資（直接設定總薪資金額）
 app.post("/api/salary-adjustments/total", (req, res) => {
   const {
     workerId,
-    newHourlyWage,
     targetTotalSalary,
-    currentTotalHours,
     reason,
   } = req.body;
 
@@ -1702,20 +1700,20 @@ app.post("/api/salary-adjustments/total", (req, res) => {
   const worker = workers[workerIndex];
 
   try {
-    // 計算當前實際薪資（使用相同的邏輯）
+    // 計算當前薪資結構
     const currentDate = new Date();
-    const start = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-    const end = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+    const start = moment().startOf("month");
+    const end = moment().endOf("month");
 
     // 獲取本月工時記錄
     const periodRecords = timeRecords.filter((r) => {
-      const recordDate = new Date(r.date);
+      const recordDate = moment(r.date);
       return (
-        r.workerId === workerId && recordDate >= start && recordDate <= end
+        r.workerId === workerId && recordDate.isBetween(start, end, "day", "[]")
       );
     });
 
-    // 計算總工時
+    // 計算工時
     let totalRegularHours = 0;
     let totalAdditionalHours = 0;
     let workingDays = 0;
@@ -1729,83 +1727,62 @@ app.post("/api/salary-adjustments/total", (req, res) => {
     });
 
     // 計算基本薪資
-    const baseSalaryFromHours = totalRegularHours * (worker.baseHourlyWage || 0);
-    const baseSalaryFromDays = workingDays * (worker.baseWorkingHours || 0) * (worker.baseHourlyWage || 0);
-    const additionalSalary = totalAdditionalHours * (worker.baseHourlyWage || 0);
-    const baseSalary = Math.max(baseSalaryFromHours, baseSalaryFromDays);
+    const actualTotalHours = totalRegularHours + totalAdditionalHours;
+    const guaranteedHours = workingDays * (worker.baseWorkingHours || 0);
+    const effectiveHours = Math.max(actualTotalHours, guaranteedHours);
+    const currentBaseSalary = effectiveHours * (worker.baseHourlyWage || 0);
 
-    // 獲取現有薪資調整
-    const existingAdjustments = salaryAdjustments.filter((adj) => {
-      const adjDate = new Date(adj.date);
-      return (
-        adj.workerId === workerId && adjDate >= start && adjDate <= end
-      );
+    // 計算需要的額外薪資調整
+    const requiredExtraSalary = targetTotalSalary - currentBaseSalary;
+
+    // 移除該工讀生本月的所有薪資調整記錄
+    salaryAdjustments = salaryAdjustments.filter((adj) => {
+      const adjDate = moment(adj.date);
+      return !(adj.workerId === workerId && adjDate.isBetween(start, end, "day", "[]"));
     });
 
-    const totalExistingAdjustments = existingAdjustments.reduce((total, adj) => {
-      return total + (adj.type === "increase" ? adj.amount : -adj.amount);
-    }, 0);
+    // 如果需要額外薪資調整，新增一筆記錄
+    if (Math.abs(requiredExtraSalary) >= 1) {
+      const adjustment = {
+        id: Date.now().toString(),
+        workerId,
+        type: requiredExtraSalary >= 0 ? "increase" : "decrease", 
+        amount: Math.abs(requiredExtraSalary),
+        reason: `總薪資設定：${reason}`,
+        date: new Date().toISOString(),
+      };
 
-    // 計算當前總薪資
-    const currentTotalSalary = baseSalary + additionalSalary + totalExistingAdjustments;
-    
-    // 計算需要調整的差額
-    const adjustmentAmount = targetTotalSalary - currentTotalSalary;
-
-    if (Math.abs(adjustmentAmount) < 1) {
-      return res.json({
-        success: true,
-        data: {
-          workerId,
-          targetTotalSalary,
-          currentTotalSalary: Math.round(currentTotalSalary),
-          adjustmentAmount: 0,
-          message: "當前薪資已接近目標薪資，無需調整"
-        },
-        message: "總薪資設定完成（無需調整）",
-      });
+      salaryAdjustments.push(adjustment);
     }
 
-    // 新增薪資調整記錄
-    const adjustment = {
-      id: Date.now().toString(),
-      workerId,
-      type: adjustmentAmount >= 0 ? "increase" : "decrease",
-      amount: Math.abs(adjustmentAmount),
-      reason: `總薪資調整：設定為 ${targetTotalSalary} 元 (${reason})`,
-      date: new Date().toISOString(),
-    };
-
-    salaryAdjustments.push(adjustment);
     saveSalaryAdjustments();
 
     // 記錄活動日誌
-    const adjustText = adjustmentAmount >= 0 ? "增加" : "減少";
     logActivity(
-      "total-salary-adjust",
+      "total-salary-set",
       "worker",
       workerId,
       worker.name,
-      `總薪資調整：從 ${Math.round(currentTotalSalary)} 元調整為 ${targetTotalSalary} 元（${adjustText} ${Math.abs(adjustmentAmount)} 元），理由：${reason}`,
+      `總薪資設定為 ${targetTotalSalary} 元，原因：${reason}`,
     );
 
     res.json({
       success: true,
       data: {
         workerId,
-        oldTotalSalary: Math.round(currentTotalSalary),
-        newTotalSalary: targetTotalSalary,
-        adjustmentAmount: Math.round(adjustmentAmount),
-        adjustmentId: adjustment.id
+        targetTotalSalary,
+        currentBaseSalary: Math.round(currentBaseSalary),
+        extraSalaryAdjustment: Math.round(requiredExtraSalary),
+        effectiveHours: Math.round(effectiveHours * 100) / 100,
       },
-      message: "總薪資調整成功",
+      message: "總薪資設定成功",
     });
 
   } catch (error) {
-    console.error("總薪資調整失敗:", error);
+    console.error("總薪資設定失敗:", error);
     res.status(500).json({
       success: false,
-      message: "總薪資調整失敗: " + error.message,
+      message: "總薪資設定失敗: " + error.message,
     });
   }
 });
@@ -1872,15 +1849,21 @@ app.get("/api/workers/:id/salary-calculation", (req, res) => {
   // 計算總工時
   let totalRegularHours = 0;
   let totalAdditionalHours = 0;
+  let workingDays = 0;
 
   periodRecords.forEach((record) => {
     totalRegularHours += record.totalHours;
     totalAdditionalHours += record.additionalHours;
+    if (record.clockIn || record.additionalHours > 0) {
+      workingDays++;
+    }
   });
 
-  // 計算基本薪資 - 只使用總工時
-  const totalHours = totalRegularHours + totalAdditionalHours;
-  const baseSalary = totalHours * (worker.baseHourlyWage || 0);
+  // 計算基本薪資 - 考慮基本時數保證
+  const actualTotalHours = totalRegularHours + totalAdditionalHours;
+  const guaranteedHours = workingDays * (worker.baseWorkingHours || 0);
+  const effectiveHours = Math.max(actualTotalHours, guaranteedHours);
+  const baseSalary = effectiveHours * (worker.baseHourlyWage || 0);
 
   // 獲取薪資調整記錄（額外薪資）
   const salaryAdjustmentsInPeriod = salaryAdjustments.filter((adj) => {
@@ -1914,7 +1897,10 @@ app.get("/api/workers/:id/salary-calculation", (req, res) => {
       workTime: {
         totalRegularHours: parseFloat(totalRegularHours.toFixed(2)),
         totalAdditionalHours: parseFloat(totalAdditionalHours.toFixed(2)),
-        totalHours: parseFloat(totalHours.toFixed(2)),
+        actualTotalHours: parseFloat(actualTotalHours.toFixed(2)),
+        guaranteedHours: parseFloat(guaranteedHours.toFixed(2)),
+        effectiveHours: parseFloat(effectiveHours.toFixed(2)),
+        workingDays,
       },
       salary: {
         baseSalary: parseFloat(baseSalary.toFixed(2)),

@@ -121,8 +121,20 @@
             <el-descriptions-item label="加班工時">
               {{ salaryData.workTime.totalAdditionalHours }} 小時
             </el-descriptions-item>
-            <el-descriptions-item label="累積工時">
-              <strong>{{ salaryData.workTime.totalHours }} 小時</strong>
+            <el-descriptions-item label="實際總工時">
+              {{ salaryData.workTime.actualTotalHours }} 小時
+            </el-descriptions-item>
+            <el-descriptions-item label="基本時數保證">
+              {{ salaryData.workTime.guaranteedHours }} 小時
+              <el-text type="info" size="small">
+                ({{ salaryData.workTime.workingDays }} 天 × {{ salaryData.worker.baseWorkingHours }} 小時)
+              </el-text>
+            </el-descriptions-item>
+            <el-descriptions-item label="薪資計算工時">
+              <strong>{{ salaryData.workTime.effectiveHours }} 小時</strong>
+              <el-text type="primary" size="small">
+                (取較大值)
+              </el-text>
             </el-descriptions-item>
           </el-descriptions>
         </el-col>
@@ -135,7 +147,7 @@
                 <strong>{{ salaryData.salary.baseSalary }} 元</strong>
               </div>
               <div style="font-size: 12px; color: #666;">
-                時薪 {{ salaryData.worker.baseHourlyWage }} × 累積工時 {{ salaryData.workTime.totalHours }}
+                時薪 {{ salaryData.worker.baseHourlyWage }} × 有效工時 {{ salaryData.workTime.effectiveHours }}
               </div>
             </el-descriptions-item>
             <el-descriptions-item label="額外薪資" v-if="salaryData.salary.extraSalary !== 0">
@@ -310,7 +322,7 @@
         :closable="false"
         style="margin-bottom: 20px"
       >
-        設定要支付給工讀生的總薪資金額，系統將通過薪資調整記錄來確保實際薪資符合目標金額
+        直接設定這位工讀生本月的總薪資金額（包含所有工時和額外薪資）
       </el-alert>
 
       <el-form
@@ -337,9 +349,9 @@
 
         <el-divider />
 
-        <el-form-item label="累積工時">
+        <el-form-item label="有效工時">
           <el-input
-            :value="totalWorkHours + ' 小時'"
+            :value="effectiveWorkHours + ' 小時'"
             disabled
             style="width: 100%"
           />
@@ -353,7 +365,7 @@
           />
         </el-form-item>
 
-        <el-form-item label="目前預估薪資">
+        <el-form-item label="目前總薪資">
           <el-input
             :value="currentEstimatedSalary + ' 元'"
             disabled
@@ -497,7 +509,13 @@ const actualWorkHours = computed(() => {
 // 累積工時（正常工時 + 加班工時）
 const totalWorkHours = computed(() => {
   if (!salaryData.value) return 0;
-  return salaryData.value.workTime?.totalHours || 0;
+  return salaryData.value.workTime?.actualTotalHours || 0;
+});
+
+// 有效工時（考慮基本時數保證）
+const effectiveWorkHours = computed(() => {
+  if (!salaryData.value) return 0;
+  return salaryData.value.workTime?.effectiveHours || 0;
 });
 
 // 目前時薪
@@ -689,17 +707,12 @@ const handleTotalSalaryAdjust = async () => {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.message || "總薪資調整失敗");
+      throw new Error(result.message || "總薪資設定失敗");
     }
 
-    if (result.data.adjustmentAmount === 0) {
-      ElMessage.info(result.data.message || "目標薪資與當前薪資相同，無需調整");
-    } else {
-      const adjustText = result.data.adjustmentAmount >= 0 ? "增加" : "減少";
-      ElMessage.success(
-        `總薪資調整成功！從 ${result.data.oldTotalSalary} 元調整為 ${result.data.newTotalSalary} 元（${adjustText} ${Math.abs(result.data.adjustmentAmount)} 元）`,
-      );
-    }
+    ElMessage.success(
+      `總薪資設定成功！設定為 ${result.data.targetTotalSalary} 元`
+    );
     
     totalSalaryDialogVisible.value = false;
 

@@ -124,9 +124,6 @@
             <el-descriptions-item label="累積工時">
               <strong>{{ salaryData.workTime.totalHours }} 小時</strong>
             </el-descriptions-item>
-            <el-descriptions-item label="工作天數">
-              {{ salaryData.workTime.workingDays }} 天
-            </el-descriptions-item>
           </el-descriptions>
         </el-col>
 
@@ -501,33 +498,6 @@ const actualWorkHours = computed(() => {
 const totalWorkHours = computed(() => {
   if (!salaryData.value) return 0;
   return salaryData.value.workTime?.totalHours || 0;
-});
-
-// 基本時數保證（工作天數 × 基本時數）
-const guaranteedHours = computed(() => {
-  if (!salaryData.value || !totalSalaryForm.value.workerId) return 0;
-  const worker = workers.value.find(w => w.id === totalSalaryForm.value.workerId);
-  const workingDays = salaryData.value.workTime?.workingDays || 0;
-  const baseHours = worker?.baseWorkingHours || 0;
-  return workingDays * baseHours;
-});
-
-// 有效時數（取較大值）
-const effectiveHours = computed(() => {
-  return Math.max(actualWorkHours.value, guaranteedHours.value);
-});
-
-// 薪資計算方式
-const salaryCalculationMethod = computed(() => {
-  const actual = actualWorkHours.value;
-  const guaranteed = guaranteedHours.value;
-  if (actual > guaranteed) {
-    return "按實際工時";
-  } else if (guaranteed > 0) {
-    return "按基本時數保證";
-  } else {
-    return "按實際工時";
-  }
 });
 
 // 目前時薪

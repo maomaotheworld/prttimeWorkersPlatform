@@ -1872,20 +1872,15 @@ app.get("/api/workers/:id/salary-calculation", (req, res) => {
   // 計算總工時
   let totalRegularHours = 0;
   let totalAdditionalHours = 0;
-  let workingDays = 0;
 
   periodRecords.forEach((record) => {
     totalRegularHours += record.totalHours;
     totalAdditionalHours += record.additionalHours;
-    if (record.clockIn || record.additionalHours > 0) {
-      workingDays++;
-    }
   });
 
-  // 計算基本薪資和額外薪資
+  // 計算基本薪資 - 只使用總工時
   const totalHours = totalRegularHours + totalAdditionalHours;
-  const baseSalaryFromTotalHours = totalHours * (worker.baseHourlyWage || 0);
-  const baseSalaryFromDays = workingDays * (worker.baseWorkingHours || 0) * (worker.baseHourlyWage || 0);
+  const baseSalary = totalHours * (worker.baseHourlyWage || 0);
 
   // 獲取薪資調整記錄（額外薪資）
   const salaryAdjustmentsInPeriod = salaryAdjustments.filter((adj) => {
@@ -1899,10 +1894,7 @@ app.get("/api/workers/:id/salary-calculation", (req, res) => {
     return total + (adj.type === "increase" ? adj.amount : -adj.amount);
   }, 0);
 
-  // 計算總薪資
-  // 基本薪資：取總工時計算 vs 基本時數保證的較大值
-  const baseSalary = Math.max(baseSalaryFromTotalHours, baseSalaryFromDays);
-  // 總薪資：基本薪資 + 額外薪資調整
+  // 計算總薪資：基本薪資 + 額外薪資調整
   const totalSalary = baseSalary + totalAdjustments;
 
   res.json({
@@ -1923,11 +1915,8 @@ app.get("/api/workers/:id/salary-calculation", (req, res) => {
         totalRegularHours: parseFloat(totalRegularHours.toFixed(2)),
         totalAdditionalHours: parseFloat(totalAdditionalHours.toFixed(2)),
         totalHours: parseFloat(totalHours.toFixed(2)),
-        workingDays,
       },
       salary: {
-        baseSalaryFromTotalHours: parseFloat(baseSalaryFromTotalHours.toFixed(2)),
-        baseSalaryFromDays: parseFloat(baseSalaryFromDays.toFixed(2)),
         baseSalary: parseFloat(baseSalary.toFixed(2)),
         extraSalary: parseFloat(totalAdjustments.toFixed(2)),
         totalSalary: parseFloat(totalSalary.toFixed(2)),

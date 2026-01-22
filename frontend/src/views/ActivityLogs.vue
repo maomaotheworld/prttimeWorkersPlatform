@@ -9,7 +9,7 @@
           :icon="Delete"
           :disabled="logs.length === 0"
         >
-          清空?��?
+          清空日誌
         </el-button>
         <el-button
           type="primary"
@@ -17,7 +17,7 @@
           :icon="Refresh"
           :loading="loading"
         >
-          ?�新?��?
+          重新整理
         </el-button>
       </div>
     </div>
@@ -220,10 +220,10 @@ const handleClearLogs = async () => {
 
 // 搜尋功能
 const handleSearch = () => {
-  // ?��??�輯?��?算屬?�中?��?
+  // 搜尋邏輯在計算屬性中處理
 };
 
-// ?��??��?
+// 分頁處理
 const handleSizeChange = (size) => {
   pageSize.value = size;
   currentPage.value = 1;
@@ -235,7 +235,7 @@ const handlePageChange = (page) => {
   fetchLogs();
 };
 
-// ?��??��???
+// 格式化時間
 const formatTime = (timestamp) => {
   return new Date(timestamp).toLocaleString("zh-TW", {
     year: "numeric",
@@ -247,7 +247,7 @@ const formatTime = (timestamp) => {
   });
 };
 
-// ?��??��?軸�???
+// 獲取時間軸類型
 const getTimelineType = (action) => {
   switch (action) {
     case "create":
@@ -263,7 +263,7 @@ const getTimelineType = (action) => {
   }
 };
 
-// ?��??��??��?
+// 獲取操作圖標
 const getActionIcon = (action) => {
   switch (action) {
     case "create":
@@ -284,7 +284,7 @@ const getActionIcon = (action) => {
   }
 };
 
-// ?��??��?標籤類�?
+// 獲取操作標籤類型
 const getActionTagType = (action) => {
   switch (action) {
     case "create":
@@ -300,7 +300,7 @@ const getActionTagType = (action) => {
   }
 };
 
-// ?��??��??��?
+// 獲取操作文字
 const getActionText = (action) => {
   const actionMap = {
     create: "新增",
@@ -420,7 +420,7 @@ onMounted(() => {
   text-align: center;
 }
 
-/* ?��?式設�?*/
+/* 響應式設計 */
 @media (max-width: 768px) {
   .activity-logs-container {
     padding: 12px;

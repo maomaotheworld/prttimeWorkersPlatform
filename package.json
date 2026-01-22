@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "工讀生管理系統",
   "scripts": {
-    "build": "npm --prefix ./frontend install && npm --prefix ./frontend run build && cp -r ./frontend/dist ./dist",
+    "build": "npm --prefix ./frontend install && npm --prefix ./frontend run build && cp -r ./frontend/dist ./dist && cp ./frontend/vercel.json ./dist/",
     "dev": "cd frontend && npm run dev",
     "install": "npm --prefix ./frontend install"
   },

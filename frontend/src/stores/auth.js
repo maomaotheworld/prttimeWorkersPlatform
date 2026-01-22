@@ -75,17 +75,14 @@ export const useAuthStore = defineStore("auth", {
       try {
         console.log("Auth store: ?��??�入請�?", { username });
 
-        // 使用getApiUrl獲取正確的 API URL  
-        const directResponse = await fetch(
-          getApiUrl("/api/auth/login"),
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ username, password }),
+        // 使用getApiUrl獲取正確的 API URL
+        const directResponse = await fetch(getApiUrl("/api/auth/login"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        );
+          body: JSON.stringify({ username, password }),
+        });
 
         const responseData = await directResponse.json();
         console.log("Auth store: ?�接請�??��?", responseData);

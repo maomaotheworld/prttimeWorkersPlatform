@@ -21,7 +21,7 @@ app.use(
       "http://localhost:5175",
     ],
     credentials: true,
-  })
+  }),
 );
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -1141,112 +1141,125 @@ app.post("/api/time-records/clock-out", (req, res) => {
 });
 
 // 新增額外工時（支持疊加模式）
-app.post("/api/time-records/additional-hours", authenticateToken, (req, res) => {
-  const { workerId, date, hours, reason, adjustmentType } = req.body;
+app.post(
+  "/api/time-records/additional-hours",
+  authenticateToken,
+  (req, res) => {
+    const { workerId, date, hours, reason, adjustmentType } = req.body;
 
-  if (!workerId || !date || hours === undefined || hours === null || !reason) {
-    return res.status(400).json({
-      success: false,
-      message: "所有欄位都不能為空",
-    });
-  }
+    if (
+      !workerId ||
+      !date ||
+      hours === undefined ||
+      hours === null ||
+      !reason
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "所有欄位都不能為空",
+      });
+    }
 
-  // 驗證時數為數字
-  const inputHours = parseFloat(hours);
-  if (isNaN(inputHours) || inputHours === 0) {
-    return res.status(400).json({
-      success: false,
-      message: "時數必須是非零數字，可使用小數點",
-    });
-  }
+    // 驗證時數為數字
+    const inputHours = parseFloat(hours);
+    if (isNaN(inputHours) || inputHours === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "時數必須是非零數字，可使用小數點",
+      });
+    }
 
-  // 根據調整類型決定實際時數（add: 正數, subtract: 負數）
-  const actualHours = adjustmentType === "subtract" ? -Math.abs(inputHours) : Math.abs(inputHours);
+    // 根據調整類型決定實際時數（add: 正數, subtract: 負數）
+    const actualHours =
+      adjustmentType === "subtract"
+        ? -Math.abs(inputHours)
+        : Math.abs(inputHours);
 
-  // 檢查工讀生是否存在
-  const worker = workers.find((w) => w.id === workerId);
-  if (!worker) {
-    return res.status(404).json({
-      success: false,
-      message: "工讀生不存在",
-    });
-  }
+    // 檢查工讀生是否存在
+    const worker = workers.find((w) => w.id === workerId);
+    if (!worker) {
+      return res.status(404).json({
+        success: false,
+        message: "工讀生不存在",
+      });
+    }
 
-  const targetDate = moment(date).format("YYYY-MM-DD");
+    const targetDate = moment(date).format("YYYY-MM-DD");
 
-  // 找到該日期的工時記錄
-  let record = timeRecords.find(
-    (r) =>
-      r.workerId === workerId &&
-      moment(r.date).format("YYYY-MM-DD") === targetDate,
-  );
+    // 找到該日期的工時記錄
+    let record = timeRecords.find(
+      (r) =>
+        r.workerId === workerId &&
+        moment(r.date).format("YYYY-MM-DD") === targetDate,
+    );
 
-  // 獲取操作者資訊
-  const operatorId = req.user ? req.user.id : "system";
-  const operatorName = req.user ? (req.user.name || req.user.username) : "系統";
+    // 獲取操作者資訊
+    const operatorId = req.user ? req.user.id : "system";
+    const operatorName = req.user ? req.user.name || req.user.username : "系統";
 
-  // 創建調整記錄
-  const adjustmentRecord = {
-    id: uuidv4(),
-    hours: actualHours,
-    reason: reason,
-    operatorId: operatorId,
-    operatorName: operatorName,
-    createdAt: new Date().toISOString(),
-  };
-
-  if (!record) {
-    // 如果沒有當日記錄，創建一個新的記錄
-    record = {
+    // 創建調整記錄
+    const adjustmentRecord = {
       id: uuidv4(),
-      workerId,
-      date: new Date(date).toISOString(),
-      clockIn: null,
-      clockOut: null,
-      totalHours: 0,
-      additionalHours: actualHours,
-      adjustments: [adjustmentRecord], // 儲存所有調整記錄
+      hours: actualHours,
+      reason: reason,
+      operatorId: operatorId,
+      operatorName: operatorName,
       createdAt: new Date().toISOString(),
     };
-    timeRecords.push(record);
-  } else {
-    // 更新現有記錄 - 疊加時數
-    const recordIndex = timeRecords.findIndex((r) => r.id === record.id);
-    
-    // 初始化 adjustments 陣列（如果不存在）
-    if (!timeRecords[recordIndex].adjustments) {
-      timeRecords[recordIndex].adjustments = [];
+
+    if (!record) {
+      // 如果沒有當日記錄，創建一個新的記錄
+      record = {
+        id: uuidv4(),
+        workerId,
+        date: new Date(date).toISOString(),
+        clockIn: null,
+        clockOut: null,
+        totalHours: 0,
+        additionalHours: actualHours,
+        adjustments: [adjustmentRecord], // 儲存所有調整記錄
+        createdAt: new Date().toISOString(),
+      };
+      timeRecords.push(record);
+    } else {
+      // 更新現有記錄 - 疊加時數
+      const recordIndex = timeRecords.findIndex((r) => r.id === record.id);
+
+      // 初始化 adjustments 陣列（如果不存在）
+      if (!timeRecords[recordIndex].adjustments) {
+        timeRecords[recordIndex].adjustments = [];
+      }
+
+      // 新增調整記錄
+      timeRecords[recordIndex].adjustments.push(adjustmentRecord);
+
+      // 疊加時數
+      timeRecords[recordIndex].additionalHours =
+        (timeRecords[recordIndex].additionalHours || 0) + actualHours;
+
+      record = timeRecords[recordIndex];
     }
-    
-    // 新增調整記錄
-    timeRecords[recordIndex].adjustments.push(adjustmentRecord);
-    
-    // 疊加時數
-    timeRecords[recordIndex].additionalHours = 
-      (timeRecords[recordIndex].additionalHours || 0) + actualHours;
-    
-    record = timeRecords[recordIndex];
-  }
 
-  saveTimeRecords(); // 持久化數據
+    saveTimeRecords(); // 持久化數據
 
-  // 記錄活動日誌（包含操作者資訊）
-  const actionType = actualHours >= 0 ? "新增" : "扣除";
-  logActivity(
-    "time-adjust",
-    "time-record",
-    record.id,
-    worker.name,
-    `${operatorName} 對工讀生進行時數調整：${actionType} ${Math.abs(actualHours)} 小時，原因：${reason}`,
-    operatorId,
-  );
+    // 記錄活動日誌（包含操作者資訊）
+    const actionType = actualHours >= 0 ? "新增" : "扣除";
+    logActivity(
+      "time-adjust",
+      "time-record",
+      record.id,
+      worker.name,
+      `${operatorName} 對工讀生進行時數調整：${actionType} ${Math.abs(actualHours)} 小時，原因：${reason}`,
+      operatorId,
+    );
 
-  res.status(201).json({
-    success: true,
-    data: record,
-    message: `時數${actionType}成功`,
-  });
-});
+    res.status(201).json({
+      success: true,
+      data: record,
+      message: `時數${actionType}成功`,
+    });
+  },
+);
 
 // 編輯打卡時間
 app.post("/api/time-records/edit-time", (req, res) => {
@@ -1420,9 +1433,20 @@ app.post("/api/salary-adjustments", (req, res) => {
 
 // 調整總薪資（根據目標總薪資計算新時薪）
 app.post("/api/salary-adjustments/total", (req, res) => {
-  const { workerId, newHourlyWage, targetTotalSalary, currentTotalHours, reason } = req.body;
+  const {
+    workerId,
+    newHourlyWage,
+    targetTotalSalary,
+    currentTotalHours,
+    reason,
+  } = req.body;
 
-  if (!workerId || newHourlyWage === undefined || newHourlyWage === null || !reason) {
+  if (
+    !workerId ||
+    newHourlyWage === undefined ||
+    newHourlyWage === null ||
+    !reason
+  ) {
     return res.status(400).json({
       success: false,
       message: "所有欄位都不能為空",
@@ -1455,10 +1479,15 @@ app.post("/api/salary-adjustments/total", (req, res) => {
 
   // 記錄活動日誌
   const wageDiff = newWage - oldWage;
-  const changeText = wageDiff >= 0 ? `調升 ${wageDiff}` : `調降 ${Math.abs(wageDiff)}`;
-  const totalSalaryText = targetTotalSalary ? `，目標總薪資：${targetTotalSalary} 元` : '';
-  const hoursText = currentTotalHours ? `，本期工時：${currentTotalHours} 小時` : '';
-  
+  const changeText =
+    wageDiff >= 0 ? `調升 ${wageDiff}` : `調降 ${Math.abs(wageDiff)}`;
+  const totalSalaryText = targetTotalSalary
+    ? `，目標總薪資：${targetTotalSalary} 元`
+    : "";
+  const hoursText = currentTotalHours
+    ? `，本期工時：${currentTotalHours} 小時`
+    : "";
+
   logActivity(
     "total-salary-adjust",
     "worker",

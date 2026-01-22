@@ -507,7 +507,7 @@ const loadTodayAttendance = async () => {
 
     // 後端返�??��???{ success: true, data: [...], message: "..." }
     const records = result.data || [];
-    
+
     // ?��??�工讀?�設定�??�出?��???
     workers.value.forEach((worker) => {
       const attendance = records.find(

@@ -132,16 +132,19 @@ export const useWorkersStore = defineStore("workers", () => {
     try {
       console.log("Workers store: 批次更新薪資", workerIds, wageData);
 
-      const response = await fetch(getApiUrl("/api/workers/batch-update-wage"), {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        getApiUrl("/api/workers/batch-update-wage"),
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            workerIds,
+            ...wageData,
+          }),
         },
-        body: JSON.stringify({
-          workerIds,
-          ...wageData,
-        }),
-      });
+      );
 
       const data = await response.json();
       console.log("Workers store: 批次更新薪資回應", data);
@@ -149,7 +152,9 @@ export const useWorkersStore = defineStore("workers", () => {
       if (data.success) {
         // 更新本地數據
         data.data.updated.forEach((updatedWorker) => {
-          const index = workers.value.findIndex((w) => w.id === updatedWorker.id);
+          const index = workers.value.findIndex(
+            (w) => w.id === updatedWorker.id,
+          );
           if (index !== -1) {
             workers.value[index] = updatedWorker;
           }
@@ -173,20 +178,23 @@ export const useWorkersStore = defineStore("workers", () => {
       // 從localStorage 獲取 token（用於身份驗證）
       const token = localStorage.getItem("auth_token") || "";
 
-      const response = await fetch(getApiUrl("/api/time-records/additional-hours"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+      const response = await fetch(
+        getApiUrl("/api/time-records/additional-hours"),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            workerId: timeRecord.workerId,
+            date: timeRecord.date,
+            hours: Math.abs(timeRecord.hours),
+            reason: timeRecord.description,
+            adjustmentType: timeRecord.adjustmentType || "add", // 預設調整類型：add 或 subtract
+          }),
         },
-        body: JSON.stringify({
-          workerId: timeRecord.workerId,
-          date: timeRecord.date,
-          hours: Math.abs(timeRecord.hours),
-          reason: timeRecord.description,
-          adjustmentType: timeRecord.adjustmentType || "add", // 預設調整類型：add 或 subtract
-        }),
-      });
+      );
 
       const data = await response.json();
       console.log("Workers store: 新增工時記錄回應", data);

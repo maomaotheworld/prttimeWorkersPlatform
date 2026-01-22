@@ -178,10 +178,10 @@ const fetchLogs = async () => {
     }
 
     const response = await fetch(
-      `${getApiUrl()}/activity-logs?` + new URLSearchParams(params)
+      `${getApiUrl()}/activity-logs?` + new URLSearchParams(params),
     );
     const data = await response.json();
-    
+
     logs.value = data.data;
     totalLogs.value = data.total;
     totalPages.value = data.totalPages;
@@ -207,7 +207,7 @@ const handleClearLogs = async () => {
     );
 
     await fetch(`${getApiUrl()}/activity-logs`, {
-      method: 'DELETE'
+      method: "DELETE",
     });
     ElMessage.success("活動日誌已清空");
     await fetchLogs();

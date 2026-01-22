@@ -6,8 +6,8 @@ import { ElementPlusResolver } from "unplugin-vue-components/resolvers";
 
 export default defineConfig(({ mode }) => {
   // 載入環境變數
-  const env = loadEnv(mode, process.cwd(), '');
-  
+  const env = loadEnv(mode, process.cwd(), "");
+
   return {
     plugins: [
       vue(),
@@ -21,8 +21,8 @@ export default defineConfig(({ mode }) => {
     ],
     // 明確定義環境變數
     define: {
-      'import.meta.env.VITE_API_URL': JSON.stringify(
-        env.VITE_API_URL || 'http://localhost:3005'
+      "import.meta.env.VITE_API_URL": JSON.stringify(
+        env.VITE_API_URL || "http://localhost:3005",
       ),
     },
     server: {

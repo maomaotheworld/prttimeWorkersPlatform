@@ -1,9 +1,9 @@
 <template>
   <div class="time-records-container">
     <div class="page-header">
-      <h1 class="page-title">工�?記�?</h1>
+      <h1 class="page-title">工作記錄</h1>
       <el-button type="primary" @click="showAddAdditionalDialog" :icon="Plus">
-        ?��?額�?工�?
+        新增額外工時
       </el-button>
     </div>
 
@@ -34,13 +34,13 @@
           />
         </el-col>
         <el-col :xs="24" :sm="8">
-          <el-button type="primary" @click="fetchRecords">?�詢</el-button>
-          <el-button @click="resetFilters">?�置</el-button>
+          <el-button type="primary" @click="fetchRecords">查詢</el-button>
+          <el-button @click="resetFilters">重置</el-button>
         </el-col>
       </el-row>
     </el-card>
 
-    <!-- 工�?記�?表格 -->
+    <!-- 工作記錄表格 -->
     <el-card class="table-card">
       <el-table
         v-loading="loading"
@@ -48,7 +48,7 @@
         stripe
         class="responsive-table"
       >
-        <el-table-column prop="date" label="?��?" width="120">
+        <el-table-column prop="date" label="日期" width="120">
           <template #default="{ row }">
             {{ formatDate(row.date) }}
           </template>
@@ -65,7 +65,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="上班?��?" width="100">
+        <el-table-column label="上班時間" width="100">
           <template #default="{ row }">
             <span v-if="row.clockIn">
               {{ formatTime(row.clockIn) }}
@@ -90,13 +90,13 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="額�?工�?" width="120">
+        <el-table-column label="額外工時" width="120">
           <template #default="{ row }">
             <span v-if="row.additionalHours > 0" class="success-text">
-              +{{ row.additionalHours }} 小�?
+              +{{ row.additionalHours }} 小時
             </span>
             <span v-else-if="row.additionalHours < 0" class="danger-text">
-              {{ row.additionalHours }} 小�?
+              {{ row.additionalHours }} 小時
             </span>
             <span v-else class="info-text">-</span>
           </template>
@@ -133,14 +133,14 @@
 
       <div v-if="records.length === 0 && !loading" class="empty-state">
         <el-icon size="48"><DocumentRemove /></el-icon>
-        <p>?�無工�?記�?</p>
+        <p>暫無工作記錄</p>
       </div>
     </el-card>
 
-    <!-- ?��?額�?工�?對話�?-->
+    <!-- 新增額外工時對話框 -->
     <el-dialog
       v-model="additionalDialogVisible"
-      title="?�數調整"
+      title="工時調整"
       :width="isMobile ? '95%' : '500px'"
     >
       <el-form
@@ -164,23 +164,23 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="?��?" prop="date">
+        <el-form-item label="日期" prop="date">
           <el-date-picker
             v-model="additionalForm.date"
             type="date"
-            placeholder="?��??��?"
+            placeholder="選擇日期"
             style="width: 100%"
           />
         </el-form-item>
 
-        <el-form-item label="調整類�?" prop="adjustmentType">
+        <el-form-item label="調整類型" prop="adjustmentType">
           <el-radio-group v-model="additionalForm.adjustmentType">
-            <el-radio-button label="add">?��?工�?</el-radio-button>
-            <el-radio-button label="subtract">??��工�?</el-radio-button>
+            <el-radio-button label="add">增加工時</el-radio-button>
+            <el-radio-button label="subtract">減少工時</el-radio-button>
           </el-radio-group>
         </el-form-item>
 
-        <el-form-item label="?�數" prop="hours">
+        <el-form-item label="時數" prop="hours">
           <el-input-number
             v-model="additionalForm.hours"
             :min="0.1"
@@ -190,29 +190,33 @@
             style="width: 100%"
           />
           <span style="font-size: 12px; color: #909399; margin-left: 8px">
-            {{ additionalForm.adjustmentType === 'add' ? '將新�? : '將扣?? }}
-            {{ additionalForm.hours }} 小�?
+            {{ additionalForm.adjustmentType === "add" ? "將新增" : "將扣除" }}
+            {{ additionalForm.hours }} 小時
           </span>
         </el-form-item>
 
-        <el-form-item label="?�由" prop="reason">
+        <el-form-item label="原因" prop="reason">
           <el-input
             v-model="additionalForm.reason"
             type="textarea"
             :rows="3"
-            :placeholder="additionalForm.adjustmentType === 'add' ? '請說?��??��?額�?工�??��??? : '請說?�扣?�工?��??�由'"
+            :placeholder="
+              additionalForm.adjustmentType === 'add'
+                ? '請說明新增額外工時的原因'
+                : '請說明扣除工時的原因'
+            "
           />
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="additionalDialogVisible = false">?��?</el-button>
+        <el-button @click="additionalDialogVisible = false">取消</el-button>
         <el-button
           type="primary"
           @click="handleAddAdditional"
           :loading="submitting"
         >
-          ?��?
+          確認
         </el-button>
       </template>
     </el-dialog>
@@ -246,14 +250,14 @@ const dateRange = ref([
   moment().endOf("month").format("YYYY-MM-DD"),
 ]);
 
-// 額�?工�?對話�?
+// 額外工時對話框
 const additionalDialogVisible = ref(false);
 const additionalForm = ref({
   workerId: "",
   date: new Date(),
   hours: 1,
   reason: "",
-  adjustmentType: "add", // ?�設?�新增工??
+  adjustmentType: "add", // 預設為新增工時
 });
 
 const additionalFormRules = {
@@ -265,13 +269,13 @@ const additionalFormRules = {
 
 const additionalFormRef = ref();
 
-// 工具?�數
+// 工具函數
 const formatDate = (date) => moment(date).format("MM/DD");
 const formatTime = (time) => moment(time).format("HH:mm");
 
 const getWorkerName = (workerId) => {
   const worker = workers.value.find((w) => w.id === workerId);
-  return worker ? worker.name : "?�知";
+  return worker ? worker.name : "未知";
 };
 
 const getWorkerNumber = (workerId) => {
@@ -279,7 +283,7 @@ const getWorkerNumber = (workerId) => {
   return worker ? worker.number : "";
 };
 
-// ?��??��?
+// 獲取數據
 const fetchRecords = async () => {
   try {
     loading.value = true;
@@ -310,14 +314,14 @@ const fetchRecords = async () => {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.message || "載入工�?記�?失�?");
+      throw new Error(result.message || "載入工作記錄失敗");
     }
 
-    // 後端返�??��???{ success: true, data: [...], message: "..." }
+    // 後端返回格式：{ success: true, data: [...], message: "..." }
     records.value = result.data || [];
   } catch (error) {
-    console.error("載入工�?記�?失�?:", error);
-    ElMessage.error(error.message || "載入工�?記�?失�?");
+    console.error("載入工作記錄失敗:", error);
+    ElMessage.error(error.message || "載入工作記錄失敗");
   } finally {
     loading.value = false;
   }
@@ -344,7 +348,7 @@ const showAddAdditionalDialog = () => {
     date: new Date(),
     hours: 1,
     reason: "",
-    adjustmentType: "add", // ?�設?�新增工??
+    adjustmentType: "add", // 預設為新增工時
   };
   additionalDialogVisible.value = true;
 };
@@ -366,24 +370,24 @@ const handleAddAdditional = async () => {
         date: moment(additionalForm.value.date).format("YYYY-MM-DD"),
         hours: additionalForm.value.hours,
         reason: additionalForm.value.reason,
-        adjustmentType: additionalForm.value.adjustmentType, // 添�?調整類�?
+        adjustmentType: additionalForm.value.adjustmentType, // 添加調整類型
       }),
     });
 
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.message || "?�數調整失�?");
+      throw new Error(result.message || "工時調整失敗");
     }
 
     const actionText =
-      additionalForm.value.adjustmentType === "add" ? "?��?" : "??��";
-    ElMessage.success(`?�數${actionText}?��?`);
+      additionalForm.value.adjustmentType === "add" ? "新增" : "減少";
+    ElMessage.success(`工時${actionText}成功`);
     additionalDialogVisible.value = false;
     await fetchRecords();
   } catch (error) {
-    console.error("額�?工�??��?失�?:", error);
-    ElMessage.error(error.message || "額�?工�??��?失�?");
+    console.error("額外工時新增失敗:", error);
+    ElMessage.error(error.message || "額外工時新增失敗");
   } finally {
     submitting.value = false;
   }
@@ -402,7 +406,7 @@ onMounted(() => {
   overflow: auto;
 }
 
-/* ?��?義滾?��?�?? */
+/* 自定義滾動條樣式 */
 .time-records-container::-webkit-scrollbar {
   width: 6px;
   height: 6px;

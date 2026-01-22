@@ -225,7 +225,7 @@ const handleClearLogs = async () => {
       },
     );
 
-    const apiUrl = `${getApiUrl()}/api/activity-logs`;
+    const apiUrl = getApiUrl("/api/activity-logs");
     console.log('清空日誌 API URL:', apiUrl);
     
     const response = await fetch(apiUrl, {

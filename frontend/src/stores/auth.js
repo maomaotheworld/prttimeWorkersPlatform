@@ -174,34 +174,43 @@ export const useAuthStore = defineStore("auth", {
     // 登出
     async logout() {
       try {
+        // 嘗試調用後端登出API
         if (this.token) {
-          await api.post("/auth/logout");
+          const response = await fetch(getApiUrl("/api/auth/logout"), {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${this.token}`
+            }
+          });
+          
+          if (!response.ok) {
+            console.warn("登出API請求失敗，HTTP狀態:", response.status);
+          }
         }
       } catch (error) {
-        console.error("登出請求失敗:", error);
-      } finally {
-        // 清除狀態
-        this.token = null;
-        this.user = null;
-        this.isLoggedIn = false;
-        this.permissions = {
-          canManageUsers: false,
-          canEditWorkers: false,
-          canImportData: false,
-          canClockIn: false,
-          canEditTime: false,
-          canViewReports: false,
-          canDeleteData: false,
-        };
-        this.users = [];
-
-        // 清除 localStorage
-        localStorage.removeItem("auth_token");
-        localStorage.removeItem("auth_user");
-
-        // 清除API默認header
-        delete api.defaults.headers.common["Authorization"];
+        // API錯誤不影響前端登出流程
+        console.warn("登出API請求失敗，但仍會清除前端狀態:", error.message);
       }
+      
+      // 無論API是否成功，都清除前端狀態
+      this.token = null;
+      this.user = null;
+      this.isLoggedIn = false;
+      this.permissions = {
+        canManageUsers: false,
+        canEditWorkers: false,
+        canImportData: false,
+        canClockIn: false,
+        canEditTime: false,
+        canViewReports: false,
+        canDeleteData: false,
+      };
+      this.users = [];
+
+      // 清除 localStorage
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_user");
     },
 
     // 驗證token

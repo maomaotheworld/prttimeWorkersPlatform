@@ -304,15 +304,28 @@ const handleLogout = async () => {
     );
 
     if (confirmResult === "confirm") {
-      await authStore.logout();
-      ElMessage.success("已成功登出");
-      router.push("/login");
+      try {
+        await authStore.logout();
+        ElMessage.success("已成功登出");
+      } catch (error) {
+        // 即使logout過程有錯誤，仍然跳轉到登入頁面
+        console.warn("登出過程中發生錯誤:", error);
+        ElMessage.success("已登出");
+      }
+      
+      // 無論如何都跳轉到登入頁面
+      await router.push("/login");
     }
   } catch (error) {
     // 用戶取消登出
-    if (error !== "cancel") {
-      ElMessage.error("登出失敗");
+    if (error === "cancel") {
+      // 用戶主動取消，不顯示錯誤訊息
+      return;
     }
+    
+    // 其他錯誤（例如確認對話框錯誤）
+    console.error("登出確認過程錯誤:", error);
+    ElMessage.error("登出確認失敗");
   }
 };
 

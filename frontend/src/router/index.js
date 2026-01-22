@@ -32,6 +32,15 @@ const routes = [
     },
   },
   {
+    path: "/personnel-list",
+    name: "PersonnelList",
+    component: () => import("../views/PersonnelList.vue"),
+    meta: {
+      title: "人員列表",
+      requiresAuth: false,
+    },
+  },
+  {
     path: "/groups",
     name: "Groups",
     component: () => import("../views/Groups.vue"),
@@ -107,8 +116,8 @@ router.beforeEach((to, from, next) => {
     ? `${to.meta.title} - 工讀生管理平台`
     : "工讀生管理平台";
 
-  // 如果是登入頁面直接進入（在進入組件內部處理登入邏輯）
-  if (to.path === "/login") {
+  // 如果是登入頁面或不需要認證的頁面，直接進入
+  if (to.path === "/login" || to.meta?.requiresAuth === false) {
     next();
     return;
   }

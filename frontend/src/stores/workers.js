@@ -11,11 +11,20 @@ export const useWorkersStore = defineStore("workers", () => {
       loading.value = true;
       console.log("Workers store: 獲取工讀生列表");
 
+      // 獲取認證token
+      const token = localStorage.getItem("auth_token");
+      
+      const headers = {
+        "Content-Type": "application/json",
+      };
+      
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       const response = await fetch(getApiUrl("/api/workers"), {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: headers,
       });
 
       const data = await response.json();
@@ -52,11 +61,20 @@ export const useWorkersStore = defineStore("workers", () => {
 
       console.log("Workers store: 發送的數據", requestData);
 
+      // 獲取認證token
+      const token = localStorage.getItem("auth_token");
+      
+      const headers = {
+        "Content-Type": "application/json",
+      };
+      
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       const response = await fetch(getApiUrl("/api/workers"), {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: headers,
         body: JSON.stringify(requestData),
       });
 
@@ -81,11 +99,20 @@ export const useWorkersStore = defineStore("workers", () => {
     try {
       console.log("Workers store: 更新工讀生", id, workerData);
 
+      // 獲取認證token
+      const token = localStorage.getItem("auth_token");
+      
+      const headers = {
+        "Content-Type": "application/json",
+      };
+      
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       const response = await fetch(getApiUrl(`/api/workers/${id}`), {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: headers,
         body: JSON.stringify(workerData),
       });
 
@@ -113,11 +140,20 @@ export const useWorkersStore = defineStore("workers", () => {
     try {
       console.log("Workers store: 刪除工讀生", id);
 
+      // 獲取認證token
+      const token = localStorage.getItem("auth_token");
+      
+      const headers = {
+        "Content-Type": "application/json",
+      };
+      
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       const response = await fetch(getApiUrl(`/api/workers/${id}`), {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: headers,
       });
 
       const data = await response.json();
@@ -144,13 +180,22 @@ export const useWorkersStore = defineStore("workers", () => {
     try {
       console.log("Workers store: 批次更新薪資", workerIds, wageData);
 
+      // 獲取認證token
+      const token = localStorage.getItem("auth_token");
+      
+      const headers = {
+        "Content-Type": "application/json",
+      };
+      
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       const response = await fetch(
         getApiUrl("/api/workers/batch-update-wage"),
         {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: headers,
           body: JSON.stringify({
             workerIds,
             ...wageData,

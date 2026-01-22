@@ -1,20 +1,20 @@
 <template>
   <div class="attendance-container">
     <div class="page-header">
-      <h1 class="page-title">?�卡系統</h1>
+      <h1 class="page-title">打卡系統</h1>
       <div class="current-time">
         <el-icon><Clock /></el-icon>
         {{ currentTime }}
       </div>
     </div>
 
-    <!-- ?��?篩選?�??-->
+    <!-- 數據篩選區域 -->
     <el-card class="filter-card mb-20">
       <el-row :gutter="16" class="filter-row">
         <el-col :xs="24" :sm="8">
-          <el-form-item label="?��??��?">
+          <el-form-item label="分組顯示">
             <el-radio-group v-model="groupBy" @change="handleGroupChange">
-              <el-radio-button label="all">?�部</el-radio-button>
+              <el-radio-button label="all">全部</el-radio-button>
               <el-radio-button label="floor">樓層</el-radio-button>
               <el-radio-button label="group">組別</el-radio-button>
             </el-radio-group>
@@ -22,12 +22,12 @@
         </el-col>
 
         <el-col :xs="24" :sm="8" v-if="groupBy === 'floor'">
-          <el-form-item label="?��?樓層">
+          <el-form-item label="選擇樓層">
             <el-select
               v-model="selectedFloor"
               @change="filterWorkers"
               clearable
-              placeholder="?��?樓層"
+              placeholder="選擇樓層"
             >
               <el-option
                 v-for="floor in availableFloors"
@@ -40,12 +40,12 @@
         </el-col>
 
         <el-col :xs="24" :sm="8" v-if="groupBy === 'group'">
-          <el-form-item label="?��?組別">
+          <el-form-item label="選擇組別">
             <el-select
               v-model="selectedGroup"
               @change="filterWorkers"
               clearable
-              placeholder="?��?組別"
+              placeholder="選擇組別"
             >
               <el-option
                 v-for="group in groups"
@@ -59,11 +59,11 @@
       </el-row>
     </el-card>
 
-    <!-- 工�??��??��?�?-->
+    <!-- 工讀生考勤列表 -->
     <el-card class="attendance-list-card">
       <template #header>
         <div class="card-header">
-          <span>工�??��??��?�?({{ filteredWorkers.length }}�?</span>
+          <span>工讀生考勤狀態 ({{ filteredWorkers.length }}人)</span>
           <div class="header-actions">
             <el-button
               type="primary"
@@ -72,7 +72,7 @@
               :loading="loading"
             >
               <el-icon><Refresh /></el-icon>
-              ?�新
+              重新整理
             </el-button>
           </div>
         </div>
@@ -86,12 +86,12 @@
           class="attendance-table"
           :height="tableHeight"
         >
-          <el-table-column prop="number" label="編�?" width="80" sortable />
+          <el-table-column prop="number" label="編號" width="80" sortable />
 
-          <el-table-column prop="name" label="姓�?" min-width="100" />
+          <el-table-column prop="name" label="姓名" min-width="100" />
 
           <el-table-column prop="floor" label="樓層" width="70">
-            <template #default="{ row }"> {{ row.floor || "-" }}�?</template>
+            <template #default="{ row }"> {{ row.floor || "-" }}樓</template>
           </el-table-column>
 
           <el-table-column prop="groupId" label="組別" min-width="90">
@@ -148,7 +148,7 @@
           >
             <template #default="{ row }">
               <div class="action-buttons">
-                <!-- 上班?�卡?��? -->
+                <!-- 上班打卡按鈕 -->
                 <el-button
                   v-if="!row.todayAttendance?.clockIn"
                   type="success"
@@ -156,10 +156,10 @@
                   @click="handleQuickClock(row, 'in')"
                   :loading="row.clocking"
                 >
-                  上班?�卡
+                  上班打卡
                 </el-button>
 
-                <!-- 下班?�卡?��? -->
+                <!-- 下班打卡按鈕 -->
                 <el-button
                   v-else-if="!row.todayAttendance?.clockOut"
                   type="warning"
@@ -167,17 +167,17 @@
                   @click="handleQuickClock(row, 'out')"
                   :loading="row.clocking"
                 >
-                  下班?�卡
+                  下班打卡
                 </el-button>
 
-                <!-- 編輯?��??��? -->
+                <!-- 編輯時間按鈕 -->
                 <el-button
                   type="primary"
                   size="small"
                   @click="showEditTimeDialog(row)"
                   plain
                 >
-                  編輯?��?
+                  編輯時間
                 </el-button>
               </div>
             </template>
@@ -186,10 +186,10 @@
       </div>
     </el-card>
 
-    <!-- 編輯?�卡?��?對話�?-->
+    <!-- 編輯打卡時間對話框 -->
     <el-dialog
       v-model="editTimeDialogVisible"
-      title="編輯?�卡?��?"
+      title="編輯打卡時間"
       :width="isMobile ? '95%' : '500px'"
       center
     >
@@ -205,18 +205,18 @@
           <el-date-picker
             v-model="timeEditForm.clockIn"
             type="datetime"
-            placeholder="?��?上班?��?"
+            placeholder="選擇上班時間"
             format="YYYY-MM-DD HH:mm"
             value-format="YYYY-MM-DD HH:mm:ss"
             style="width: 100%"
           />
         </el-form-item>
 
-        <el-form-item label="下班?��?">
+        <el-form-item label="下班時間">
           <el-date-picker
             v-model="timeEditForm.clockOut"
             type="datetime"
-            placeholder="?��?下班?��?"
+            placeholder="選擇下班時間"
             format="YYYY-MM-DD HH:mm"
             value-format="YYYY-MM-DD HH:mm:ss"
             style="width: 100%"
@@ -263,24 +263,24 @@ const workersStore = useWorkersStore();
 const groupsStore = useGroupsStore();
 const authStore = useAuthStore();
 
-// ?��?式數??
+// 響應式數據
 const windowWidth = ref(window.innerWidth);
 const isMobile = computed(() => windowWidth.value <= 768);
 const currentTime = ref(moment().format("YYYY/MM/DD HH:mm:ss"));
 
-// 工�??��?組別?��?
+// 工讀生和組別數據
 const workers = computed(() => workersStore.workers);
 const groups = computed(() => groupsStore.groups);
 
-// ?��??��?
+// 篩選條件
 const groupBy = ref("all");
 const selectedFloor = ref("");
 const selectedGroup = ref("");
 
-// 篩選後�?工�??��???
+// 篩選後的工讀生列表
 const filteredWorkers = ref([]);
 
-// ?�用樓層清單
+// 可用樓層清單
 const availableFloors = computed(() => {
   const floors = [
     ...new Set(workers.value.map((w) => w.floor).filter((f) => f)),
@@ -288,11 +288,11 @@ const availableFloors = computed(() => {
   return floors.sort((a, b) => a - b);
 });
 
-// 載入?�??
+// 載入狀態
 const loading = ref(false);
 const submitting = ref(false);
 
-// 編輯?��?對話�?
+// 編輯時間對話框
 const editTimeDialogVisible = ref(false);
 const timeEditForm = ref({
   workerId: "",
@@ -308,10 +308,10 @@ const tableHeight = computed(() => {
   return isMobile.value ? "calc(100vh - 350px)" : "calc(100vh - 300px)";
 });
 
-// ?��?定�???
+// 計時器定義
 let timeInterval = null;
 
-// 馬卡龍�??��?置�?從Workers.vue複製�?
+// 馬卡龍色彩配置（從Workers.vue複製）
 const macaronColors = [
   "#FFB6C1",
   "#FFCCCB",
@@ -345,7 +345,7 @@ const macaronColors = [
   "#EE82EE",
 ];
 
-// 工具?�數
+// 工具函數
 const formatTime = (timeString) => {
   return moment(timeString).format("HH:mm");
 };
@@ -375,7 +375,7 @@ const getTextColor = (backgroundColor) => {
   return luminance > 0.5 ? "#333333" : "#ffffff";
 };
 
-// ?��??��?
+// 事件處理
 const handleGroupChange = () => {
   selectedFloor.value = "";
   selectedGroup.value = "";
@@ -391,7 +391,7 @@ const filterWorkers = () => {
     filtered = filtered.filter((w) => w.groupId === selectedGroup.value);
   }
 
-  // ?��??�工讀?�添?��??�出?��???
+  // 為每位工讀生添加今日出勤狀態
   filteredWorkers.value = filtered.map((worker) => ({
     ...worker,
     todayAttendance: worker.todayAttendance || null,
@@ -399,10 +399,10 @@ const filterWorkers = () => {
   }));
 };
 
-// 快速�??��???
+// 快速打卡功能
 const handleQuickClock = async (worker, type) => {
   try {
-    // 設�?該工讀?��?載入?�??
+    // 設定該工讀生載入狀態
     worker.clocking = true;
 
     const endpoint =
@@ -420,21 +420,21 @@ const handleQuickClock = async (worker, type) => {
     const data = await response.json();
 
     if (data.success) {
-      ElMessage.success(`${worker.name} ${action}?�卡?��?`);
-      // ?�新載入?��?
+      ElMessage.success(`${worker.name} ${action}打卡成功`);
+      // 重新載入數據
       await loadTodayAttendance();
     } else {
-      throw new Error(data.message || "?�卡失�?");
+      throw new Error(data.message || "打卡失敗");
     }
   } catch (error) {
-    console.error(`${worker.name} ?�卡失�?:`, error);
-    ElMessage.error(`${worker.name} ?�卡失�?`);
+    console.error(`${worker.name} 打卡失敗:`, error);
+    ElMessage.error(`${worker.name} 打卡失敗`);
   } finally {
     worker.clocking = false;
   }
 };
 
-// 顯示編輯?��?對話�?
+// 顯示編輯時間對話框
 const showEditTimeDialog = (worker) => {
   timeEditForm.value = {
     workerId: worker.id,
@@ -447,7 +447,7 @@ const showEditTimeDialog = (worker) => {
   editTimeDialogVisible.value = true;
 };
 
-// ?��??��?編輯
+// 處理時間編輯
 const handleTimeEdit = async () => {
   try {
     submitting.value = true;
@@ -471,23 +471,23 @@ const handleTimeEdit = async () => {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.message || "?��?編輯失�?");
+      throw new Error(result.message || "時間編輯失敗");
     }
 
-    ElMessage.success("?�卡?��?修改?��?");
+    ElMessage.success("打卡時間修改成功");
     editTimeDialogVisible.value = false;
 
-    // ?�新載入?��?
+    // 重新載入數據
     await loadTodayAttendance();
   } catch (error) {
-    console.error("?��?編輯失�?:", error);
-    ElMessage.error(error.message || "?��?編輯失�?");
+    console.error("時間編輯失敗:", error);
+    ElMessage.error(error.message || "時間編輯失敗");
   } finally {
     submitting.value = false;
   }
 };
 
-// 載入今日?�勤記�?
+// 載入今日考勤記錄
 const loadTodayAttendance = async () => {
   try {
     const today = moment().format("YYYY-MM-DD");
@@ -502,13 +502,13 @@ const loadTodayAttendance = async () => {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.message || "載入?�勤記�?失�?");
+      throw new Error(result.message || "載入考勤記錄失敗");
     }
 
-    // 後端返�??��???{ success: true, data: [...], message: "..." }
+    // 後端返回格式：{ success: true, data: [...], message: "..." }
     const records = result.data || [];
 
-    // ?��??�工讀?�設定�??�出?��???
+    // 為每位工讀生設定今日出勤狀態
     workers.value.forEach((worker) => {
       const attendance = records.find(
         (record) => record.workerId === worker.id,
@@ -516,14 +516,14 @@ const loadTodayAttendance = async () => {
       worker.todayAttendance = attendance || null;
     });
 
-    // ?�新篩選
+    // 重新篩選
     filterWorkers();
   } catch (error) {
-    console.error("載入今日?�勤記�?失�?:", error);
+    console.error("載入今日考勤記錄失敗:", error);
   }
 };
 
-// ?�新?��?
+// 重新整理數據
 const refreshData = async () => {
   loading.value = true;
   try {
@@ -533,7 +533,7 @@ const refreshData = async () => {
       loadTodayAttendance(),
     ]);
   } catch (error) {
-    console.error("?�新?��?失�?:", error);
+    console.error("重新整理數據失敗:", error);
   } finally {
     loading.value = false;
   }
@@ -546,10 +546,10 @@ const handleResize = () => {
 onMounted(() => {
   window.addEventListener("resize", handleResize);
 
-  // ?��??��?定�???
+  // 啟動計時器定時更新
   timeInterval = setInterval(updateCurrentTime, 1000);
 
-  // 載入?��??��?
+  // 載入初始數據
   refreshData();
 });
 
@@ -568,7 +568,7 @@ onUnmounted(() => {
   overflow: auto;
 }
 
-/* ?��?義滾?��?�?? */
+/* 自定義滾動條樣式 */
 .attendance-container::-webkit-scrollbar {
   width: 6px;
   height: 6px;

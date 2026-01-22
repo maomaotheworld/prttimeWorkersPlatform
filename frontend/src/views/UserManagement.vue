@@ -4,24 +4,24 @@
       <div class="header-content">
         <h1 class="page-title">
           <el-icon><Setting /></el-icon>
-          ?�戶管�?
+          ?�戶管�?
         </h1>
-        <p class="page-description">管�?系統?�戶帳�?，新增�?組長帳�?</p>
+        <p class="page-description">管�?系統?�戶帳�?，新增�?組長帳�?</p>
       </div>
       <div class="header-actions">
         <el-button type="primary" :icon="Plus" @click="showCreateDialog = true">
-          ?��?小�???
+          ?��?小�???
         </el-button>
       </div>
     </div>
 
-    <!-- ?�戶?�表 -->
+    <!-- ?�戶?�表 -->
     <el-card class="user-list-card">
       <template #header>
         <div class="card-header">
           <span class="card-title">
             <el-icon><User /></el-icon>
-            ?�戶?�表
+            ?�戶?�表
           </span>
           <el-button
             type="primary"
@@ -34,13 +34,13 @@
       </template>
 
       <el-table :data="users" v-loading="loading" class="user-table" stripe>
-        <el-table-column prop="username" label="帳�?" width="120">
+        <el-table-column prop="username" label="帳�?" width="120">
           <template #default="{ row }">
             <span class="username">{{ row.username }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column prop="name" label="姓�?" width="120">
+        <el-table-column prop="name" label="姓�?" width="120">
           <template #default="{ row }">
             <span class="user-name">{{ row.name }}</span>
           </template>
@@ -54,27 +54,27 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="email" label="?�箱" min-width="180">
+        <el-table-column prop="email" label="?�箱" min-width="180">
           <template #default="{ row }">
             <span class="email">{{ row.email || "-" }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column prop="isActive" label="?�?? width="80">
+        <el-table-column prop="isActive" label="狀態" width="80">
           <template #default="{ row }">
             <el-tag :type="row.isActive ? 'success' : 'danger'" size="small">
-              {{ row.isActive ? "?�用" : "?�用" }}
+              {{ row.isActive ? "啟用" : "停用" }}
             </el-tag>
           </template>
         </el-table-column>
 
-        <el-table-column prop="createdAt" label="建�??��?" width="150">
+        <el-table-column prop="createdAt" label="建�??��?" width="150">
           <template #default="{ row }">
             <span class="date">{{ formatDate(row.createdAt) }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="?��?" width="100" fixed="right">
+        <el-table-column label="?��?" width="100" fixed="right">
           <template #default="{ row }">
             <el-button
               v-if="row.role !== 'admin'"
@@ -90,10 +90,10 @@
       </el-table>
     </el-card>
 
-    <!-- ?��?小�??��?話�? -->
+    <!-- 創建小組長對話框 -->
     <el-dialog
       v-model="showCreateDialog"
-      title="?��?小�??�帳??
+      title="創建小組長帳號"
       :width="isMobile ? '95%' : '500px'"
       :before-close="handleCloseDialog"
     >
@@ -103,10 +103,10 @@
         :rules="createRules"
         label-width="80px"
       >
-        <el-form-item label="帳�?" prop="username">
+        <el-form-item label="帳號" prop="username">
           <el-input
             v-model="createForm.username"
-            placeholder="請輸?�帳??
+            placeholder="請輸入帳號"
             clearable
           />
         </el-form-item>
@@ -115,24 +115,24 @@
           <el-input
             v-model="createForm.password"
             type="password"
-            placeholder="請輸?��?�?
+            placeholder="請輸入密碼"
             show-password
             clearable
           />
         </el-form-item>
 
-        <el-form-item label="姓�?" prop="name">
+        <el-form-item label="姓名" prop="name">
           <el-input
             v-model="createForm.name"
-            placeholder="請輸?��???
+            placeholder="請輸入姓名"
             clearable
           />
         </el-form-item>
 
-        <el-form-item label="?�箱" prop="email">
+        <el-form-item label="信箱" prop="email">
           <el-input
             v-model="createForm.email"
-            placeholder="請輸?�郵箱�??�填�?
+            placeholder="請輸入郵箱（可選填）"
             clearable
           />
         </el-form-item>
@@ -140,13 +140,13 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="handleCloseDialog">?��?</el-button>
+          <el-button @click="handleCloseDialog">取消</el-button>
           <el-button
             type="primary"
             @click="handleCreateUser"
             :loading="creating"
           >
-            建�?帳�?
+            建立帳號
           </el-button>
         </div>
       </template>
@@ -163,13 +163,13 @@ import moment from "moment";
 
 const authStore = useAuthStore();
 
-// ?��?式數??
+// ?��?式數??
 const loading = ref(false);
 const creating = ref(false);
 const showCreateDialog = ref(false);
 const users = ref([]);
 
-// 表單?��?
+// 表單?��?
 const createForm = reactive({
   username: "",
   password: "",
@@ -177,37 +177,39 @@ const createForm = reactive({
   email: "",
 });
 
-// 表單驗�?規�?
+// 表單驗證規則
 const createRules = {
   username: [
-    { required: true, message: "請輸?�帳??, trigger: "blur" },
-    { min: 3, max: 20, message: "帳�??�度??3 ??20 ?��?�?, trigger: "blur" },
+    { required: true, message: "請輸入帳號", trigger: "blur" },
+    { min: 3, max: 20, message: "帳號長度應在3到20個字元", trigger: "blur" },
   ],
   password: [
-    { required: true, message: "請輸?��?�?, trigger: "blur" },
-    { min: 6, message: "密碼?�度不能少於 6 ?��?�?, trigger: "blur" },
+    { required: true, message: "請輸入密碼", trigger: "blur" },
+    { min: 6, message: "密碼長度不能少於6個字元", trigger: "blur" },
   ],
   name: [
-    { required: true, message: "請輸?��???, trigger: "blur" },
-    { min: 2, max: 10, message: "姓�??�度??2 ??10 ?��?�?, trigger: "blur" },
+    { required: true, message: "請輸入姓名", trigger: "blur" },
+    { min: 2, max: 10, message: "姓名長度應在2到10個字元", trigger: "blur" },
   ],
-  email: [{ type: "email", message: "請輸?�正確�??�箱?��?", trigger: "blur" }],
+  email: [
+    { type: "email", message: "請輸入正確的電子郵箱格式", trigger: "blur" },
+  ],
 };
 
 // 引用
 const createFormRef = ref();
 
-// 計�?屬�?
+// 計算屬性
 const isMobile = computed(() => window.innerWidth <= 768);
 
-// ?��?
+// 方法
 const getRoleText = (role) => {
   const roleMap = {
-    admin: "管�???,
-    leader: "小�???,
+    admin: "管理者",
+    leader: "小組長",
     reader: "訪客",
   };
-  return roleMap[role] || "?�知";
+  return roleMap[role] || "未知";
 };
 
 const getRoleTagType = (role) => {
@@ -223,7 +225,7 @@ const formatDate = (dateString) => {
   return moment(dateString).format("YYYY-MM-DD HH:mm");
 };
 
-// 載入?�戶?�表
+// 載入?�戶?�表
 const loadUsers = async () => {
   loading.value = true;
   try {
@@ -234,16 +236,16 @@ const loadUsers = async () => {
       ElMessage.error(result.message);
     }
   } catch (error) {
-    ElMessage.error("載入?�戶?�表失�?");
+    ElMessage.error("載入?�戶?�表失�?");
   } finally {
     loading.value = false;
   }
 };
 
-// ?��??�戶
+// ?��??�戶
 const handleCreateUser = async () => {
   try {
-    // 表單驗�?
+    // 表單驗�?
     const valid = await createFormRef.value.validate();
     if (!valid) return;
 
@@ -260,22 +262,22 @@ const handleCreateUser = async () => {
       ElMessage.error(result.message);
     }
   } catch (error) {
-    console.error("?��??�戶?�誤:", error);
-    ElMessage.error("?��??�戶失�?");
+    console.error("?��??�戶?�誤:", error);
+    ElMessage.error("?��??�戶失�?");
   } finally {
     creating.value = false;
   }
 };
 
-// 確�??�除?�戶
+// 確�??�除?�戶
 const confirmDelete = async (user) => {
   try {
     const confirmResult = await ElMessageBox.confirm(
-      `確�?要刪?�用?��?{user.name}??${user.username})?��?`,
-      "?�除確�?",
+      `確�?要刪?�用?��?{user.name}??${user.username})?��?`,
+      "?�除確�?",
       {
-        confirmButtonText: "確�??�除",
-        cancelButtonText: "?��?",
+        confirmButtonText: "確�??�除",
+        cancelButtonText: "?��?",
         type: "warning",
       },
     );
@@ -284,11 +286,11 @@ const confirmDelete = async (user) => {
       await handleDeleteUser(user.id);
     }
   } catch (error) {
-    // ?�戶?��?
+    // ?�戶?��?
   }
 };
 
-// ?�除?�戶
+// ?�除?�戶
 const handleDeleteUser = async (userId) => {
   try {
     const result = await authStore.deleteUser(userId);
@@ -300,12 +302,12 @@ const handleDeleteUser = async (userId) => {
       ElMessage.error(result.message);
     }
   } catch (error) {
-    console.error("?�除?�戶?�誤:", error);
-    ElMessage.error("?�除?�戶失�?");
+    console.error("?�除?�戶?�誤:", error);
+    ElMessage.error("?�除?�戶失�?");
   }
 };
 
-// ?�置表單
+// ?�置表單
 const resetCreateForm = () => {
   Object.keys(createForm).forEach((key) => {
     createForm[key] = "";
@@ -315,13 +317,13 @@ const resetCreateForm = () => {
   }
 };
 
-// ?��?對話�?
+// ?��?對話�?
 const handleCloseDialog = () => {
   showCreateDialog.value = false;
   resetCreateForm();
 };
 
-// 組件?��?
+// 組件?��?
 onMounted(() => {
   loadUsers();
 });
@@ -408,7 +410,7 @@ onMounted(() => {
   gap: 10px;
 }
 
-/* ?��?端適??*/
+/* ?��?端適??*/
 @media (max-width: 768px) {
   .page-header {
     flex-direction: column;
@@ -425,7 +427,7 @@ onMounted(() => {
   }
 }
 
-/* Element Plus �??覆�? */
+/* Element Plus �??覆�? */
 .user-list-card :deep(.el-card__header) {
   background-color: #f8f9fa;
   border-bottom: 1px solid #e9ecef;

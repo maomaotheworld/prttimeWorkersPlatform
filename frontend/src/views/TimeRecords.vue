@@ -105,7 +105,10 @@
         <el-table-column label="總工時" width="100">
           <template #default="{ row }">
             <strong>
-              {{ ((row.totalHours || 0) + (row.additionalHours || 0)).toFixed(1) }} 小時
+              {{
+                ((row.totalHours || 0) + (row.additionalHours || 0)).toFixed(1)
+              }}
+              小時
             </strong>
           </template>
         </el-table-column>
@@ -113,14 +116,14 @@
         <el-table-column label="調整記錄" min-width="200">
           <template #default="{ row }">
             <div v-if="row.adjustments && row.adjustments.length > 0">
-              <el-tag 
-                v-for="(adj, index) in row.adjustments" 
+              <el-tag
+                v-for="(adj, index) in row.adjustments"
                 :key="index"
                 :type="adj.hours > 0 ? 'success' : 'danger'"
                 size="small"
-                style="margin: 2px;"
+                style="margin: 2px"
               >
-                {{ adj.hours > 0 ? '+' : '' }}{{ adj.hours }}h: {{ adj.reason }}
+                {{ adj.hours > 0 ? "+" : "" }}{{ adj.hours }}h: {{ adj.reason }}
               </el-tag>
             </div>
             <span v-else class="info-text">-</span>
@@ -186,8 +189,9 @@
             :precision="1"
             style="width: 100%"
           />
-          <span style="font-size: 12px; color: #909399; margin-left: 8px;">
-            {{ additionalForm.adjustmentType === 'add' ? '將新�? : '將扣?? }} {{ additionalForm.hours }} 小�?
+          <span style="font-size: 12px; color: #909399; margin-left: 8px">
+            {{ additionalForm.adjustmentType === 'add' ? '將新�? : '將扣?? }}
+            {{ additionalForm.hours }} 小�?
           </span>
         </el-form-item>
 
@@ -253,10 +257,10 @@ const additionalForm = ref({
 });
 
 const additionalFormRules = {
-  workerId: [{ required: true, message: "請選?�工讀??, trigger: "change" }],
-  date: [{ required: true, message: "請選?�日??, trigger: "change" }],
-  hours: [{ required: true, message: "請輸?��?外工??, trigger: "blur" }],
-  reason: [{ required: true, message: "請說?��???, trigger: "blur" }],
+  workerId: [{ required: true, message: "請選擇工讀生", trigger: "change" }],
+  date: [{ required: true, message: "請選擇日期", trigger: "change" }],
+  hours: [{ required: true, message: "請輸入額外工時", trigger: "blur" }],
+  reason: [{ required: true, message: "請說明原因", trigger: "blur" }],
 };
 
 const additionalFormRef = ref();
@@ -372,7 +376,8 @@ const handleAddAdditional = async () => {
       throw new Error(result.message || "?�數調整失�?");
     }
 
-    const actionText = additionalForm.value.adjustmentType === "add" ? "?��?" : "??��";
+    const actionText =
+      additionalForm.value.adjustmentType === "add" ? "?��?" : "??��";
     ElMessage.success(`?�數${actionText}?��?`);
     additionalDialogVisible.value = false;
     await fetchRecords();

@@ -16,31 +16,21 @@
         <el-table-column prop="department" label="部門" width="120" />
         <el-table-column prop="position" label="職位" width="120" />
         <el-table-column prop="hourlyWage" label="時薪" width="100">
-          <template #default="{ row }">
-            ${{ row.hourlyWage }}
-          </template>
+          <template #default="{ row }"> ${{ row.hourlyWage }} </template>
         </el-table-column>
         <el-table-column prop="status" label="狀態" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status === 'active' ? 'success' : 'danger'">
-              {{ row.status === 'active' ? '在職' : '離職' }}
+              {{ row.status === "active" ? "在職" : "離職" }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column fixed="right" label="操作" width="200">
           <template #default="{ row }">
-            <el-button
-              type="primary"
-              size="small"
-              @click="editWorker(row)"
-            >
+            <el-button type="primary" size="small" @click="editWorker(row)">
               編輯
             </el-button>
-            <el-button
-              type="danger"
-              size="small"
-              @click="deleteWorker(row)"
-            >
+            <el-button type="danger" size="small" @click="deleteWorker(row)">
               刪除
             </el-button>
           </template>
@@ -55,12 +45,7 @@
       width="600px"
       @close="resetForm"
     >
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        label-width="100px"
-      >
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="工號" prop="workerNumber">
           <el-input v-model="form.workerNumber" placeholder="請輸入工號" />
         </el-form-item>
@@ -92,117 +77,117 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
-import { useWorkersStore } from '@/stores/workers'
+import { ref, onMounted } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { Plus } from "@element-plus/icons-vue";
+import { useWorkersStore } from "@/stores/workers";
 
 // 使用 store
-const workersStore = useWorkersStore()
+const workersStore = useWorkersStore();
 
 // 響應式數據
-const workers = ref([])
-const dialogVisible = ref(false)
-const isEditing = ref(false)
-const formRef = ref()
+const workers = ref([]);
+const dialogVisible = ref(false);
+const isEditing = ref(false);
+const formRef = ref();
 
 const form = ref({
-  workerNumber: '',
-  name: '',
-  phoneNumber: '',
-  email: '',
-  department: '',
-  position: '',
-  hourlyWage: 0
-})
+  workerNumber: "",
+  name: "",
+  phoneNumber: "",
+  email: "",
+  department: "",
+  position: "",
+  hourlyWage: 0,
+});
 
 const rules = {
-  workerNumber: [{ required: true, message: '請輸入工號', trigger: 'blur' }],
-  name: [{ required: true, message: '請輸入姓名', trigger: 'blur' }],
-  phoneNumber: [{ required: true, message: '請輸入電話', trigger: 'blur' }],
-  email: [{ required: true, message: '請輸入電子郵件', trigger: 'blur' }],
-  hourlyWage: [{ required: true, message: '請輸入時薪', trigger: 'blur' }]
-}
+  workerNumber: [{ required: true, message: "請輸入工號", trigger: "blur" }],
+  name: [{ required: true, message: "請輸入姓名", trigger: "blur" }],
+  phoneNumber: [{ required: true, message: "請輸入電話", trigger: "blur" }],
+  email: [{ required: true, message: "請輸入電子郵件", trigger: "blur" }],
+  hourlyWage: [{ required: true, message: "請輸入時薪", trigger: "blur" }],
+};
 
 // 方法
 const fetchWorkers = async () => {
   try {
-    await workersStore.fetchWorkers()
-    workers.value = workersStore.workers
+    await workersStore.fetchWorkers();
+    workers.value = workersStore.workers;
   } catch (error) {
-    ElMessage.error('獲取工讀生列表失敗')
+    ElMessage.error("獲取工讀生列表失敗");
   }
-}
+};
 
 const showAddDialog = () => {
-  isEditing.value = false
-  dialogVisible.value = true
-}
+  isEditing.value = false;
+  dialogVisible.value = true;
+};
 
 const editWorker = (worker) => {
-  isEditing.value = true
-  form.value = { ...worker }
-  dialogVisible.value = true
-}
+  isEditing.value = true;
+  form.value = { ...worker };
+  dialogVisible.value = true;
+};
 
 const deleteWorker = async (worker) => {
   try {
     await ElMessageBox.confirm(
       `確定要刪除工讀生 "${worker.name}" 嗎？`,
-      '確認刪除',
-      { type: 'warning' }
-    )
-    
-    await workersStore.deleteWorker(worker.id)
-    ElMessage.success('刪除成功')
-    await fetchWorkers()
+      "確認刪除",
+      { type: "warning" },
+    );
+
+    await workersStore.deleteWorker(worker.id);
+    ElMessage.success("刪除成功");
+    await fetchWorkers();
   } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error('刪除失敗')
+    if (error !== "cancel") {
+      ElMessage.error("刪除失敗");
     }
   }
-}
+};
 
 const submitForm = async () => {
-  if (!formRef.value) return
-  
+  if (!formRef.value) return;
+
   try {
-    await formRef.value.validate()
-    
+    await formRef.value.validate();
+
     if (isEditing.value) {
-      await workersStore.updateWorker(form.value)
-      ElMessage.success('更新成功')
+      await workersStore.updateWorker(form.value);
+      ElMessage.success("更新成功");
     } else {
-      await workersStore.addWorker(form.value)
-      ElMessage.success('新增成功')
+      await workersStore.addWorker(form.value);
+      ElMessage.success("新增成功");
     }
-    
-    dialogVisible.value = false
-    await fetchWorkers()
+
+    dialogVisible.value = false;
+    await fetchWorkers();
   } catch (error) {
-    ElMessage.error('操作失敗')
+    ElMessage.error("操作失敗");
   }
-}
+};
 
 const resetForm = () => {
   if (formRef.value) {
-    formRef.value.resetFields()
+    formRef.value.resetFields();
   }
   form.value = {
-    workerNumber: '',
-    name: '',
-    phoneNumber: '',
-    email: '',
-    department: '',
-    position: '',
-    hourlyWage: 0
-  }
-}
+    workerNumber: "",
+    name: "",
+    phoneNumber: "",
+    email: "",
+    department: "",
+    position: "",
+    hourlyWage: 0,
+  };
+};
 
 // 初始化
 onMounted(() => {
-  fetchWorkers()
-})
+  fetchWorkers();
+});
 </script>
 
 <style scoped>

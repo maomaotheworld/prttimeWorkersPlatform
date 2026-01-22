@@ -250,7 +250,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
 import { ElMessage } from "element-plus";
 import moment from "moment";
 import { Clock, Refresh } from "@element-plus/icons-vue";
@@ -432,7 +432,21 @@ const handleQuickClock = async (worker, type) => {
 
     if (data.success) {
       ElMessage.success(`${worker.name} ${action}打卡成功`);
-      // 重新載入數據
+      
+      // 立即更新本地狀態
+      if (type === "in") {
+        if (!worker.todayAttendance) {
+          worker.todayAttendance = {};
+        }
+        worker.todayAttendance.clockIn = new Date().toISOString();
+      } else {
+        if (!worker.todayAttendance) {
+          worker.todayAttendance = {};
+        }
+        worker.todayAttendance.clockOut = new Date().toISOString();
+      }
+      
+      // 重新載入數據確保同步
       await loadTodayAttendance();
     } else {
       throw new Error(data.message || "打卡失敗");
@@ -519,11 +533,14 @@ const loadTodayAttendance = async () => {
     // 後端返回格式：{ success: true, data: [...], message: "..." }
     const records = result.data || [];
 
+    console.log("載入的考勤記錄:", records);
+
     // 為每位工讀生設定今日出勤狀態
     workers.value.forEach((worker) => {
       const attendance = records.find(
         (record) => record.workerId === worker.id,
       );
+      // 使用 Vue.set 確保響應式更新
       worker.todayAttendance = attendance || null;
     });
 
@@ -532,10 +549,21 @@ const loadTodayAttendance = async () => {
       const attendance = records.find(
         (record) => record.workerId === filteredWorker.id,
       );
+      // 使用 Vue.set 確保響應式更新
       filteredWorker.todayAttendance = attendance || null;
     });
 
-    console.log("今日考勤記錄載入完成:", records);
+    console.log("今日考勤記錄載入完成，工讀生狀態:", workers.value.map(w => ({
+      name: w.name,
+      clockIn: w.todayAttendance?.clockIn,
+      clockOut: w.todayAttendance?.clockOut
+    })));
+    
+    // 強制更新視圖
+    nextTick(() => {
+      console.log("視圖更新完成");
+    });
+
   } catch (error) {
     console.error("載入今日考勤記錄失敗:", error);
   }

@@ -66,6 +66,13 @@
                 <span>組別管理</span>
               </el-menu-item>
               <el-menu-item
+                v-if="authStore.canEditWorkers || authStore.isAdmin"
+                index="/floors"
+              >
+                <el-icon><OfficeBuilding /></el-icon>
+                <span>樓層管理</span>
+              </el-menu-item>
+              <el-menu-item
                 v-if="authStore.hasPermission('canClockIn')"
                 index="/attendance"
               >
@@ -179,6 +186,7 @@ import {
   HomeFilled,
   User,
   UserFilled,
+  OfficeBuilding,
   Clock,
   Calendar,
   Money,

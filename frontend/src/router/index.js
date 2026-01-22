@@ -36,7 +36,17 @@ const routes = [
     name: "Groups",
     component: () => import("../views/Groups.vue"),
     meta: {
-      title: "組別管�?",
+      title: "組別管理",
+      requiresAuth: true,
+      allowedRoles: ["admin", "leader", "reader"],
+    },
+  },
+  {
+    path: "/floors",
+    name: "Floors",
+    component: () => import("../views/Floors.vue"),
+    meta: {
+      title: "樓層管理",
       requiresAuth: true,
       allowedRoles: ["admin", "leader", "reader"],
     },

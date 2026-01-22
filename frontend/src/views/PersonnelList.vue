@@ -78,7 +78,20 @@
 
             <el-table-column prop="name" label="姓名" width="120" sortable />
 
-            <el-table-column prop="groupId" label="姓名" width="120" sortable />
+            <el-table-column prop="groupId" label="組別" width="150" sortable>
+              <template #default="scope">
+                <el-tag 
+                  v-if="groupMapping[scope.row.groupId]"
+                  size="small"
+                  :style="getGroupTagStyle(groupMapping[scope.row.groupId])"
+                >
+                  {{ groupMapping[scope.row.groupId] }}
+                </el-tag>
+                <el-tag v-else size="small" type="info">
+                  未分組
+                </el-tag>
+              </template>
+            </el-table-column>
 
             <el-table-column prop="floor" label="樓層" width="100" sortable>
               <template #default="scope">
@@ -88,50 +101,17 @@
               </template>
             </el-table-column>
 
-            <el-table-column prop="job" label="工作" sortable>
+            <el-table-column prop="job" label="工作" width="150" sortable>
               <template #default="scope">
-                <span>{{ scope.row.job || "未設定" }}</span>
+                <el-tag type="success" size="small" v-if="scope.row.job">
+                  {{ scope.row.job }}
+                </el-tag>
+                <el-tag type="info" size="small" v-else>
+                  未設定
+                </el-tag>
               </template>
             </el-table-column>
           </el-table>
-
-          <!-- 統計信息 -->
-          <div class="stats-section">
-            <el-row :gutter="16" style="margin-top: 20px">
-              <el-col :span="6">
-                <el-card>
-                  <div class="stat-item">
-                    <div class="stat-number">{{ totalWorkers }}</div>
-                    <div class="stat-label">總人員數</div>
-                  </div>
-                </el-card>
-              </el-col>
-              <el-col :span="6">
-                <el-card>
-                  <div class="stat-item">
-                    <div class="stat-number">{{ filteredWorkers.length }}</div>
-                    <div class="stat-label">篩選後人員</div>
-                  </div>
-                </el-card>
-              </el-col>
-              <el-col :span="6">
-                <el-card>
-                  <div class="stat-item">
-                    <div class="stat-number">{{ groupsWithWorkers }}</div>
-                    <div class="stat-label">有人員的組別</div>
-                  </div>
-                </el-card>
-              </el-col>
-              <el-col :span="6">
-                <el-card>
-                  <div class="stat-item">
-                    <div class="stat-number">{{ floorsWithWorkers }}</div>
-                    <div class="stat-label">有人員的樓層</div>
-                  </div>
-                </el-card>
-              </el-col>
-            </el-row>
-          </div>
         </div>
       </div>
     </div>
@@ -161,6 +141,7 @@ export default defineComponent({
     const filterFloor = ref("");
     const filterGroup = ref("");
     const loading = ref(false);
+    const groupMapping = ref({});
     const groupMapping = ref({});
 
     // 計算屬性
@@ -204,23 +185,6 @@ export default defineComponent({
       }
 
       return result;
-    });
-
-    // 統計數據
-    const totalWorkers = computed(() => workers.value.length);
-
-    const groupsWithWorkers = computed(() => {
-      const groupIds = [
-        ...new Set(workers.value.map((w) => w.groupId).filter(Boolean)),
-      ];
-      return groupIds.length;
-    });
-
-    const floorsWithWorkers = computed(() => {
-      const floors = [
-        ...new Set(workers.value.map((w) => w.floor).filter(Boolean)),
-      ];
-      return floors.length;
     });
 
     // 方法
@@ -330,15 +294,13 @@ export default defineComponent({
       filterFloor,
       filterGroup,
       loading,
+      groupMapping,
 
       // 計算屬性
       workers,
       groups,
       availableFloors,
       filteredWorkers,
-      totalWorkers,
-      groupsWithWorkers,
-      floorsWithWorkers,
 
       // 方法
       handleSearch,
@@ -447,29 +409,6 @@ h1 {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.stats-section {
-  padding: 20px;
-  background: #f8f9fa;
-}
-
-.stat-item {
-  text-align: center;
-  padding: 20px;
-}
-
-.stat-number {
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: #409eff;
-  margin-bottom: 8px;
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  color: #666;
-  font-weight: 500;
-}
-
 /* 響應式設計 */
 @media (max-width: 768px) {
   .page-content {
@@ -511,10 +450,6 @@ h1 {
     font-size: 1.5rem;
   }
 
-  .stat-number {
-    font-size: 2rem;
-  }
-
   :deep(.el-table) {
     font-size: 14px;
   }
@@ -537,14 +472,6 @@ h1 {
 
   .logo span {
     display: none;
-  }
-
-  .stats-section {
-    padding: 15px;
-  }
-
-  .stat-item {
-    padding: 15px 10px;
   }
 }
 </style>

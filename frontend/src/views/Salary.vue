@@ -308,7 +308,7 @@
         :closable="false"
         style="margin-bottom: 20px"
       >
-        輸入要支付給工讀生的總薪資，系統將根據工作數據自動計算新時薪
+        設定要支付給工讀生的總薪資金額（不考慮工時），系統將根據實際工時自動計算對應的時薪
       </el-alert>
 
       <el-form
@@ -395,12 +395,15 @@
 
         <el-form-item label="薪資調整" v-if="calculatedNewWage > 0">
           <el-tag
-            :type="salaryAdjustment >= 0 ? 'success' : 'danger'"
+            type="primary"
             size="large"
             style="padding: 10px 15px"
           >
-            {{ salaryAdjustment >= 0 ? "+" : "" }}{{ salaryAdjustment }} 元
+            調整後總薪資：{{ totalSalaryForm.targetTotalSalary }} 元
           </el-tag>
+          <div style="margin-top: 8px; font-size: 12px; color: #909399;">
+            (相較目前預估薪資 {{ salaryAdjustment >= 0 ? "+" : "" }}{{ salaryAdjustment }} 元)
+          </div>
         </el-form-item>
 
         <el-form-item label="調整理由" prop="reason">

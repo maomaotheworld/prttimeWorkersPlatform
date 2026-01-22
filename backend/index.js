@@ -696,6 +696,7 @@ app.post("/api/workers", (req, res) => {
     level,
     groupId,
     floor,
+    job, // 新增工作欄位
     baseHourlyWage,
     baseWorkingHours,
   } = req.body;
@@ -754,6 +755,7 @@ app.post("/api/workers", (req, res) => {
     level: parseInt(level),
     groupId: groupId || null,
     floor: floor || "",
+    job: job || "", // 新增工作欄位，如果沒有提供則為空字串
     baseHourlyWage:
       baseHourlyWage !== undefined ? parseFloat(baseHourlyWage) : 0,
     baseWorkingHours:
@@ -790,6 +792,7 @@ app.put("/api/workers/:id", (req, res) => {
     level,
     groupId,
     floor,
+    job, // 新增工作欄位
     baseHourlyWage,
     baseWorkingHours,
   } = req.body;
@@ -843,6 +846,7 @@ app.put("/api/workers/:id", (req, res) => {
     level: level ? parseInt(level) : workers[workerIndex].level,
     groupId: groupId !== undefined ? groupId : workers[workerIndex].groupId,
     floor: floor !== undefined ? floor : workers[workerIndex].floor || "",
+    job: job !== undefined ? job : workers[workerIndex].job || "", // 新增工作欄位更新
     baseHourlyWage:
       baseHourlyWage !== undefined
         ? parseFloat(baseHourlyWage)

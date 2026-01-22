@@ -154,6 +154,13 @@
           </template>
         </el-table-column>
         <el-table-column prop="floor" label="樓層" :width="isMobile ? '50' : '80'" />
+        <el-table-column prop="job" label="工作" :width="isMobile ? '100' : '150'">
+          <template #default="{ row }">
+            <span style="font-size: 12px;" :title="row.job">
+              {{ row.job || '-' }}
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column prop="hourlyWage" label="時薪" :width="isMobile ? '60' : '80'" />
         <el-table-column prop="baseHours" label="基本時數" :width="isMobile ? '60' : '90'" />
         <el-table-column label="累積工時" :width="isMobile ? '60' : '90'">
@@ -270,6 +277,13 @@
             </span>
           </template>
         </el-table-column>
+        <el-table-column prop="job" label="工作" width="120">
+          <template #default="{ row }">
+            <span style="font-size: 12px;">
+              {{ row.job || "-" }}
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column prop="hourlyWage" label="時薪" width="80">
           <template #default="{ row }">
             <span :style="{ color: row.hourlyWage > 0 ? 'inherit' : 'red' }">
@@ -355,6 +369,16 @@
         </el-form-item>
         <el-form-item label="樓層" prop="floor">
           <el-input v-model="workerForm.floor" placeholder="請輸入樓層" />
+        </el-form-item>
+        <el-form-item label="工作">
+          <el-input 
+            v-model="workerForm.job" 
+            placeholder="請輸入工作內容 (選填)"
+            type="textarea"
+            :rows="2"
+            maxlength="100"
+            show-word-limit
+          />
         </el-form-item>
         <el-form-item label="時薪" prop="hourlyWage">
           <el-input-number
@@ -606,6 +630,7 @@ const workerForm = reactive({
   name: "",
   group: "",
   floor: "",
+  job: "", // 新增工作欄位
   hourlyWage: 200,
   baseHours: 8,
 });
@@ -718,6 +743,7 @@ const fetchWorkers = async () => {
         name: worker.name || "",
         group: groupMapping[worker.groupId] || worker.group || "",
         floor: worker.floor || "",
+        job: worker.job || "", // 新增工作欄位映射
         hourlyWage: worker.baseHourlyWage || worker.hourlyWage || 0,
         baseHours: worker.baseWorkingHours || worker.baseHours || 8,
         additionalHours: additionalHours,
@@ -868,7 +894,8 @@ const handleFileChange = (file: any) => {
       const name = String(r[1] != null ? r[1] : "").trim();
       const group = String(r[2] != null ? r[2] : "").trim();
       const floor = String(r[3] != null ? r[3] : "").trim();
-      const hourlyWage = r[4] != null ? Number(r[4]) : 0;
+      const job = String(r[4] != null ? r[4] : "").trim(); // 新增工作欄位 (第5列)
+      const hourlyWage = r[5] != null ? Number(r[5]) : 0; // 時薪移到第6列
 
       // 確保數據格式正確
       const workerData = {
@@ -876,6 +903,7 @@ const handleFileChange = (file: any) => {
         name,
         group,
         floor,
+        job, // 新增工作欄位
         hourlyWage: hourlyWage,
         baseHours: 8,
         valid: workerNumber && name && group && floor && hourlyWage > 0,
@@ -1007,6 +1035,7 @@ const showEditWorker = (worker: Worker) => {
   workerForm.name = worker.name || "";
   workerForm.group = worker.group || "";
   workerForm.floor = worker.floor || "";
+  workerForm.job = worker.job || ""; // 新增工作欄位映射
   workerForm.hourlyWage =
     Number(worker.hourlyWage || worker.hourly_wage) || 200;
   workerForm.baseHours = Number(worker.baseHours || worker.base_hours) || 8;
@@ -1023,6 +1052,7 @@ const resetWorkerForm = () => {
     name: "",
     group: "",
     floor: "",
+    job: "", // 新增工作欄位重置
     hourlyWage: 200,
     baseHours: 8,
   });

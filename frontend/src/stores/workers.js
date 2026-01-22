@@ -130,6 +130,7 @@ export const useWorkersStore = defineStore("workers", () => {
         baseWorkingHours: Number(workerData.baseHours) || 8,
         groupId: groupMapping[workerData.group] || 'group-1', // 如果找不到對應組別，使用預設值
         floor: String(workerData.floor || "").trim(),
+        job: String(workerData.job || "").trim(), // 新增工作欄位
         // 設置預設值
         gender: '男',
         level: '工讀生',
@@ -194,6 +195,7 @@ export const useWorkersStore = defineStore("workers", () => {
         baseWorkingHours: Number(workerData.baseHours) || 8,
         groupId: groupMapping[workerData.group] || 'group-1', // 如果找不到對應組別，使用預設值
         floor: String(workerData.floor || "").trim(),
+        job: String(workerData.job || "").trim(), // 新增工作欄位
         // 保持其他欄位不變
         gender: workerData.gender || '男',
         level: workerData.level || '工讀生',

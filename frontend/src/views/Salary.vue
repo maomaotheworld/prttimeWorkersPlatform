@@ -308,7 +308,7 @@
         :closable="false"
         style="margin-bottom: 20px"
       >
-        設定要支付給工讀生的總薪資金額（不考慮工時），系統將根據實際工時自動計算對應的時薪
+        設定要支付給工讀生的總薪資金額，系統將通過薪資調整記錄來確保實際薪資符合目標金額
       </el-alert>
 
       <el-form
@@ -361,48 +361,36 @@
 
         <el-divider />
 
-        <el-form-item label="調整後總薪資" prop="targetTotalSalary">
+        <el-form-item label="目標總薪資" prop="targetTotalSalary">
           <el-input-number
             v-model="totalSalaryForm.targetTotalSalary"
             :min="0"
             :step="100"
             :precision="0"
             style="width: 100%"
-            @change="calculateNewWage"
           />
           <span style="font-size: 12px; color: #909399; margin-left: 8px">
             元
           </span>
         </el-form-item>
 
-        <el-form-item label="計算後新時薪" v-if="calculatedNewWage > 0">
-          <el-tag type="primary" size="large" style="padding: 10px 15px">
-            {{ calculatedNewWage }} 元/小時
-          </el-tag>
-        </el-form-item>
-
-        <el-form-item label="時薪調整" v-if="calculatedNewWage > 0">
-          <el-tag
-            :type="wageAdjustment >= 0 ? 'success' : 'danger'"
-            size="large"
-            style="padding: 10px 15px"
-          >
-            {{ wageAdjustment >= 0 ? "+" : "" }}{{ wageAdjustment }} 元/小時 ({{
-              wageAdjustmentPercent
-            }})
-          </el-tag>
-        </el-form-item>
-
-        <el-form-item label="薪資調整" v-if="calculatedNewWage > 0">
-          <el-tag
-            type="primary"
-            size="large"
-            style="padding: 10px 15px"
-          >
-            調整後總薪資：{{ totalSalaryForm.targetTotalSalary }} 元
-          </el-tag>
-          <div style="margin-top: 8px; font-size: 12px; color: #909399;">
-            (相較目前預估薪資 {{ salaryAdjustment >= 0 ? "+" : "" }}{{ salaryAdjustment }} 元)
+        <el-form-item label="薪資調整預覽" v-if="totalSalaryForm.targetTotalSalary && currentEstimatedSalary">
+          <div style="padding: 10px; background: #f5f7fa; border-radius: 4px;">
+            <div style="margin-bottom: 8px;">
+              目前預估薪資：<strong>{{ currentEstimatedSalary }} 元</strong>
+            </div>
+            <div style="margin-bottom: 8px;">
+              目標總薪資：<strong>{{ totalSalaryForm.targetTotalSalary }} 元</strong>
+            </div>
+            <div>
+              調整金額：
+              <el-tag 
+                :type="salaryAdjustment >= 0 ? 'success' : 'danger'" 
+                style="margin-left: 8px;"
+              >
+                {{ salaryAdjustment >= 0 ? "+" : "" }}{{ salaryAdjustment }} 元
+              </el-tag>
+            </div>
           </div>
         </el-form-item>
 
@@ -422,7 +410,7 @@
           type="primary"
           @click="handleTotalSalaryAdjust"
           :loading="submitting"
-          :disabled="calculatedNewWage <= 0"
+          :disabled="!totalSalaryForm.targetTotalSalary || totalSalaryForm.targetTotalSalary <= 0"
         >
           確認調整
         </el-button>
@@ -512,32 +500,9 @@ const currentEstimatedSalary = computed(() => {
   return Math.round(currentPeriodHours.value * currentWage.value);
 });
 
-// 計算後新時薪
-const calculatedNewWage = computed(() => {
-  if (
-    !totalSalaryForm.value.targetTotalSalary ||
-    currentPeriodHours.value === 0
-  )
-    return 0;
-  return Math.round(
-    totalSalaryForm.value.targetTotalSalary / currentPeriodHours.value,
-  );
-});
-
-// 時薪調整
-const wageAdjustment = computed(() => {
-  return calculatedNewWage.value - currentWage.value;
-});
-
-// 時薪調整百分比
-const wageAdjustmentPercent = computed(() => {
-  if (currentWage.value === 0) return "0%";
-  const percent = ((wageAdjustment.value / currentWage.value) * 100).toFixed(1);
-  return `${percent >= 0 ? "+" : ""}${percent}%`;
-});
-
-// 薪資調整金額
+// 薪資調整金額（目標總薪資與目前預估薪資的差額）
 const salaryAdjustment = computed(() => {
+  if (!totalSalaryForm.value.targetTotalSalary) return 0;
   return totalSalaryForm.value.targetTotalSalary - currentEstimatedSalary.value;
 });
 
@@ -652,10 +617,6 @@ const handleTotalSalaryWorkerChange = async () => {
   }
 };
 
-const calculateNewWage = () => {
-  // 當輸入目標總薪水時，自動觸發 computed 計算新時薪
-};
-
 const calculateSalaryForWorker = async (workerId) => {
   try {
     calculating.value = true;
@@ -703,9 +664,7 @@ const handleTotalSalaryAdjust = async () => {
       },
       body: JSON.stringify({
         workerId: totalSalaryForm.value.workerId,
-        newHourlyWage: calculatedNewWage.value,
         targetTotalSalary: totalSalaryForm.value.targetTotalSalary,
-        currentTotalHours: currentPeriodHours.value,
         reason: totalSalaryForm.value.reason,
       }),
     });
@@ -716,13 +675,19 @@ const handleTotalSalaryAdjust = async () => {
       throw new Error(result.message || "總薪資調整失敗");
     }
 
-    ElMessage.success(
-      `總薪資調整成功！新時薪為 ${calculatedNewWage.value} 元/小時`,
-    );
+    if (result.data.adjustmentAmount === 0) {
+      ElMessage.info(result.data.message || "目標薪資與當前薪資相同，無需調整");
+    } else {
+      const adjustText = result.data.adjustmentAmount >= 0 ? "增加" : "減少";
+      ElMessage.success(
+        `總薪資調整成功！從 ${result.data.oldTotalSalary} 元調整為 ${result.data.newTotalSalary} 元（${adjustText} ${Math.abs(result.data.adjustmentAmount)} 元）`,
+      );
+    }
+    
     totalSalaryDialogVisible.value = false;
 
-    // 重新載入工讀生列表
-    await workersStore.fetchWorkers();
+    // 重新載入薪資調整記錄
+    await fetchAdjustments();
 
     // 重新計算薪資
     if (selectedWorker.value) {

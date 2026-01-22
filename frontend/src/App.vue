@@ -26,13 +26,9 @@
                 </el-tag>
               </div>
               <div class="action-buttons">
-                <el-button type="primary" @click="showDashboard">
-                  <el-icon><DataAnalysis /></el-icon>
-                  統計資訊
-                </el-button>
                 <el-button type="danger" @click="handleLogout" plain>
                   <el-icon><SwitchButton /></el-icon>
-                  ?�出
+                  登出
                 </el-button>
               </div>
             </div>
@@ -40,7 +36,7 @@
         </el-header>
 
         <el-container>
-          <!-- ?��?導航 -->
+          <!-- 側邊導航 -->
           <el-aside v-if="!isMobile" width="200px" class="app-aside">
             <el-menu
               :default-active="$route.path"
@@ -101,13 +97,13 @@
             </el-menu>
           </el-aside>
 
-          <!-- 主內容�???-->
+          <!-- 主內容區域 -->
           <el-main class="app-main">
             <router-view />
           </el-main>
         </el-container>
 
-        <!-- ?��?端�???-->
+        <!-- 移動端導航 -->
         <el-header v-if="isMobile" height="50px" class="mobile-header">
           <div class="mobile-header-content">
             <div class="mobile-user-info">
@@ -124,12 +120,12 @@
               plain
               :icon="SwitchButton"
             >
-              ?�出
+              登出
             </el-button>
           </div>
         </el-header>
 
-        <!-- ?��?端�??��???-->
+        <!-- 移動端底部導航 -->
         <el-footer v-if="isMobile" height="45px" class="mobile-footer">
           <div class="mobile-nav">
             <div
@@ -144,35 +140,6 @@
         </el-footer>
       </el-container>
     </template>
-
-    <!-- 統�?資�?彈�? -->
-    <el-dialog
-      v-model="dashboardVisible"
-      title="統�?資�?"
-      :width="isMobile ? '95%' : '500px'"
-      center
-    >
-      <div class="dashboard-content">
-        <el-row :gutter="16">
-          <el-col :span="12">
-            <el-statistic title="總工讀?�數" :value="stats.totalWorkers" />
-          </el-col>
-          <el-col :span="12">
-            <el-statistic title="總�??�數" :value="stats.totalGroups" />
-          </el-col>
-          <el-col :span="12">
-            <el-statistic title="今日?�卡" :value="stats.todayClockedIn" />
-          </el-col>
-          <el-col :span="12">
-            <el-statistic
-              title="?��?工�?"
-              :value="stats.monthlyHours"
-              suffix="小�?"
-            />
-          </el-col>
-        </el-row>
-      </div>
-    </el-dialog>
   </div>
 </template>
 
@@ -182,7 +149,6 @@ import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   Management,
-  DataAnalysis,
   HomeFilled,
   User,
   UserFilled,
@@ -194,19 +160,14 @@ import {
   Setting,
   SwitchButton,
 } from "@element-plus/icons-vue";
-import { useStatsStore } from "./stores/stats";
 import { useAuthStore } from "./stores/auth";
 
 const router = useRouter();
-const statsStore = useStatsStore();
 const authStore = useAuthStore();
 
 const windowWidth = ref(window.innerWidth);
-const dashboardVisible = ref(false);
 
 const isMobile = computed(() => windowWidth.value <= 768);
-
-const stats = computed(() => statsStore.stats);
 
 // 用戶角色顯示
 const userRoleText = computed(() => {
@@ -283,11 +244,6 @@ const visibleMobileNavs = computed(() => {
 
 const handleResize = () => {
   windowWidth.value = window.innerWidth;
-};
-
-const showDashboard = async () => {
-  await statsStore.fetchStats();
-  dashboardVisible.value = true;
 };
 
 // 登出操作

@@ -9,14 +9,14 @@
     <template v-else>
       <el-container class="app-container">
         <!-- 頂部導航 -->
-        <el-header v-if="!isMobile" height="60px" class="app-header">
+        <el-header v-if="!isMobile && showNavigation" height="60px" class="app-header">
           <div class="header-content">
             <div class="logo">
               <el-icon size="24"><Management /></el-icon>
               <span>工讀生管理平台</span>
             </div>
             <div class="header-actions">
-              <div class="user-info">
+              <div v-if="authStore.isAuthenticated" class="user-info">
                 <el-avatar :size="32" class="user-avatar">
                   {{ authStore.displayName[0] }}
                 </el-avatar>
@@ -26,9 +26,13 @@
                 </el-tag>
               </div>
               <div class="action-buttons">
-                <el-button type="danger" @click="handleLogout" plain>
+                <el-button v-if="authStore.isAuthenticated" type="danger" @click="handleLogout" plain>
                   <el-icon><SwitchButton /></el-icon>
                   登出
+                </el-button>
+                <el-button v-else type="primary" @click="$router.push('/login')" plain>
+                  <el-icon><User /></el-icon>
+                  登入
                 </el-button>
               </div>
             </div>
@@ -37,7 +41,7 @@
 
         <el-container>
           <!-- 側邊導航 -->
-          <el-aside v-if="!isMobile" width="200px" class="app-aside">
+          <el-aside v-if="!isMobile && showNavigation" width="200px" class="app-aside">
             <el-menu
               :default-active="$route.path"
               router
@@ -53,6 +57,10 @@
               <el-menu-item index="/workers">
                 <el-icon><User /></el-icon>
                 <span>工讀生管理</span>
+              </el-menu-item>
+              <el-menu-item index="/personnel-list">
+                <el-icon><UserFilled /></el-icon>
+                <span>人員列表</span>
               </el-menu-item>
               <el-menu-item
                 v-if="authStore.canEditWorkers || authStore.isAdmin"
@@ -97,16 +105,20 @@
         </el-container>
 
         <!-- 移動端導航 -->
-        <el-header v-if="isMobile" height="50px" class="mobile-header">
+        <el-header v-if="isMobile && showNavigation" height="50px" class="mobile-header">
           <div class="mobile-header-content">
-            <div class="mobile-user-info">
+            <div v-if="authStore.isAuthenticated" class="mobile-user-info">
               <el-avatar :size="24">{{ authStore.displayName[0] }}</el-avatar>
               <span class="mobile-user-name">{{ authStore.displayName }}</span>
               <el-tag :type="userRoleTagType" size="small">{{
                 userRoleText
               }}</el-tag>
             </div>
+            <div v-else class="mobile-user-info">
+              <span class="mobile-user-name">訪客模式</span>
+            </div>
             <el-button
+              v-if="authStore.isAuthenticated"
               type="danger"
               size="small"
               @click="handleLogout"
@@ -115,11 +127,21 @@
             >
               登出
             </el-button>
+            <el-button
+              v-else
+              type="primary"
+              size="small"
+              @click="$router.push('/login')"
+              plain
+              :icon="User"
+            >
+              登入
+            </el-button>
           </div>
         </el-header>
 
         <!-- 移動端底部導航 -->
-        <el-footer v-if="isMobile" height="45px" class="mobile-footer">
+        <el-footer v-if="isMobile && showNavigation" height="45px" class="mobile-footer">
           <div class="mobile-nav">
             <div
               v-for="nav in visibleMobileNavs"
@@ -162,6 +184,17 @@ const windowWidth = ref(window.innerWidth);
 
 const isMobile = computed(() => windowWidth.value <= 768);
 
+// 是否顯示導航 - 對於不需要認證的頁面，也可以顯示導航
+const showNavigation = computed(() => {
+  const currentRoute = router.currentRoute.value;
+  // 如果是不需要認證的頁面，總是顯示導航
+  if (currentRoute.meta.requiresAuth === false) {
+    return true;
+  }
+  // 對於需要認證的頁面，檢查是否已認證
+  return authStore.isAuthenticated;
+});
+
 // 用戶角色顯示
 const userRoleText = computed(() => {
   switch (authStore.userRole) {
@@ -193,6 +226,7 @@ const userRoleTagType = computed(() => {
 const mobileNavs = [
   { path: "/", name: "首頁", icon: "HomeFilled" },
   { path: "/workers", name: "工讀生", icon: "User" },
+  { path: "/personnel-list", name: "人員", icon: "UserFilled", noAuth: true },
   {
     path: "/attendance",
     name: "打卡",
@@ -223,6 +257,16 @@ const mobileNavs = [
 
 const visibleMobileNavs = computed(() => {
   return mobileNavs.filter((nav) => {
+    // 如果是不需要認證的項目，總是顯示
+    if (nav.noAuth) {
+      return true;
+    }
+    
+    // 如果用戶沒有認證，只顯示不需要認證的項目
+    if (!authStore.isAuthenticated) {
+      return false;
+    }
+    
     // 如�??��??�管?�員?�選??檢查?�否?�管?�員
     if (nav.adminOnly) {
       return authStore.isAdmin;

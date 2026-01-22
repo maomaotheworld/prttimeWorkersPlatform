@@ -1,0 +1,388 @@
+<template>
+  <div class="personnel-list">
+    <h1>人員列表</h1>
+
+    <!-- 搜尋和篩選區域 -->
+    <div class="filter-section">
+      <div class="filter-row">
+        <div class="search-box">
+          <el-input
+            v-model="searchName"
+            placeholder="搜尋員工姓名"
+            @input="handleSearch"
+            clearable
+            style="width: 300px"
+          >
+            <template #prefix>
+              <i class="el-icon-search"></i>
+            </template>
+          </el-input>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <div class="filter-item">
+          <label>樓層篩選：</label>
+          <el-select
+            v-model="filterFloor"
+            placeholder="選擇樓層"
+            @change="applyFilters"
+            clearable
+            style="width: 200px"
+          >
+            <el-option
+              v-for="floor in availableFloors"
+              :key="floor"
+              :label="floor"
+              :value="floor"
+            />
+          </el-select>
+        </div>
+
+        <div class="filter-item">
+          <label>組別篩選：</label>
+          <el-select
+            v-model="filterGroup"
+            placeholder="選擇組別"
+            @change="applyFilters"
+            clearable
+            style="width: 200px"
+          >
+            <el-option
+              v-for="group in groups"
+              :key="group.id"
+              :label="group.name"
+              :value="group.id"
+            />
+          </el-select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 人員表格 -->
+    <div class="table-section">
+      <el-table
+        :data="filteredWorkers"
+        stripe
+        style="width: 100%"
+        height="600"
+        empty-text="暂無人員資料"
+        v-loading="loading"
+      >
+        <el-table-column prop="id" label="編號" width="80" sortable />
+        
+        <el-table-column prop="name" label="姓名" width="120" sortable />
+        
+        <el-table-column prop="groupName" label="組別" width="150" sortable>
+          <template #default="scope">
+            <el-tag type="info" size="small">
+              {{ scope.row.groupName || '未分配' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        
+        <el-table-column prop="floor" label="樓層" width="100" sortable>
+          <template #default="scope">
+            <el-tag type="primary" size="small">
+              {{ scope.row.floor || '未設定' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        
+        <el-table-column prop="job" label="工作" sortable>
+          <template #default="scope">
+            <span>{{ scope.row.job || '未設定' }}</span>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <!-- 統計信息 -->
+      <div class="stats-section">
+        <el-row :gutter="16" style="margin-top: 20px">
+          <el-col :span="6">
+            <el-card>
+              <div class="stat-item">
+                <div class="stat-number">{{ totalWorkers }}</div>
+                <div class="stat-label">總人員數</div>
+              </div>
+            </el-card>
+          </el-col>
+          <el-col :span="6">
+            <el-card>
+              <div class="stat-item">
+                <div class="stat-number">{{ filteredWorkers.length }}</div>
+                <div class="stat-label">篩選後人員</div>
+              </div>
+            </el-card>
+          </el-col>
+          <el-col :span="6">
+            <el-card>
+              <div class="stat-item">
+                <div class="stat-number">{{ groupsWithWorkers }}</div>
+                <div class="stat-label">有人員的組別</div>
+              </div>
+            </el-card>
+          </el-col>
+          <el-col :span="6">
+            <el-card>
+              <div class="stat-item">
+                <div class="stat-number">{{ floorsWithWorkers }}</div>
+                <div class="stat-label">有人員的樓層</div>
+              </div>
+            </el-card>
+          </el-col>
+        </el-row>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { defineComponent, ref, onMounted, computed, watch } from 'vue';
+import { useWorkersStore } from '../stores/workers';
+import { useGroupsStore } from '../stores/groups';
+
+export default defineComponent({
+  name: 'PersonnelList',
+  setup() {
+    const workersStore = useWorkersStore();
+    const groupsStore = useGroupsStore();
+
+    // 響應式數據
+    const searchName = ref('');
+    const filterFloor = ref('');
+    const filterGroup = ref('');
+    const loading = ref(false);
+
+    // 計算屬性
+    const workers = computed(() => workersStore.workers);
+    const groups = computed(() => groupsStore.groups);
+    
+    // 可用樓層列表
+    const availableFloors = computed(() => {
+      const floors = [...new Set(workers.value.map(w => w.floor).filter(Boolean))];
+      return floors.sort();
+    });
+
+    // 篩選後的工讀生列表
+    const filteredWorkers = computed(() => {
+      let result = workers.value.map(worker => ({
+        ...worker,
+        groupName: groups.value.find(g => g.id === worker.group_id)?.name || ''
+      }));
+
+      // 姓名搜尋
+      if (searchName.value.trim()) {
+        result = result.filter(worker => 
+          worker.name.toLowerCase().includes(searchName.value.trim().toLowerCase())
+        );
+      }
+
+      // 樓層篩選
+      if (filterFloor.value) {
+        result = result.filter(worker => worker.floor === filterFloor.value);
+      }
+
+      // 組別篩選
+      if (filterGroup.value) {
+        result = result.filter(worker => worker.group_id === filterGroup.value);
+      }
+
+      return result;
+    });
+
+    // 統計數據
+    const totalWorkers = computed(() => workers.value.length);
+    
+    const groupsWithWorkers = computed(() => {
+      const groupIds = [...new Set(workers.value.map(w => w.group_id).filter(Boolean))];
+      return groupIds.length;
+    });
+    
+    const floorsWithWorkers = computed(() => {
+      const floors = [...new Set(workers.value.map(w => w.floor).filter(Boolean))];
+      return floors.length;
+    });
+
+    // 方法
+    const loadData = async () => {
+      loading.value = true;
+      try {
+        await Promise.all([
+          workersStore.loadWorkers(),
+          groupsStore.loadGroups()
+        ]);
+      } catch (error) {
+        console.error('載入數據時發生錯誤:', error);
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const handleSearch = () => {
+      // 搜尋會觸發計算屬性自動更新
+    };
+
+    const applyFilters = () => {
+      // 篩選會觸發計算屬性自動更新
+    };
+
+    // 生命周期
+    onMounted(() => {
+      loadData();
+    });
+
+    return {
+      // 響應式數據
+      searchName,
+      filterFloor,
+      filterGroup,
+      loading,
+      
+      // 計算屬性
+      workers,
+      groups,
+      availableFloors,
+      filteredWorkers,
+      totalWorkers,
+      groupsWithWorkers,
+      floorsWithWorkers,
+      
+      // 方法
+      handleSearch,
+      applyFilters
+    };
+  }
+});
+</script>
+
+<style scoped>
+.personnel-list {
+  padding: 20px;
+}
+
+h1 {
+  margin-bottom: 30px;
+  color: #2c3e50;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.filter-section {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 15px;
+}
+
+.filter-row:last-child {
+  margin-bottom: 0;
+}
+
+.search-box {
+  flex: 1;
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-item label {
+  font-weight: 500;
+  color: #666;
+  white-space: nowrap;
+}
+
+.table-section {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stats-section {
+  padding: 20px;
+  background: #f8f9fa;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 20px;
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #409eff;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #666;
+  font-weight: 500;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+  .personnel-list {
+    padding: 10px;
+  }
+
+  .filter-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+
+  .search-box {
+    width: 100%;
+  }
+
+  .filter-item {
+    width: 100%;
+  }
+
+  .filter-item label {
+    min-width: 80px;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  .stat-number {
+    font-size: 2rem;
+  }
+
+  :deep(.el-table) {
+    font-size: 14px;
+  }
+
+  :deep(.el-table th),
+  :deep(.el-table td) {
+    padding: 8px 0;
+  }
+}
+
+/* 確保表格在小螢幕上可以橫向滾動 */
+@media (max-width: 600px) {
+  .table-section {
+    overflow-x: auto;
+  }
+  
+  :deep(.el-table) {
+    min-width: 600px;
+  }
+}
+</style>

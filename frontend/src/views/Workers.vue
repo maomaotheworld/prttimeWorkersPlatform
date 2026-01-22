@@ -1075,8 +1075,314 @@ onMounted(() => {
   font-weight: 500;
 }
 </style>
-  hourlyWage: 0,
-});
+
+<style scoped>
+.workers-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  padding: 24px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.header-content h1 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.page-description {
+  margin: 0;
+  color: #7f8c8d;
+  font-size: 14px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.import-btn {
+  background: linear-gradient(135deg, #67c23a, #85ce61);
+  border: none;
+}
+
+.stats-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.stat-card :deep(.el-card__body) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 32px;
+  font-weight: 600;
+  color: #2c3e50;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  color: #7f8c8d;
+  font-size: 14px;
+}
+
+.stat-icon {
+  font-size: 48px;
+  opacity: 0.2;
+}
+
+.stat-icon.success {
+  color: #67c23a;
+}
+
+.stat-icon.warning {
+  color: #e6a23c;
+}
+
+.filter-card {
+  margin-bottom: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.filters {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.table-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-title {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 16px;
+}
+
+.workers-table {
+  width: 100%;
+}
+
+.worker-number {
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-weight: 600;
+  color: #409eff;
+}
+
+.worker-name {
+  font-weight: 500;
+}
+
+.floor-text {
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-weight: 500;
+}
+
+.wage-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wage-amount {
+  font-weight: 600;
+  color: #67c23a;
+  font-family: 'Monaco', 'Consolas', monospace;
+}
+
+.wage-edit-btn {
+  color: #909399;
+  padding: 0;
+}
+
+.wage-edit-btn:hover {
+  color: #409eff;
+}
+
+.date-text {
+  color: #909399;
+  font-size: 13px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #909399;
+}
+
+.empty-state .el-icon {
+  color: #ddd;
+  margin-bottom: 16px;
+}
+
+.import-content {
+  padding: 0 4px;
+}
+
+.format-alert {
+  margin-bottom: 20px;
+}
+
+.excel-upload {
+  margin: 20px 0;
+}
+
+.preview-section {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #ebeef5;
+}
+
+.preview-section h4 {
+  margin: 0 0 16px 0;
+  color: #2c3e50;
+}
+
+.preview-stats {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #606266;
+}
+
+.wage-adjust-content,
+.hours-adjust-content {
+  padding: 0 4px;
+}
+
+.worker-info {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.worker-info h4 {
+  margin: 0 0 8px 0;
+  color: #2c3e50;
+}
+
+.worker-info p {
+  margin: 0;
+  color: #606266;
+  font-size: 14px;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+  .workers-container {
+    padding: 12px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px 16px;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .header-actions .el-button {
+    flex: 1;
+  }
+
+  .stats-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters .el-select,
+  .filters .el-input {
+    width: 100% !important;
+  }
+
+  .workers-table {
+    font-size: 14px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+/* Element Plus 樣式覆蓋 */
+.table-card :deep(.el-card__header) {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.workers-table :deep(.el-table__header) {
+  background-color: #f8f9fa;
+}
+
+.workers-table :deep(.el-table__row:hover > td) {
+  background-color: #f0f9ff;
+}
+
+.workers-table :deep(.el-tag) {
+  font-weight: 500;
+}
+</style>
 
 const rules = {
   workerNumber: [{ required: true, message: "請輸入工號", trigger: "blur" }],
@@ -1161,16 +1467,323 @@ const resetForm = () => {
   };
 };
 
-// 初始化
+    importing.value = false
+  }
+}
+
+// 組件掛載時載入數據
 onMounted(() => {
-  fetchWorkers();
-});
+  fetchWorkers()
+})
 </script>
 
 <style scoped>
 .workers-container {
-  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
 }
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  padding: 24px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.header-content h1 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.page-description {
+  margin: 0;
+  color: #7f8c8d;
+  font-size: 14px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.import-btn {
+  background: linear-gradient(135deg, #67c23a, #85ce61);
+  border: none;
+}
+
+.stats-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.stat-card :deep(.el-card__body) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 32px;
+  font-weight: 600;
+  color: #2c3e50;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  color: #7f8c8d;
+  font-size: 14px;
+}
+
+.stat-icon {
+  font-size: 48px;
+  opacity: 0.2;
+}
+
+.stat-icon.success {
+  color: #67c23a;
+}
+
+.stat-icon.warning {
+  color: #e6a23c;
+}
+
+.filter-card {
+  margin-bottom: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.filters {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.table-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-title {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 16px;
+}
+
+.workers-table {
+  width: 100%;
+}
+
+.worker-number {
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-weight: 600;
+  color: #409eff;
+}
+
+.worker-name {
+  font-weight: 500;
+}
+
+.floor-text {
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-weight: 500;
+}
+
+.wage-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wage-amount {
+  font-weight: 600;
+  color: #67c23a;
+  font-family: 'Monaco', 'Consolas', monospace;
+}
+
+.wage-edit-btn {
+  color: #909399;
+  padding: 0;
+}
+
+.wage-edit-btn:hover {
+  color: #409eff;
+}
+
+.date-text {
+  color: #909399;
+  font-size: 13px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #909399;
+}
+
+.empty-state .el-icon {
+  color: #ddd;
+  margin-bottom: 16px;
+}
+
+.import-content {
+  padding: 0 4px;
+}
+
+.format-alert {
+  margin-bottom: 20px;
+}
+
+.excel-upload {
+  margin: 20px 0;
+}
+
+.preview-section {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #ebeef5;
+}
+
+.preview-section h4 {
+  margin: 0 0 16px 0;
+  color: #2c3e50;
+}
+
+.preview-stats {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #606266;
+}
+
+.wage-adjust-content,
+.hours-adjust-content {
+  padding: 0 4px;
+}
+
+.worker-info {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.worker-info h4 {
+  margin: 0 0 8px 0;
+  color: #2c3e50;
+}
+
+.worker-info p {
+  margin: 0;
+  color: #606266;
+  font-size: 14px;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+  .workers-container {
+    padding: 12px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px 16px;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .header-actions .el-button {
+    flex: 1;
+  }
+
+  .stats-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters .el-select,
+  .filters .el-input {
+    width: 100% !important;
+  }
+
+  .workers-table {
+    font-size: 14px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+/* Element Plus 樣式覆蓋 */
+.table-card :deep(.el-card__header) {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.workers-table :deep(.el-table__header) {
+  background-color: #f8f9fa;
+}
+
+.workers-table :deep(.el-table__row:hover > td) {
+  background-color: #f0f9ff;
+}
+
+.workers-table :deep(.el-tag) {
+  font-weight: 500;
+}
+</style>
 
 .page-header {
   display: flex;

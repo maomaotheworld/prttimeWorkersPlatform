@@ -49,42 +49,49 @@
             <el-icon><List /></el-icon>
             樓層列表
           </span>
-          <el-button :icon="Refresh" @click="fetchFloors" :loading="loading" circle />
+          <el-button
+            :icon="Refresh"
+            @click="fetchFloors"
+            :loading="loading"
+            circle
+          />
         </div>
       </template>
 
       <div class="floors-grid">
-        <div 
-          v-for="floor in sortedFloors" 
-          :key="floor.id" 
+        <div
+          v-for="floor in sortedFloors"
+          :key="floor.id"
           class="floor-card"
           @click="viewFloorWorkers(floor)"
         >
           <div class="floor-header">
             <div class="floor-info">
               <h3 class="floor-name">{{ floor.name }}</h3>
-              <p class="floor-description">{{ floor.description || '無描述' }}</p>
+              <p class="floor-description">
+                {{ floor.description || "無描述" }}
+              </p>
             </div>
             <div class="floor-actions" @click.stop>
-              <el-button 
-                type="primary" 
-                size="small" 
-                :icon="Edit" 
+              <el-button
+                type="primary"
+                size="small"
+                :icon="Edit"
                 @click="editFloor(floor)"
                 circle
                 plain
               />
-              <el-button 
-                type="danger" 
-                size="small" 
-                :icon="Delete" 
+              <el-button
+                type="danger"
+                size="small"
+                :icon="Delete"
                 @click="confirmDelete(floor)"
                 circle
                 plain
               />
             </div>
           </div>
-          
+
           <div class="floor-stats">
             <div class="stat-item">
               <el-icon><UserFilled /></el-icon>
@@ -97,13 +104,16 @@
           </div>
 
           <!-- 工讀生列表預覽 -->
-          <div v-if="floor.workers && floor.workers.length > 0" class="workers-preview">
+          <div
+            v-if="floor.workers && floor.workers.length > 0"
+            class="workers-preview"
+          >
             <div class="preview-title">工讀生</div>
             <div class="workers-list">
-              <el-tag 
-                v-for="worker in floor.workers.slice(0, 5)" 
-                :key="worker.id" 
-                size="small" 
+              <el-tag
+                v-for="worker in floor.workers.slice(0, 5)"
+                :key="worker.id"
+                size="small"
                 class="worker-tag"
               >
                 {{ worker.name }}
@@ -113,7 +123,7 @@
               </span>
             </div>
           </div>
-          
+
           <div v-else class="empty-workers">
             <el-icon><Warning /></el-icon>
             <span>暫無工讀生</span>
@@ -125,7 +135,9 @@
       <div v-if="floors.length === 0 && !loading" class="empty-state">
         <el-icon size="64"><OfficeBuilding /></el-icon>
         <p>暫無樓層資料</p>
-        <el-button type="primary" @click="showAddDialog">新增第一個樓層</el-button>
+        <el-button type="primary" @click="showAddDialog"
+          >新增第一個樓層</el-button
+        >
       </div>
     </el-card>
 
@@ -136,22 +148,27 @@
       :width="isMobile ? '95%' : '500px'"
       @close="resetForm"
     >
-      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="80px">
+      <el-form
+        ref="formRef"
+        :model="formData"
+        :rules="formRules"
+        label-width="80px"
+      >
         <el-form-item label="樓層名稱" prop="name">
           <el-input v-model="formData.name" placeholder="例如：1F、B1、2F" />
         </el-form-item>
         <el-form-item label="樓層描述" prop="description">
-          <el-input 
-            v-model="formData.description" 
-            type="textarea" 
+          <el-input
+            v-model="formData.description"
+            type="textarea"
             :rows="3"
             placeholder="請輸入樓層描述（可選）"
           />
         </el-form-item>
         <el-form-item label="排序順序" prop="sortOrder">
-          <el-input-number 
-            v-model="formData.sortOrder" 
-            :min="0" 
+          <el-input-number
+            v-model="formData.sortOrder"
+            :min="0"
             :max="100"
             style="width: 100%"
           />
@@ -160,7 +177,7 @@
       <template #footer>
         <el-button @click="showFormDialog = false">取消</el-button>
         <el-button type="primary" @click="submitForm" :loading="submitting">
-          {{ isEditing ? '更新' : '新增' }}
+          {{ isEditing ? "更新" : "新增" }}
         </el-button>
       </template>
     </el-dialog>
@@ -184,25 +201,36 @@
         </div>
 
         <!-- 按組別分組顯示 -->
-        <div v-if="workersByGroup && Object.keys(workersByGroup).length > 0" class="workers-by-group">
-          <div v-for="(workers, groupName) in workersByGroup" :key="groupName" class="group-section">
+        <div
+          v-if="workersByGroup && Object.keys(workersByGroup).length > 0"
+          class="workers-by-group"
+        >
+          <div
+            v-for="(workers, groupName) in workersByGroup"
+            :key="groupName"
+            class="group-section"
+          >
             <div class="group-header">
               <el-tag type="warning" size="small">{{ groupName }}</el-tag>
               <span class="group-count">{{ workers.length }} 人</span>
             </div>
             <div class="group-workers">
-              <div v-for="worker in workers" :key="worker.id" class="worker-item">
+              <div
+                v-for="worker in workers"
+                :key="worker.id"
+                class="worker-item"
+              >
                 <div class="worker-info">
                   <span class="worker-name">{{ worker.name }}</span>
                   <span class="worker-number">{{ worker.workerNumber }}</span>
                 </div>
                 <div class="worker-details">
                   <span class="worker-wage">${{ worker.hourlyWage }}/時</span>
-                  <el-tag 
-                    :type="worker.status === 'active' ? 'success' : 'danger'" 
+                  <el-tag
+                    :type="worker.status === 'active' ? 'success' : 'danger'"
                     size="small"
                   >
-                    {{ worker.status === 'active' ? '在職' : '離職' }}
+                    {{ worker.status === "active" ? "在職" : "離職" }}
                   </el-tag>
                 </div>
               </div>
@@ -220,221 +248,233 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, reactive, computed, onMounted } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
 import {
-  OfficeBuilding, Plus, Edit, Delete, Refresh, UserFilled,
-  TrendCharts, List, Collection, Warning
-} from '@element-plus/icons-vue'
-import { useWorkersStore } from '@/stores/workers'
+  OfficeBuilding,
+  Plus,
+  Edit,
+  Delete,
+  Refresh,
+  UserFilled,
+  TrendCharts,
+  List,
+  Collection,
+  Warning,
+} from "@element-plus/icons-vue";
+import { useWorkersStore } from "@/stores/workers";
 
 // Store
-const workersStore = useWorkersStore()
+const workersStore = useWorkersStore();
 
 // 響應式數據
-const loading = ref(false)
-const submitting = ref(false)
-const floors = ref([])
-const workers = ref([])
-const showFormDialog = ref(false)
-const showWorkersDialog = ref(false)
-const isEditing = ref(false)
-const currentFloor = ref(null)
-const floorWorkers = ref([])
+const loading = ref(false);
+const submitting = ref(false);
+const floors = ref([]);
+const workers = ref([]);
+const showFormDialog = ref(false);
+const showWorkersDialog = ref(false);
+const isEditing = ref(false);
+const currentFloor = ref(null);
+const floorWorkers = ref([]);
 
 // 表單引用
-const formRef = ref()
+const formRef = ref();
 
 // 表單數據
 const formData = reactive({
-  name: '',
-  description: '',
-  sortOrder: 0
-})
+  name: "",
+  description: "",
+  sortOrder: 0,
+});
 
 // 計算屬性
-const isMobile = computed(() => window.innerWidth <= 768)
+const isMobile = computed(() => window.innerWidth <= 768);
 
 const sortedFloors = computed(() => {
-  return [...floors.value].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-})
+  return [...floors.value].sort(
+    (a, b) => (a.sortOrder || 0) - (b.sortOrder || 0),
+  );
+});
 
 const totalWorkers = computed(() => {
-  return floors.value.reduce((sum, floor) => sum + (floor.workerCount || 0), 0)
-})
+  return floors.value.reduce((sum, floor) => sum + (floor.workerCount || 0), 0);
+});
 
 const averageWorkersPerFloor = computed(() => {
-  if (floors.value.length === 0) return 0
-  return Math.round(totalWorkers.value / floors.value.length)
-})
+  if (floors.value.length === 0) return 0;
+  return Math.round(totalWorkers.value / floors.value.length);
+});
 
 const activeFloorWorkers = computed(() => {
-  return floorWorkers.value.filter(w => w.status === 'active').length
-})
+  return floorWorkers.value.filter((w) => w.status === "active").length;
+});
 
 const workersByGroup = computed(() => {
-  const groups = {}
-  floorWorkers.value.forEach(worker => {
-    const groupName = worker.group || '未分組'
+  const groups = {};
+  floorWorkers.value.forEach((worker) => {
+    const groupName = worker.group || "未分組";
     if (!groups[groupName]) {
-      groups[groupName] = []
+      groups[groupName] = [];
     }
-    groups[groupName].push(worker)
-  })
-  return groups
-})
+    groups[groupName].push(worker);
+  });
+  return groups;
+});
 
 // 表單驗證規則
 const formRules = {
-  name: [
-    { required: true, message: '請輸入樓層名稱', trigger: 'blur' }
-  ],
-  sortOrder: [
-    { required: true, message: '請輸入排序順序', trigger: 'blur' }
-  ]
-}
+  name: [{ required: true, message: "請輸入樓層名稱", trigger: "blur" }],
+  sortOrder: [{ required: true, message: "請輸入排序順序", trigger: "blur" }],
+};
 
 // 方法
 const fetchFloors = async () => {
-  loading.value = true
+  loading.value = true;
   try {
     // 獲取樓層列表
-    const response = await fetch('/api/floors')
-    const result = await response.json()
-    
+    const response = await fetch("/api/floors");
+    const result = await response.json();
+
     if (result.success) {
-      floors.value = result.data
-      
+      floors.value = result.data;
+
       // 為每個樓層獲取工讀生統計
-      await Promise.all(floors.value.map(async floor => {
-        const workersResponse = await fetch(`/api/floors/${floor.id}/workers`)
-        const workersResult = await workersResponse.json()
-        
-        if (workersResult.success) {
-          floor.workers = workersResult.data
-          floor.workerCount = workersResult.data.length
-          floor.groupCount = [...new Set(workersResult.data.map(w => w.group))].length
-        }
-      }))
+      await Promise.all(
+        floors.value.map(async (floor) => {
+          const workersResponse = await fetch(
+            `/api/floors/${floor.id}/workers`,
+          );
+          const workersResult = await workersResponse.json();
+
+          if (workersResult.success) {
+            floor.workers = workersResult.data;
+            floor.workerCount = workersResult.data.length;
+            floor.groupCount = [
+              ...new Set(workersResult.data.map((w) => w.group)),
+            ].length;
+          }
+        }),
+      );
     }
   } catch (error) {
-    ElMessage.error('載入樓層列表失敗')
+    ElMessage.error("載入樓層列表失敗");
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const showAddDialog = () => {
-  isEditing.value = false
-  resetForm()
-  showFormDialog.value = true
-}
+  isEditing.value = false;
+  resetForm();
+  showFormDialog.value = true;
+};
 
 const editFloor = (floor) => {
-  isEditing.value = true
+  isEditing.value = true;
   Object.assign(formData, {
     id: floor.id,
     name: floor.name,
-    description: floor.description || '',
-    sortOrder: floor.sortOrder || 0
-  })
-  showFormDialog.value = true
-}
+    description: floor.description || "",
+    sortOrder: floor.sortOrder || 0,
+  });
+  showFormDialog.value = true;
+};
 
 const resetForm = () => {
   Object.assign(formData, {
-    name: '',
-    description: '',
-    sortOrder: 0
-  })
-}
+    name: "",
+    description: "",
+    sortOrder: 0,
+  });
+};
 
 const submitForm = async () => {
   try {
-    submitting.value = true
-    const valid = await formRef.value.validate()
-    if (!valid) return
+    submitting.value = true;
+    const valid = await formRef.value.validate();
+    if (!valid) return;
 
-    const url = isEditing.value ? `/api/floors/${formData.id}` : '/api/floors'
-    const method = isEditing.value ? 'PUT' : 'POST'
+    const url = isEditing.value ? `/api/floors/${formData.id}` : "/api/floors";
+    const method = isEditing.value ? "PUT" : "POST";
 
     const response = await fetch(url, {
       method,
       headers: {
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify(formData)
-    })
+      body: JSON.stringify(formData),
+    });
 
-    const result = await response.json()
+    const result = await response.json();
 
     if (result.success) {
-      ElMessage.success(isEditing.value ? '樓層更新成功' : '樓層新增成功')
-      showFormDialog.value = false
-      await fetchFloors()
+      ElMessage.success(isEditing.value ? "樓層更新成功" : "樓層新增成功");
+      showFormDialog.value = false;
+      await fetchFloors();
     } else {
-      ElMessage.error(result.message || '操作失敗')
+      ElMessage.error(result.message || "操作失敗");
     }
   } catch (error) {
-    ElMessage.error(isEditing.value ? '更新失敗' : '新增失敗')
+    ElMessage.error(isEditing.value ? "更新失敗" : "新增失敗");
   } finally {
-    submitting.value = false
+    submitting.value = false;
   }
-}
+};
 
 const confirmDelete = async (floor) => {
   try {
     await ElMessageBox.confirm(
       `確定要刪除樓層「${floor.name}」嗎？此操作將影響該樓層下的所有工讀生。`,
-      '刪除確認',
+      "刪除確認",
       {
-        confirmButtonText: '確認刪除',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-    
-    const response = await fetch(`/api/floors/${floor.id}`, {
-      method: 'DELETE'
-    })
+        confirmButtonText: "確認刪除",
+        cancelButtonText: "取消",
+        type: "warning",
+      },
+    );
 
-    const result = await response.json()
+    const response = await fetch(`/api/floors/${floor.id}`, {
+      method: "DELETE",
+    });
+
+    const result = await response.json();
 
     if (result.success) {
-      ElMessage.success('樓層刪除成功')
-      await fetchFloors()
+      ElMessage.success("樓層刪除成功");
+      await fetchFloors();
     } else {
-      ElMessage.error(result.message || '刪除失敗')
+      ElMessage.error(result.message || "刪除失敗");
     }
   } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error('刪除失敗')
+    if (error !== "cancel") {
+      ElMessage.error("刪除失敗");
     }
   }
-}
+};
 
 const viewFloorWorkers = async (floor) => {
-  currentFloor.value = floor
-  
+  currentFloor.value = floor;
+
   try {
-    const response = await fetch(`/api/floors/${floor.id}/workers`)
-    const result = await response.json()
-    
+    const response = await fetch(`/api/floors/${floor.id}/workers`);
+    const result = await response.json();
+
     if (result.success) {
-      floorWorkers.value = result.data
-      showWorkersDialog.value = true
+      floorWorkers.value = result.data;
+      showWorkersDialog.value = true;
     } else {
-      ElMessage.error('載入工讀生資料失敗')
+      ElMessage.error("載入工讀生資料失敗");
     }
   } catch (error) {
-    ElMessage.error('載入工讀生資料失敗')
+    ElMessage.error("載入工讀生資料失敗");
   }
-}
+};
 
 // 組件掛載時載入數據
 onMounted(() => {
-  fetchFloors()
-})
+  fetchFloors();
+});
 </script>
 
 <style scoped>
@@ -737,7 +777,7 @@ onMounted(() => {
 .worker-number {
   font-size: 12px;
   color: #909399;
-  font-family: 'Monaco', 'Consolas', monospace;
+  font-family: "Monaco", "Consolas", monospace;
 }
 
 .worker-details {
@@ -747,7 +787,7 @@ onMounted(() => {
 }
 
 .worker-wage {
-  font-family: 'Monaco', 'Consolas', monospace;
+  font-family: "Monaco", "Consolas", monospace;
   font-weight: 600;
   color: #67c23a;
   font-size: 14px;

@@ -225,14 +225,32 @@ const handleClearLogs = async () => {
       },
     );
 
-    await fetch(`${getApiUrl()}/api/activity-logs`, {
+    const apiUrl = `${getApiUrl()}/api/activity-logs`;
+    console.log('清空日誌 API URL:', apiUrl);
+    
+    const response = await fetch(apiUrl, {
       method: "DELETE",
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
+    
+    console.log('清空日誌回應狀態:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('清空日誌錯誤回應:', errorText);
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+    }
+    
+    const result = await response.json();
+    console.log('清空日誌成功:', result);
     ElMessage.success("活動日誌已清空");
     await fetchLogs();
   } catch (error) {
     if (error !== "cancel") {
-      ElMessage.error("清空活動日誌失敗");
+      console.error("清空日誌錯誤:", error);
+      ElMessage.error(`清空活動日誌失敗: ${error.message}`);
     }
   }
 };

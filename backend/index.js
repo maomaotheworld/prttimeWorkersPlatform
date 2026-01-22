@@ -21,6 +21,8 @@ app.use(
       "http://localhost:5175",
     ],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 app.use(bodyParser.json());
@@ -1970,20 +1972,29 @@ app.get("/api/activity-logs", (req, res) => {
 
 // 清空活動日誌（管理員功能）
 app.delete("/api/activity-logs", (req, res) => {
-  activityLogs = [];
+  try {
+    activityLogs = [];
 
-  logActivity(
-    "clear",
-    "activity-logs",
-    "all",
-    "所有日誌",
-    "管理員清空了所有活動日誌",
-  );
+    logActivity(
+      "clear",
+      "activity-logs",
+      "all",
+      "所有日誌",
+      "管理員清空了所有活動日誌",
+    );
 
-  res.json({
-    success: true,
-    message: "活動日誌已清空",
-  });
+    res.json({
+      success: true,
+      message: "活動日誌已清空",
+    });
+  } catch (error) {
+    console.error("清空活動日誌錯誤:", error);
+    res.status(500).json({
+      success: false,
+      message: "清空活動日誌失敗",
+      error: error.message,
+    });
+  }
 });
 
 app.use("*", (req, res) => {

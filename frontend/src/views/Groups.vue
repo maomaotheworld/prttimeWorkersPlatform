@@ -9,30 +9,30 @@
 
     <el-card class="table-card">
       <el-table v-loading="loading" :data="groups" stripe>
-        <el-table-column prop="name" label="組別?�稱" min-width="150" />
-        <el-table-column prop="description" label="?�述" min-width="200" />
+        <el-table-column prop="name" label="組別名稱" min-width="150" />
+        <el-table-column prop="description" label="描述" min-width="200" />
         <el-table-column label="人數" width="100">
           <template #default="{ row }">
             {{ getWorkerCount(row.id) }}
           </template>
         </el-table-column>
-        <el-table-column label="?��?" width="160">
+        <el-table-column label="操作" width="160">
           <template #default="{ row }">
             <el-button type="primary" size="small" @click="showEditDialog(row)">
               編輯
             </el-button>
             <el-button type="danger" size="small" @click="handleDelete(row)">
-              ?�除
+              刪除
             </el-button>
           </template>
         </el-table-column>
       </el-table>
     </el-card>
 
-    <!-- ?��?/編輯組別對話�?-->
+    <!-- 新增/編輯組別對話框 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="isEdit ? '編輯組別' : '?��?組別'"
+      :title="isEdit ? '編輯組別' : '新增組別'"
       :width="isMobile ? '95%' : '500px'"
     >
       <el-form

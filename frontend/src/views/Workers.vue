@@ -317,6 +317,7 @@ import { ref, reactive, computed, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import * as XLSX from "xlsx";
 import { useWorkersStore } from "@/stores/workers";
+import { getApiUrl } from "@/config/api";
 
 interface Worker {
   id: string;
@@ -388,14 +389,58 @@ const fetchWorkers = async () => {
   loading.value = true;
   try {
     await workersStore.fetchWorkers();
-    workers.value = workersStore.workers;
-    console.log("Workers.vue: 獲取到的工讀生數據", workers.value);
-    console.log("Workers.vue: 第一個工讀生數據樣例", workers.value[0]);
+    
+    // 獲取group映射（ID到名稱）
+    const groupMapping = await getGroupIdToNameMapping();
+    
+    // 映射後端數據到前端顯示格式
+    workers.value = workersStore.workers.map(worker => ({
+      id: worker.id,
+      workerNumber: worker.number || worker.workerNumber || "",
+      name: worker.name || "",
+      group: groupMapping[worker.groupId] || worker.group || "",
+      floor: worker.floor || "",
+      hourlyWage: worker.baseHourlyWage || worker.hourlyWage || 0,
+      baseHours: worker.baseWorkingHours || worker.baseHours || 8,
+      totalHours: worker.totalHours || 0
+    }));
+    
+    console.log("Workers.vue: 原始工讀生數據", workersStore.workers);
+    console.log("Workers.vue: 映射後工讀生數據", workers.value);
   } catch (error) {
     console.error("Workers.vue: 獲取工讀生失敗", error);
     ElMessage.error("獲取工讀生列表失敗");
   } finally {
     loading.value = false;
+  }
+};
+
+// 獲取group ID到名稱的映射
+const getGroupIdToNameMapping = async () => {
+  try {
+    const response = await fetch(getApiUrl("/api/groups"), {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('獲取組別列表失敗');
+    }
+    
+    const result = await response.json();
+    const mapping = {};
+    
+    if (result.success && result.data) {
+      result.data.forEach(group => {
+        mapping[group.id] = group.name;
+      });
+    }
+    
+    return mapping;
+  } catch (error) {
+    console.error('獲取組別映射失敗:', error);
+    return {};
   }
 };
 

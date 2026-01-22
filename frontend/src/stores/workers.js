@@ -143,6 +143,32 @@ export const useWorkersStore = defineStore("workers", () => {
     try {
       console.log("Workers store: 更新工讀生", id, workerData);
 
+      // 獲取group映射
+      const groupMapping = await getGroupMapping();
+      console.log("Workers store: Group映射", groupMapping);
+
+      // 根據後端API格式準備數據
+      const requestData = {
+        number: String(workerData.workerNumber || "").trim(),
+        name: String(workerData.name || "").trim(),
+        baseHourlyWage: Number(workerData.hourlyWage) || 0,
+        baseWorkingHours: Number(workerData.baseHours) || 8,
+        groupId: groupMapping[workerData.group] || 'group-1', // 如果找不到對應組別，使用預設值
+        floor: String(workerData.floor || "").trim(),
+        // 保持其他欄位不變
+        gender: workerData.gender || '男',
+        level: workerData.level || '工讀生',
+        phone: workerData.phone || '',
+        email: workerData.email || '',
+        address: workerData.address || '',
+        emergencyContact: workerData.emergencyContact || '',
+        bankAccount: workerData.bankAccount || '',
+        startDate: workerData.startDate || new Date().toISOString().split('T')[0],
+        status: workerData.status || 'active'
+      };
+
+      console.log("Workers store: 發送的更新數據", requestData);
+
       // 獲取認證token
       const token = localStorage.getItem("auth_token");
       
@@ -157,7 +183,7 @@ export const useWorkersStore = defineStore("workers", () => {
       const response = await fetch(getApiUrl(`/api/workers/${id}`), {
         method: "PUT",
         headers: headers,
-        body: JSON.stringify(workerData),
+        body: JSON.stringify(requestData),
       });
 
       const data = await response.json();

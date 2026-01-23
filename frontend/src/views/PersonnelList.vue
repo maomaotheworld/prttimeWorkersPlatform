@@ -120,7 +120,6 @@
 
 <script>
 import { defineComponent, ref, onMounted, computed } from "vue";
-import { useWorkersStore } from "../stores/workers";
 import { useGroupsStore } from "../stores/groups";
 import { Management, User, Search } from "@element-plus/icons-vue";
 import { getApiUrl } from "../config/api";
@@ -133,7 +132,6 @@ export default defineComponent({
     Search,
   },
   setup() {
-    const workersStore = useWorkersStore();
     const groupsStore = useGroupsStore();
 
     // 響應式數據
@@ -142,9 +140,10 @@ export default defineComponent({
     const filterGroup = ref("");
     const loading = ref(false);
     const groupMapping = ref({});
+    const workersData = ref([]);
 
     // 計算屬性
-    const workers = computed(() => workersStore.workers);
+    const workers = computed(() => workersData.value);
     const groups = computed(() => groupsStore.groups);
 
     // 可用樓層列表
@@ -191,12 +190,13 @@ export default defineComponent({
       loading.value = true;
       try {
         // 同時載入工讀生數據和組別映射
-        const [_, groupMappingData] = await Promise.all([
-          workersStore.loadWorkers(),
+        const [workersResponse, groupMappingData] = await Promise.all([
+          loadWorkersData(),
           getGroupIdToNameMapping(),
         ]);
         
-        // 更新組別映射
+        // 更新資料
+        workersData.value = workersResponse;
         groupMapping.value = groupMappingData;
         
         // 也載入組別數據用於篩選器
@@ -205,6 +205,27 @@ export default defineComponent({
         console.error("載入數據時發生錯誤:", error);
       } finally {
         loading.value = false;
+      }
+    };
+
+    // 直接載入工讀生資料
+    const loadWorkersData = async () => {
+      try {
+        const response = await fetch(getApiUrl("/api/workers"), {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("獲取工讀生列表失敗");
+        }
+
+        const result = await response.json();
+        return result.success ? result.data : [];
+      } catch (error) {
+        console.error("載入工讀生資料失敗:", error);
+        return [];
       }
     };
 
@@ -294,6 +315,7 @@ export default defineComponent({
       filterGroup,
       loading,
       groupMapping,
+      workersData,
 
       // 計算屬性
       workers,

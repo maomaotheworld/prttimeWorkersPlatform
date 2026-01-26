@@ -109,20 +109,39 @@ const router = createRouter({
   routes,
 });
 
-// 認�?守�? - 簡�??�本?��?循環依賴
+// 認證守衛 - 訪客權限控制
 router.beforeEach((to, from, next) => {
   // 設定頁面標題
   document.title = to.meta.title
     ? `${to.meta.title} - 工讀生管理平台`
     : "工讀生管理平台";
 
-  // 如果是登入頁面或不需要認證的頁面，直接進入
-  if (to.path === "/login" || to.meta?.requiresAuth === false) {
+  // 檢查認證狀態
+  const token = localStorage.getItem("auth_token");
+  const isAuthenticated = !!token;
+
+  // 如果是登入頁面，直接進入
+  if (to.path === "/login") {
     next();
     return;
   }
 
-  // 對於?�要�?證�??�面，暫?��??�許?�入，�?證檢?�在App.vue中�???
+  // 如果是公開頁面（人員列表），總是允許
+  if (to.meta?.requiresAuth === false) {
+    next();
+    return;
+  }
+
+  // 對於訪客（未認證用戶）
+  if (!isAuthenticated) {
+    // 只能存取人員列表頁面，其他頁面重定向到人員列表
+    if (to.path !== "/personnel-list") {
+      next("/personnel-list");
+      return;
+    }
+  }
+
+  // 已認證用戶可以正常存取
   next();
 });
 

@@ -1,5 +1,19 @@
 <template>
   <div class="home-container">
+    <!-- 訪客顯示空白頁面 -->
+    <div v-if="!isAuthenticated" class="guest-home">
+      <el-empty 
+        description="請登入以查看系統內容" 
+        :image-size="200"
+      >
+        <el-button type="primary" @click="$router.push('/login')">
+          前往登入
+        </el-button>
+      </el-empty>
+    </div>
+
+    <!-- 已認證用戶顯示完整首頁內容 -->
+    <template v-else>
     <div class="welcome-section">
       <el-card class="welcome-card">
         <div class="welcome-content">
@@ -87,6 +101,7 @@
         </el-timeline>
       </el-card>
     </div>
+    </template>
   </div>
 </template>
 
@@ -103,12 +118,19 @@ import {
   Edit,
 } from "@element-plus/icons-vue";
 import { useStatsStore } from "../stores/stats";
+import { useAuthStore } from "../stores/auth";
 
 const statsStore = useStatsStore();
+const authStore = useAuthStore();
 
 const windowWidth = ref(window.innerWidth);
 const isMobile = computed(() => windowWidth.value <= 768);
 const stats = computed(() => statsStore.stats);
+
+// 檢查是否為已認證用戶
+const isAuthenticated = computed(() => {
+  return authStore.isLoggedIn || !!localStorage.getItem("auth_token");
+});
 
 const quickActions = [
   {

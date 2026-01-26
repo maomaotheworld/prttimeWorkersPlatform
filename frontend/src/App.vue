@@ -184,24 +184,17 @@ const windowWidth = ref(window.innerWidth);
 
 const isMobile = computed(() => windowWidth.value <= 768);
 
-// 是否顯示導航 - 對於不需要認證的頁面，也可以顯示導航
+// 是否顯示導航 - 除了登入頁面外都顯示導航
 const showNavigation = computed(() => {
   const currentRoute = router.currentRoute.value;
   
   console.log('Navigation check:', {
     path: currentRoute.path,
-    requiresAuth: currentRoute.meta?.requiresAuth,
-    isLoggedIn: authStore.isLoggedIn,
-    hasToken: !!localStorage.getItem("auth_token")
+    isLoginPage: currentRoute.path === '/login'
   });
   
-  // 如果是不需要認證的頁面，總是顯示導航
-  if (currentRoute.meta?.requiresAuth === false) {
-    return true;
-  }
-  
-  // 對於需要認證的頁面，檢查是否已認證或有有效token
-  return authStore.isLoggedIn || !!localStorage.getItem("auth_token");
+  // 只有登入頁面不顯示導航，其他所有頁面都顯示
+  return currentRoute.path !== '/login';
 });
 
 // 用戶角色顯示

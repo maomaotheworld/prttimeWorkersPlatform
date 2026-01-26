@@ -50,50 +50,13 @@
               text-color="#fff"
               active-text-color="#ffd04b"
             >
-              <el-menu-item index="/">
-                <el-icon><HomeFilled /></el-icon>
-                <span>首頁</span>
-              </el-menu-item>
-              <el-menu-item index="/workers">
-                <el-icon><User /></el-icon>
-                <span>工讀生管理</span>
-              </el-menu-item>
-              <el-menu-item index="/personnel-list">
-                <el-icon><UserFilled /></el-icon>
-                <span>人員列表</span>
-              </el-menu-item>
-              <el-menu-item
-                v-if="authStore.canEditWorkers || authStore.isAdmin"
-                index="/groups"
+              <el-menu-item 
+                v-for="nav in visibleDesktopNavs" 
+                :key="nav.path" 
+                :index="nav.path"
               >
-                <el-icon><UserFilled /></el-icon>
-                <span>組別管理</span>
-              </el-menu-item>
-              <el-menu-item
-                v-if="authStore.hasPermission('canClockIn')"
-                index="/attendance"
-              >
-                <el-icon><Clock /></el-icon>
-                <span>打卡系統</span>
-              </el-menu-item>
-              <el-menu-item index="/time-records">
-                <el-icon><Calendar /></el-icon>
-                <span>工時記錄</span>
-              </el-menu-item>
-              <el-menu-item index="/salary">
-                <el-icon><Money /></el-icon>
-                <span>薪資管理</span>
-              </el-menu-item>
-              <el-menu-item
-                v-if="authStore.canViewReports || authStore.isAdmin"
-                index="/activity-logs"
-              >
-                <el-icon><Document /></el-icon>
-                <span>活動資料</span>
-              </el-menu-item>
-              <el-menu-item v-if="authStore.isAdmin" index="/user-management">
-                <el-icon><Setting /></el-icon>
-                <span>用戶管理</span>
+                <el-icon><component :is="nav.iconComponent" /></el-icon>
+                <span>{{ nav.name }}</span>
               </el-menu-item>
             </el-menu>
           </el-aside>
@@ -224,6 +187,43 @@ const userRoleTagType = computed(() => {
   }
 });
 
+// 桌面版導航配置
+const desktopNavs = [
+  { path: "/", name: "首頁", iconComponent: HomeFilled },
+  { path: "/workers", name: "工讀生管理", iconComponent: User },
+  { path: "/personnel-list", name: "人員列表", iconComponent: UserFilled, noAuth: true },
+  { path: "/groups", name: "組別管理", iconComponent: UserFilled, permission: "canEditWorkers" },
+  { path: "/attendance", name: "打卡系統", iconComponent: Clock, permission: "canClockIn" },
+  { path: "/time-records", name: "工時記錄", iconComponent: Calendar },
+  { path: "/salary", name: "薪資管理", iconComponent: Money },
+  { path: "/activity-logs", name: "活動資料", iconComponent: Document, permission: "canViewReports" },
+  { path: "/user-management", name: "用戶管理", iconComponent: Setting, adminOnly: true },
+];
+
+const visibleDesktopNavs = computed(() => {
+  return desktopNavs.filter((nav) => {
+    // 如果是不需要認證的項目，總是顯示
+    if (nav.noAuth) {
+      return true;
+    }
+    
+    // 如果用戶沒有認證，只顯示不需要認證的項目
+    if (!authStore.isLoggedIn && !localStorage.getItem("auth_token")) {
+      return false;
+    }
+    
+    // 如果是管理員專用選項，檢查是否為管理員
+    if (nav.adminOnly) {
+      return authStore.isAdmin;
+    }
+    // 如果需要特定權限，檢查權限
+    if (nav.permission) {
+      return authStore.hasPermission(nav.permission) || authStore.isAdmin;
+    }
+    return true;
+  });
+});
+
 // 底部端點配置(需要權限過濾)
 const mobileNavs = [
   { path: "/", name: "首頁", icon: "HomeFilled" },
@@ -265,15 +265,15 @@ const visibleMobileNavs = computed(() => {
     }
     
     // 如果用戶沒有認證，只顯示不需要認證的項目
-    if (!authStore.isLoggedIn) {
+    if (!authStore.isLoggedIn && !localStorage.getItem("auth_token")) {
       return false;
     }
     
-    // 如�??��??�管?�員?�選??檢查?�否?�管?�員
+    // 如果是管理員專用選項，檢查是否為管理員
     if (nav.adminOnly) {
       return authStore.isAdmin;
     }
-    // 如�??��??��?�?檢查權�?
+    // 如果需要特定權限，檢查權限
     if (nav.permission) {
       return authStore.hasPermission(nav.permission) || authStore.isAdmin;
     }

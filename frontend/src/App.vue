@@ -187,12 +187,21 @@ const isMobile = computed(() => windowWidth.value <= 768);
 // 是否顯示導航 - 對於不需要認證的頁面，也可以顯示導航
 const showNavigation = computed(() => {
   const currentRoute = router.currentRoute.value;
+  
+  console.log('Navigation check:', {
+    path: currentRoute.path,
+    requiresAuth: currentRoute.meta?.requiresAuth,
+    isLoggedIn: authStore.isLoggedIn,
+    hasToken: !!localStorage.getItem("auth_token")
+  });
+  
   // 如果是不需要認證的頁面，總是顯示導航
   if (currentRoute.meta?.requiresAuth === false) {
     return true;
   }
-  // 對於需要認證的頁面，檢查是否已認證
-  return authStore.isLoggedIn;
+  
+  // 對於需要認證的頁面，檢查是否已認證或有有效token
+  return authStore.isLoggedIn || !!localStorage.getItem("auth_token");
 });
 
 // 用戶角色顯示

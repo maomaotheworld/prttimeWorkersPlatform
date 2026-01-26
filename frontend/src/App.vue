@@ -196,7 +196,7 @@ const desktopNavs = [
   { path: "/attendance", name: "打卡系統", iconComponent: Clock, permission: "canClockIn" },
   { path: "/time-records", name: "工時記錄", iconComponent: Calendar, adminOnly: true },
   { path: "/salary", name: "薪資管理", iconComponent: Money, adminOnly: true },
-  { path: "/activity-logs", name: "活動資料", iconComponent: Document, permission: "canViewReports" },
+  { path: "/activity-logs", name: "活動資料", iconComponent: Document, adminOnly: true },
   { path: "/user-management", name: "用戶管理", iconComponent: Setting, adminOnly: true },
 ];
 
@@ -241,7 +241,7 @@ const mobileNavs = [
     path: "/activity-logs",
     name: "活動",
     icon: "Document",
-    permission: "canViewReports",
+    adminOnly: true,
   },
   {
     path: "/user-management",

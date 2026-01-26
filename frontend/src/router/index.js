@@ -134,11 +134,10 @@ router.beforeEach((to, from, next) => {
 
   // 對於訪客（未認證用戶）
   if (!isAuthenticated) {
-    // 只能存取人員列表頁面，其他頁面重定向到人員列表
-    if (to.path !== "/personnel-list") {
-      next("/personnel-list");
-      return;
-    }
+    // 訪客不能存取任何需要認證的頁面，包括首頁
+    // 重定向到人員列表頁面
+    next("/personnel-list");
+    return;
   }
 
   // 已認證用戶可以正常存取

@@ -189,7 +189,7 @@ const userRoleTagType = computed(() => {
 
 // 桌面版導航配置
 const desktopNavs = [
-  { path: "/", name: "首頁", iconComponent: HomeFilled },
+  { path: "/", name: "首頁", iconComponent: HomeFilled, requiresAuth: true },
   { path: "/workers", name: "工讀生管理", iconComponent: User, adminOnly: true },
   { path: "/personnel-list", name: "人員列表", iconComponent: UserFilled, noAuth: true },
   { path: "/groups", name: "組別管理", iconComponent: UserFilled, permission: "canEditWorkers" },
@@ -212,6 +212,11 @@ const visibleDesktopNavs = computed(() => {
       return false;
     }
     
+    // 如果需要認證但用戶未認證，不顯示
+    if (nav.requiresAuth && (!authStore.isLoggedIn && !localStorage.getItem("auth_token"))) {
+      return false;
+    }
+    
     // 如果是管理員專用選項，檢查是否為管理員或 evelyn
     if (nav.adminOnly) {
       return authStore.isAdminOrEvelyn;
@@ -226,7 +231,7 @@ const visibleDesktopNavs = computed(() => {
 
 // 底部端點配置(需要權限過濾)
 const mobileNavs = [
-  { path: "/", name: "首頁", icon: "HomeFilled" },
+  { path: "/", name: "首頁", icon: "HomeFilled", requiresAuth: true },
   { path: "/workers", name: "工讀生", icon: "User", adminOnly: true },
   { path: "/personnel-list", name: "人員", icon: "UserFilled", noAuth: true },
   {
@@ -266,6 +271,11 @@ const visibleMobileNavs = computed(() => {
     
     // 如果用戶沒有認證，只顯示不需要認證的項目
     if (!authStore.isLoggedIn && !localStorage.getItem("auth_token")) {
+      return false;
+    }
+    
+    // 如果需要認證但用戶未認證，不顯示
+    if (nav.requiresAuth && (!authStore.isLoggedIn && !localStorage.getItem("auth_token"))) {
       return false;
     }
     

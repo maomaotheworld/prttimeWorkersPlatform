@@ -190,12 +190,12 @@ const userRoleTagType = computed(() => {
 // 桌面版導航配置
 const desktopNavs = [
   { path: "/", name: "首頁", iconComponent: HomeFilled },
-  { path: "/workers", name: "工讀生管理", iconComponent: User },
+  { path: "/workers", name: "工讀生管理", iconComponent: User, adminOnly: true },
   { path: "/personnel-list", name: "人員列表", iconComponent: UserFilled, noAuth: true },
   { path: "/groups", name: "組別管理", iconComponent: UserFilled, permission: "canEditWorkers" },
   { path: "/attendance", name: "打卡系統", iconComponent: Clock, permission: "canClockIn" },
-  { path: "/time-records", name: "工時記錄", iconComponent: Calendar },
-  { path: "/salary", name: "薪資管理", iconComponent: Money },
+  { path: "/time-records", name: "工時記錄", iconComponent: Calendar, adminOnly: true },
+  { path: "/salary", name: "薪資管理", iconComponent: Money, adminOnly: true },
   { path: "/activity-logs", name: "活動資料", iconComponent: Document, permission: "canViewReports" },
   { path: "/user-management", name: "用戶管理", iconComponent: Setting, adminOnly: true },
 ];
@@ -212,13 +212,13 @@ const visibleDesktopNavs = computed(() => {
       return false;
     }
     
-    // 如果是管理員專用選項，檢查是否為管理員
+    // 如果是管理員專用選項，檢查是否為管理員或 evelyn
     if (nav.adminOnly) {
-      return authStore.isAdmin;
+      return authStore.isAdminOrEvelyn;
     }
     // 如果需要特定權限，檢查權限
     if (nav.permission) {
-      return authStore.hasPermission(nav.permission) || authStore.isAdmin;
+      return authStore.hasPermission(nav.permission) || authStore.isAdminOrEvelyn;
     }
     return true;
   });
@@ -227,7 +227,7 @@ const visibleDesktopNavs = computed(() => {
 // 底部端點配置(需要權限過濾)
 const mobileNavs = [
   { path: "/", name: "首頁", icon: "HomeFilled" },
-  { path: "/workers", name: "工讀生", icon: "User" },
+  { path: "/workers", name: "工讀生", icon: "User", adminOnly: true },
   { path: "/personnel-list", name: "人員", icon: "UserFilled", noAuth: true },
   {
     path: "/attendance",
@@ -235,8 +235,8 @@ const mobileNavs = [
     icon: "Clock",
     permission: "canClockIn",
   },
-  { path: "/time-records", name: "工時", icon: "Calendar" },
-  { path: "/salary", name: "薪資", icon: "Money" },
+  { path: "/time-records", name: "工時", icon: "Calendar", adminOnly: true },
+  { path: "/salary", name: "薪資", icon: "Money", adminOnly: true },
   {
     path: "/activity-logs",
     name: "活動",
@@ -269,13 +269,13 @@ const visibleMobileNavs = computed(() => {
       return false;
     }
     
-    // 如果是管理員專用選項，檢查是否為管理員
+    // 如果是管理員專用選項，檢查是否為管理員或 evelyn
     if (nav.adminOnly) {
-      return authStore.isAdmin;
+      return authStore.isAdminOrEvelyn;
     }
     // 如果需要特定權限，檢查權限
     if (nav.permission) {
-      return authStore.hasPermission(nav.permission) || authStore.isAdmin;
+      return authStore.hasPermission(nav.permission) || authStore.isAdminOrEvelyn;
     }
     return true;
   });

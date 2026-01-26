@@ -39,6 +39,18 @@ export const useAuthStore = defineStore("auth", {
     // ?�戶顯示?�稱
     displayName: (state) => state.user?.name || state.user?.username || "訪客",
 
+    // 是否為 evelyn（超級管理員）
+    isEvelyn: (state) => {
+      const username = state.user?.username || state.user?.name || "";
+      return ['evelyn', 'evelyn.pan'].includes(username.toLowerCase());
+    },
+
+    // ?�否?�管?�員或 evelyn
+    isAdminOrEvelyn: (state) => {
+      return state.user?.role === "admin" || 
+             ['evelyn', 'evelyn.pan'].includes((state.user?.username || state.user?.name || "").toLowerCase());
+    },
+
     // 權�?檢查輔助?��?
     hasPermission: (state) => (permission) => {
       return state.permissions[permission] || false;

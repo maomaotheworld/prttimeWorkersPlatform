@@ -179,19 +179,85 @@ export default defineComponent({
       return result;
     });
 
-    // 方法 - 使用與 Workers 頁面相同的載入邏輯
+    // 專門為訪客模式設計的載入函數
+    const loadWorkersForGuests = async () => {
+      try {
+        console.log("PersonnelList: 正在載入工讀生資料（訪客模式）");
+        
+        const response = await fetch(getApiUrl("/api/workers"), {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+          },
+          cache: 'no-store',
+        });
+
+        console.log("PersonnelList: API 回應狀態:", response.status);
+
+        if (!response.ok && response.status !== 304) {
+          throw new Error(`載入工讀生失敗: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log("PersonnelList: 收到工讀生資料:", result);
+        
+        if (result.success) {
+          workersStore.workers = result.data;
+          return result.data;
+        } else {
+          throw new Error(result.message || "載入工讀生失敗");
+        }
+      } catch (error) {
+        console.error("PersonnelList: 載入工讀生失敗:", error);
+        return [];
+      }
+    };
+
+    const loadGroupsForGuests = async () => {
+      try {
+        console.log("PersonnelList: 正在載入組別資料（訪客模式）");
+        
+        const response = await fetch(getApiUrl("/api/groups"), {
+          method: "GET", 
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+          },
+          cache: 'no-store',
+        });
+
+        console.log("PersonnelList: Groups API 回應狀態:", response.status);
+
+        if (!response.ok && response.status !== 304) {
+          throw new Error(`載入組別失敗: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log("PersonnelList: 收到組別資料:", result);
+        
+        if (result.success) {
+          workersStore.groups = result.data;
+          return result.data;
+        } else {
+          throw new Error(result.message || "載入組別失敗");
+        }
+      } catch (error) {
+        console.error("PersonnelList: 載入組別失敗:", error);
+        return [];
+      }
+    };
+
+    // 方法 - 專為訪客模式設計的載入邏輯
     const loadData = async () => {
-      console.log("PersonnelList: 開始載入數據...");
+      console.log("PersonnelList: 開始載入數據（訪客模式）...");
       loading.value = true;
       try {
-        // 使用 workersStore 載入工讀生數據
-        await workersStore.fetchWorkers();
-        console.log("PersonnelList: 工讀生數據載入完成");
-        
-        // 載入組別數據
-        await workersStore.fetchGroups();
-        console.log("PersonnelList: 組別數據載入完成");
-        
+        await Promise.all([
+          loadWorkersForGuests(),
+          loadGroupsForGuests()
+        ]);
+        console.log("PersonnelList: 所有數據載入完成");
       } catch (error) {
         console.error("PersonnelList: 載入數據失敗:", error);
       } finally {

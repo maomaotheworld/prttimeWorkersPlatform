@@ -193,36 +193,17 @@ export default defineComponent({
         const fullUrl = `${API_BASE_URL}/api/workers`;
         console.log("PersonnelList: 完整 API URL:", fullUrl);
         
-        // 備用方案：也試試 getApiUrl
-        const backupUrl = getApiUrl("/api/workers");
-        console.log("PersonnelList: 備用 API URL:", backupUrl);
-        
-        // 使用主要 URL
-        let response = await window.fetch(fullUrl, {
+        console.log("PersonnelList: 準備發送 fetch 請求...");
+        const response = await fetch(fullUrl, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            "Cache-Control": "no-cache",
           },
-          cache: 'no-store',
         });
 
         console.log("PersonnelList: Workers API 回應狀態:", response.status, response.statusText);
         console.log("PersonnelList: Workers API response object:", response);
-
-        // 如果主要 URL 失敗，嘗試備用 URL
-        if (!response.ok && response.status !== 304) {
-          console.log("PersonnelList: 主要 URL 失敗，嘗試備用 URL...");
-          response = await window.fetch(backupUrl, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "Cache-Control": "no-cache",
-            },
-            cache: 'no-store',
-          });
-          console.log("PersonnelList: 備用 API 回應狀態:", response.status, response.statusText);
-        }
+        console.log("PersonnelList: Response headers:", [...response.headers.entries()]);
 
         if (!response.ok && response.status !== 304) {
           throw new Error(`載入工讀生失敗: ${response.status} ${response.statusText}`);
@@ -232,17 +213,20 @@ export default defineComponent({
         const result = await response.json();
         console.log("PersonnelList: 收到工讀生資料:", result);
         
-        if (result.success && result.data) {
+        if (result && result.success && result.data) {
           workersData.value = result.data;
           console.log("PersonnelList: 工讀生資料更新完成，數量:", result.data.length);
           return result.data;
         } else {
           console.error("PersonnelList: API 回應格式錯誤:", result);
-          throw new Error(result.message || "載入工讀生失敗");
+          workersData.value = [];
+          return [];
         }
       } catch (error) {
         console.error("PersonnelList: 載入工讀生失敗:", error);
         console.error("PersonnelList: Error stack:", error.stack);
+        console.error("PersonnelList: Error name:", error.name);
+        console.error("PersonnelList: Error message:", error.message);
         workersData.value = [];
         return [];
       }
@@ -257,36 +241,17 @@ export default defineComponent({
         const fullUrl = `${API_BASE_URL}/api/groups`;
         console.log("PersonnelList: 完整 Groups API URL:", fullUrl);
         
-        // 備用方案：也試試 getApiUrl
-        const backupUrl = getApiUrl("/api/groups");
-        console.log("PersonnelList: 備用 Groups API URL:", backupUrl);
-        
-        // 使用主要 URL
-        let response = await window.fetch(fullUrl, {
+        console.log("PersonnelList: 準備發送 Groups fetch 請求...");
+        const response = await fetch(fullUrl, {
           method: "GET", 
           headers: {
             "Content-Type": "application/json",
-            "Cache-Control": "no-cache",
           },
-          cache: 'no-store',
         });
 
         console.log("PersonnelList: Groups API 回應狀態:", response.status, response.statusText);
         console.log("PersonnelList: Groups API response object:", response);
-
-        // 如果主要 URL 失敗，嘗試備用 URL
-        if (!response.ok && response.status !== 304) {
-          console.log("PersonnelList: Groups 主要 URL 失敗，嘗試備用 URL...");
-          response = await window.fetch(backupUrl, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "Cache-Control": "no-cache",
-            },
-            cache: 'no-store',
-          });
-          console.log("PersonnelList: Groups 備用 API 回應狀態:", response.status, response.statusText);
-        }
+        console.log("PersonnelList: Groups Response headers:", [...response.headers.entries()]);
 
         if (!response.ok && response.status !== 304) {
           throw new Error(`載入組別失敗: ${response.status} ${response.statusText}`);
@@ -296,17 +261,20 @@ export default defineComponent({
         const result = await response.json();
         console.log("PersonnelList: 收到組別資料:", result);
         
-        if (result.success && result.data) {
+        if (result && result.success && result.data) {
           groupsData.value = result.data;
           console.log("PersonnelList: 組別資料更新完成，數量:", result.data.length);
           return result.data;
         } else {
           console.error("PersonnelList: Groups API 回應格式錯誤:", result);
-          throw new Error(result.message || "載入組別失敗");
+          groupsData.value = [];
+          return [];
         }
       } catch (error) {
         console.error("PersonnelList: 載入組別失敗:", error);
         console.error("PersonnelList: Groups Error stack:", error.stack);
+        console.error("PersonnelList: Groups Error name:", error.name);
+        console.error("PersonnelList: Groups Error message:", error.message);
         groupsData.value = [];
         return [];
       }

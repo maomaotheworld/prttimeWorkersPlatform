@@ -188,7 +188,12 @@ export default defineComponent({
       try {
         console.log("PersonnelList: 正在載入工讀生資料（訪客模式）");
         
-        const response = await fetch(getApiUrl("/api/workers"), {
+        // 直接構建完整 URL，避免 getApiUrl 的問題
+        const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3005";
+        const fullUrl = `${API_BASE_URL}/api/workers`;
+        console.log("PersonnelList: 完整 API URL:", fullUrl);
+        
+        const response = await window.fetch(fullUrl, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -197,12 +202,14 @@ export default defineComponent({
           cache: 'no-store',
         });
 
-        console.log("PersonnelList: API 回應狀態:", response.status);
+        console.log("PersonnelList: Workers API 回應狀態:", response.status, response.statusText);
+        console.log("PersonnelList: Workers API response object:", response);
 
         if (!response.ok && response.status !== 304) {
-          throw new Error(`載入工讀生失敗: ${response.status}`);
+          throw new Error(`載入工讀生失敗: ${response.status} ${response.statusText}`);
         }
 
+        console.log("PersonnelList: 準備解析 JSON...");
         const result = await response.json();
         console.log("PersonnelList: 收到工讀生資料:", result);
         
@@ -216,6 +223,7 @@ export default defineComponent({
         }
       } catch (error) {
         console.error("PersonnelList: 載入工讀生失敗:", error);
+        console.error("PersonnelList: Error stack:", error.stack);
         workersData.value = [];
         return [];
       }
@@ -225,7 +233,12 @@ export default defineComponent({
       try {
         console.log("PersonnelList: 正在載入組別資料（訪客模式）");
         
-        const response = await fetch(getApiUrl("/api/groups"), {
+        // 直接構建完整 URL，避免 getApiUrl 的問題
+        const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3005";
+        const fullUrl = `${API_BASE_URL}/api/groups`;
+        console.log("PersonnelList: 完整 Groups API URL:", fullUrl);
+        
+        const response = await window.fetch(fullUrl, {
           method: "GET", 
           headers: {
             "Content-Type": "application/json",
@@ -234,12 +247,14 @@ export default defineComponent({
           cache: 'no-store',
         });
 
-        console.log("PersonnelList: Groups API 回應狀態:", response.status);
+        console.log("PersonnelList: Groups API 回應狀態:", response.status, response.statusText);
+        console.log("PersonnelList: Groups API response object:", response);
 
         if (!response.ok && response.status !== 304) {
-          throw new Error(`載入組別失敗: ${response.status}`);
+          throw new Error(`載入組別失敗: ${response.status} ${response.statusText}`);
         }
 
+        console.log("PersonnelList: 準備解析 Groups JSON...");
         const result = await response.json();
         console.log("PersonnelList: 收到組別資料:", result);
         
@@ -253,6 +268,7 @@ export default defineComponent({
         }
       } catch (error) {
         console.error("PersonnelList: 載入組別失敗:", error);
+        console.error("PersonnelList: Groups Error stack:", error.stack);
         groupsData.value = [];
         return [];
       }
@@ -263,11 +279,18 @@ export default defineComponent({
       console.log("PersonnelList: 開始載入數據（訪客模式）...");
       loading.value = true;
       try {
-        await Promise.all([
-          loadWorkersForGuests(),
-          loadGroupsForGuests()
-        ]);
+        // 分別載入，不使用 Promise.all，方便除錯
+        console.log("PersonnelList: 開始載入工讀生資料...");
+        const workersResult = await loadWorkersForGuests();
+        console.log("PersonnelList: 工讀生載入結果:", workersResult?.length || 0);
+        
+        console.log("PersonnelList: 開始載入組別資料...");
+        const groupsResult = await loadGroupsForGuests();
+        console.log("PersonnelList: 組別載入結果:", groupsResult?.length || 0);
+        
         console.log("PersonnelList: 所有數據載入完成");
+        console.log("PersonnelList: 最終工讀生數據:", workersData.value?.length || 0);
+        console.log("PersonnelList: 最終組別數據:", groupsData.value?.length || 0);
       } catch (error) {
         console.error("PersonnelList: 載入數據失敗:", error);
       } finally {

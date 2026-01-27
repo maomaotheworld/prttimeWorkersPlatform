@@ -135,10 +135,14 @@ export default defineComponent({
     const filterFloor = ref("");
     const filterGroup = ref("");
     const loading = ref(false);
+    
+    // PersonnelList 專用的響應式資料
+    const workersData = ref([]);
+    const groupsData = ref([]);
 
-    // 計算屬性 - 直接使用 workersStore 的數據
-    const workers = computed(() => workersStore.workers);
-    const groups = computed(() => workersStore.groups);
+    // 計算屬性 - 使用本地的響應式資料
+    const workers = computed(() => workersData.value);
+    const groups = computed(() => groupsData.value);
 
     // 可用樓層列表
     const availableFloors = computed(() => {
@@ -202,14 +206,17 @@ export default defineComponent({
         const result = await response.json();
         console.log("PersonnelList: 收到工讀生資料:", result);
         
-        if (result.success) {
-          workersStore.workers = result.data;
+        if (result.success && result.data) {
+          workersData.value = result.data;
+          console.log("PersonnelList: 工讀生資料更新完成，數量:", result.data.length);
           return result.data;
         } else {
+          console.error("PersonnelList: API 回應格式錯誤:", result);
           throw new Error(result.message || "載入工讀生失敗");
         }
       } catch (error) {
         console.error("PersonnelList: 載入工讀生失敗:", error);
+        workersData.value = [];
         return [];
       }
     };
@@ -236,14 +243,17 @@ export default defineComponent({
         const result = await response.json();
         console.log("PersonnelList: 收到組別資料:", result);
         
-        if (result.success) {
-          workersStore.groups = result.data;
+        if (result.success && result.data) {
+          groupsData.value = result.data;
+          console.log("PersonnelList: 組別資料更新完成，數量:", result.data.length);
           return result.data;
         } else {
+          console.error("PersonnelList: Groups API 回應格式錯誤:", result);
           throw new Error(result.message || "載入組別失敗");
         }
       } catch (error) {
         console.error("PersonnelList: 載入組別失敗:", error);
+        groupsData.value = [];
         return [];
       }
     };
@@ -322,6 +332,8 @@ export default defineComponent({
       filterFloor,
       filterGroup,
       loading,
+      workersData,
+      groupsData,
 
       // 計算屬性
       workers,

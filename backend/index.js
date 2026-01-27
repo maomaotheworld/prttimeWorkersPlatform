@@ -69,11 +69,11 @@ function loadWorkers() {
       "utf8",
     );
     const loadedWorkers = JSON.parse(data);
-    
+
     // 確保每個工讀生都有 job 欄位
-    return loadedWorkers.map(worker => ({
+    return loadedWorkers.map((worker) => ({
       ...worker,
-      job: worker.job || "" // 如果沒有 job 欄位，設為空字串
+      job: worker.job || "", // 如果沒有 job 欄位，設為空字串
     }));
   } catch (err) {
     console.log("無法載入工作人員數據，使用空陣列:", err.message);
@@ -534,7 +534,7 @@ app.post(
 app.post("/api/auth/create-admin", authenticateToken, (req, res) => {
   try {
     // 只有特定用戶可以創建管理員
-    const allowedUsers = ['evelyn', 'evelyn.pan'];
+    const allowedUsers = ["evelyn", "evelyn.pan"];
     if (!allowedUsers.includes(req.user.username)) {
       return res.status(403).json({
         success: false,
@@ -953,7 +953,7 @@ app.post("/api/workers/:id/additional-hours", authenticateToken, (req, res) => {
 
   // 查找今日記錄
   let record = timeRecords.find(
-    (r) => r.workerId === workerId && r.date.startsWith(today)
+    (r) => r.workerId === workerId && r.date.startsWith(today),
   );
 
   const operatorId = req.user?.userId || "system";
@@ -989,7 +989,7 @@ app.post("/api/workers/:id/additional-hours", authenticateToken, (req, res) => {
     // 更新現有記錄
     const recordIndex = timeRecords.findIndex((r) => r.id === record.id);
     timeRecords[recordIndex].additionalHours += adjustHours;
-    
+
     // 添加調整記錄
     if (!timeRecords[recordIndex].adjustments) {
       timeRecords[recordIndex].adjustments = [];
@@ -1008,7 +1008,7 @@ app.post("/api/workers/:id/additional-hours", authenticateToken, (req, res) => {
     "worker",
     workerId,
     worker.name,
-    `${actionText}累積工時 ${Math.abs(adjustHours)} 小時，原因：${reason}`
+    `${actionText}累積工時 ${Math.abs(adjustHours)} 小時，原因：${reason}`,
   );
 
   res.json({
@@ -1351,8 +1351,8 @@ app.get("/api/time-records/additional-hours", authenticateToken, (req, res) => {
   try {
     // 計算每個工讀生的總額外工時
     const additionalHoursMap = {};
-    
-    timeRecords.forEach(record => {
+
+    timeRecords.forEach((record) => {
       if (record.additionalHours && record.additionalHours !== 0) {
         if (!additionalHoursMap[record.workerId]) {
           additionalHoursMap[record.workerId] = 0;
@@ -1360,13 +1360,13 @@ app.get("/api/time-records/additional-hours", authenticateToken, (req, res) => {
         additionalHoursMap[record.workerId] += record.additionalHours;
       }
     });
-    
+
     // 轉換為陣列格式
-    const result = Object.keys(additionalHoursMap).map(workerId => ({
+    const result = Object.keys(additionalHoursMap).map((workerId) => ({
       workerId: workerId,
-      totalHours: additionalHoursMap[workerId]
+      totalHours: additionalHoursMap[workerId],
     }));
-    
+
     res.json({
       success: true,
       data: result,
@@ -1386,7 +1386,8 @@ app.post(
   "/api/time-records/additional-hours",
   authenticateToken,
   (req, res) => {
-    const { workerId, date, hours, reason, adjustmentType, adjustedBy } = req.body;
+    const { workerId, date, hours, reason, adjustmentType, adjustedBy } =
+      req.body;
 
     if (
       !workerId ||
@@ -1436,9 +1437,15 @@ app.post(
 
     // 獲取操作者資訊 - 優先使用前端傳來的信息
     const operatorId = req.user ? req.user.id : "system";
-    const operatorName = adjustedBy || (req.user ? req.user.name || req.user.username : "系統");
+    const operatorName =
+      adjustedBy || (req.user ? req.user.name || req.user.username : "系統");
 
-    console.log("操作者信息:", { operatorId, operatorName, adjustedBy, userFromToken: req.user });
+    console.log("操作者信息:", {
+      operatorId,
+      operatorName,
+      adjustedBy,
+      userFromToken: req.user,
+    });
 
     // 創建調整記錄
     const adjustmentRecord = {
@@ -1481,8 +1488,8 @@ app.post(
       // 疊加時數
       timeRecords[recordIndex].additionalHours =
         (timeRecords[recordIndex].additionalHours || 0) + actualHours;
-      
-      // 更新最新的操作者信息  
+
+      // 更新最新的操作者信息
       timeRecords[recordIndex].adjustedBy = operatorName;
       timeRecords[recordIndex].adjustedAt = new Date().toISOString();
 
@@ -1682,18 +1689,9 @@ app.post("/api/salary-adjustments", (req, res) => {
 
 // 調整總薪資（直接設定總薪資金額）
 app.post("/api/salary-adjustments/total", (req, res) => {
-  const {
-    workerId,
-    targetTotalSalary,
-    reason,
-  } = req.body;
+  const { workerId, targetTotalSalary, reason } = req.body;
 
-  if (
-    !workerId ||
-    !targetTotalSalary ||
-    targetTotalSalary <= 0 ||
-    !reason
-  ) {
+  if (!workerId || !targetTotalSalary || targetTotalSalary <= 0 || !reason) {
     return res.status(400).json({
       success: false,
       message: "所有欄位都不能為空",
@@ -1749,7 +1747,9 @@ app.post("/api/salary-adjustments/total", (req, res) => {
     // 移除該工讀生本月的所有薪資調整記錄
     salaryAdjustments = salaryAdjustments.filter((adj) => {
       const adjDate = moment(adj.date);
-      return !(adj.workerId === workerId && adjDate.isBetween(start, end, "day", "[]"));
+      return !(
+        adj.workerId === workerId && adjDate.isBetween(start, end, "day", "[]")
+      );
     });
 
     // 如果需要額外薪資調整，新增一筆記錄
@@ -1757,7 +1757,7 @@ app.post("/api/salary-adjustments/total", (req, res) => {
       const adjustment = {
         id: Date.now().toString(),
         workerId,
-        type: requiredExtraSalary >= 0 ? "increase" : "decrease", 
+        type: requiredExtraSalary >= 0 ? "increase" : "decrease",
         amount: Math.abs(requiredExtraSalary),
         reason: `總薪資設定：${reason}`,
         date: new Date().toISOString(),
@@ -1788,7 +1788,6 @@ app.post("/api/salary-adjustments/total", (req, res) => {
       },
       message: "總薪資設定成功",
     });
-
   } catch (error) {
     console.error("總薪資設定失敗:", error);
     res.status(500).json({

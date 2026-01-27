@@ -14,11 +14,11 @@ export const useWorkersStore = defineStore("workers", () => {
 
       // 獲取認證token
       const token = localStorage.getItem("auth_token");
-      
+
       const headers = {
         "Content-Type": "application/json",
       };
-      
+
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
       }
@@ -55,7 +55,7 @@ export const useWorkersStore = defineStore("workers", () => {
       const headers = {
         "Content-Type": "application/json",
       };
-      
+
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
       }
@@ -66,11 +66,11 @@ export const useWorkersStore = defineStore("workers", () => {
       });
 
       if (!response.ok) {
-        throw new Error('獲取組別列表失敗');
+        throw new Error("獲取組別列表失敗");
       }
-      
+
       const result = await response.json();
-      
+
       if (result.success && result.data) {
         groups.value = result.data;
         console.log("Workers store: 組別列表更新完成", groups.value.length);
@@ -90,26 +90,26 @@ export const useWorkersStore = defineStore("workers", () => {
       const token = localStorage.getItem("auth_token");
       const response = await fetch(getApiUrl("/api/groups"), {
         headers: {
-          "Authorization": `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
-      
+
       if (!response.ok) {
-        throw new Error('獲取組別列表失敗');
+        throw new Error("獲取組別列表失敗");
       }
-      
+
       const result = await response.json();
       const mapping = {};
-      
+
       if (result.success && result.data) {
-        result.data.forEach(group => {
+        result.data.forEach((group) => {
           mapping[group.name] = group.id;
         });
       }
-      
+
       return mapping;
     } catch (error) {
-      console.error('獲取組別映射失敗:', error);
+      console.error("獲取組別映射失敗:", error);
       return {};
     }
   };
@@ -128,30 +128,30 @@ export const useWorkersStore = defineStore("workers", () => {
         name: String(workerData.name || "").trim(),
         baseHourlyWage: Number(workerData.hourlyWage) || 0,
         baseWorkingHours: Number(workerData.baseHours) || 8,
-        groupId: groupMapping[workerData.group] || 'group-1', // 如果找不到對應組別，使用預設值
+        groupId: groupMapping[workerData.group] || "group-1", // 如果找不到對應組別，使用預設值
         floor: String(workerData.floor || "").trim(),
         job: String(workerData.job || "").trim(), // 新增工作欄位
         // 設置預設值
-        gender: '男',
-        level: '工讀生',
-        phone: '',
-        email: '',
-        address: '',
-        emergencyContact: '',
-        bankAccount: '',
-        startDate: new Date().toISOString().split('T')[0],
-        status: 'active'
+        gender: "男",
+        level: "工讀生",
+        phone: "",
+        email: "",
+        address: "",
+        emergencyContact: "",
+        bankAccount: "",
+        startDate: new Date().toISOString().split("T")[0],
+        status: "active",
       };
 
       console.log("Workers store: 發送的數據", requestData);
 
       // 獲取認證token
       const token = localStorage.getItem("auth_token");
-      
+
       const headers = {
         "Content-Type": "application/json",
       };
-      
+
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
       }
@@ -193,30 +193,31 @@ export const useWorkersStore = defineStore("workers", () => {
         name: String(workerData.name || "").trim(),
         baseHourlyWage: Number(workerData.hourlyWage) || 0,
         baseWorkingHours: Number(workerData.baseHours) || 8,
-        groupId: groupMapping[workerData.group] || 'group-1', // 如果找不到對應組別，使用預設值
+        groupId: groupMapping[workerData.group] || "group-1", // 如果找不到對應組別，使用預設值
         floor: String(workerData.floor || "").trim(),
         job: String(workerData.job || "").trim(), // 新增工作欄位
         // 保持其他欄位不變
-        gender: workerData.gender || '男',
-        level: workerData.level || '工讀生',
-        phone: workerData.phone || '',
-        email: workerData.email || '',
-        address: workerData.address || '',
-        emergencyContact: workerData.emergencyContact || '',
-        bankAccount: workerData.bankAccount || '',
-        startDate: workerData.startDate || new Date().toISOString().split('T')[0],
-        status: workerData.status || 'active'
+        gender: workerData.gender || "男",
+        level: workerData.level || "工讀生",
+        phone: workerData.phone || "",
+        email: workerData.email || "",
+        address: workerData.address || "",
+        emergencyContact: workerData.emergencyContact || "",
+        bankAccount: workerData.bankAccount || "",
+        startDate:
+          workerData.startDate || new Date().toISOString().split("T")[0],
+        status: workerData.status || "active",
       };
 
       console.log("Workers store: 發送的更新數據", requestData);
 
       // 獲取認證token
       const token = localStorage.getItem("auth_token");
-      
+
       const headers = {
         "Content-Type": "application/json",
       };
-      
+
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
       }
@@ -253,11 +254,11 @@ export const useWorkersStore = defineStore("workers", () => {
 
       // 獲取認證token
       const token = localStorage.getItem("auth_token");
-      
+
       const headers = {
         "Content-Type": "application/json",
       };
-      
+
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
       }
@@ -293,11 +294,11 @@ export const useWorkersStore = defineStore("workers", () => {
 
       // 獲取認證token
       const token = localStorage.getItem("auth_token");
-      
+
       const headers = {
         "Content-Type": "application/json",
       };
-      
+
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
       }
@@ -349,7 +350,7 @@ export const useWorkersStore = defineStore("workers", () => {
       // 獲取當前登入用戶信息
       const userInfo = JSON.parse(localStorage.getItem("auth_user") || "{}");
       console.log("Workers store: 用戶信息", userInfo);
-      
+
       const response = await fetch(
         getApiUrl("/api/time-records/additional-hours"),
         {

@@ -9,7 +9,11 @@
     <template v-else>
       <el-container class="app-container">
         <!-- 頂部導航 -->
-        <el-header v-if="!isMobile && showNavigation" height="60px" class="app-header">
+        <el-header
+          v-if="!isMobile && showNavigation"
+          height="60px"
+          class="app-header"
+        >
           <div class="header-content">
             <div class="logo">
               <el-icon size="24"><Management /></el-icon>
@@ -26,11 +30,21 @@
                 </el-tag>
               </div>
               <div class="action-buttons">
-                <el-button v-if="authStore.isLoggedIn" type="danger" @click="handleLogout" plain>
+                <el-button
+                  v-if="authStore.isLoggedIn"
+                  type="danger"
+                  @click="handleLogout"
+                  plain
+                >
                   <el-icon><SwitchButton /></el-icon>
                   登出
                 </el-button>
-                <el-button v-else type="primary" @click="$router.push('/login')" plain>
+                <el-button
+                  v-else
+                  type="primary"
+                  @click="$router.push('/login')"
+                  plain
+                >
                   <el-icon><User /></el-icon>
                   登入
                 </el-button>
@@ -41,7 +55,11 @@
 
         <el-container>
           <!-- 側邊導航 -->
-          <el-aside v-if="!isMobile && showNavigation" width="200px" class="app-aside">
+          <el-aside
+            v-if="!isMobile && showNavigation"
+            width="200px"
+            class="app-aside"
+          >
             <el-menu
               :default-active="$route.path"
               router
@@ -50,9 +68,9 @@
               text-color="#fff"
               active-text-color="#ffd04b"
             >
-              <el-menu-item 
-                v-for="nav in visibleDesktopNavs" 
-                :key="nav.path" 
+              <el-menu-item
+                v-for="nav in visibleDesktopNavs"
+                :key="nav.path"
                 :index="nav.path"
               >
                 <el-icon><component :is="nav.iconComponent" /></el-icon>
@@ -68,7 +86,11 @@
         </el-container>
 
         <!-- 移動端導航 -->
-        <el-header v-if="isMobile && showNavigation" height="50px" class="mobile-header">
+        <el-header
+          v-if="isMobile && showNavigation"
+          height="50px"
+          class="mobile-header"
+        >
           <div class="mobile-header-content">
             <div v-if="authStore.isLoggedIn" class="mobile-user-info">
               <el-avatar :size="24">{{ authStore.displayName[0] }}</el-avatar>
@@ -104,7 +126,11 @@
         </el-header>
 
         <!-- 移動端底部導航 -->
-        <el-footer v-if="isMobile && showNavigation" height="45px" class="mobile-footer">
+        <el-footer
+          v-if="isMobile && showNavigation"
+          height="45px"
+          class="mobile-footer"
+        >
           <div class="mobile-nav">
             <div
               v-for="nav in visibleMobileNavs"
@@ -150,14 +176,14 @@ const isMobile = computed(() => windowWidth.value <= 768);
 // 是否顯示導航 - 除了登入頁面外都顯示導航
 const showNavigation = computed(() => {
   const currentRoute = router.currentRoute.value;
-  
-  console.log('Navigation check:', {
+
+  console.log("Navigation check:", {
     path: currentRoute.path,
-    isLoginPage: currentRoute.path === '/login'
+    isLoginPage: currentRoute.path === "/login",
   });
-  
+
   // 只有登入頁面不顯示導航，其他所有頁面都顯示
-  return currentRoute.path !== '/login';
+  return currentRoute.path !== "/login";
 });
 
 // 用戶角色顯示
@@ -190,14 +216,49 @@ const userRoleTagType = computed(() => {
 // 桌面版導航配置
 const desktopNavs = [
   { path: "/", name: "首頁", iconComponent: HomeFilled, requiresAuth: true },
-  { path: "/workers", name: "工讀生管理", iconComponent: User, adminOnly: true },
-  { path: "/personnel-list", name: "人員列表", iconComponent: UserFilled, noAuth: true },
-  { path: "/groups", name: "組別管理", iconComponent: UserFilled, permission: "canEditWorkers" },
-  { path: "/attendance", name: "打卡系統", iconComponent: Clock, permission: "canClockIn" },
-  { path: "/time-records", name: "工時記錄", iconComponent: Calendar, adminOnly: true },
+  {
+    path: "/workers",
+    name: "工讀生管理",
+    iconComponent: User,
+    adminOnly: true,
+  },
+  {
+    path: "/personnel-list",
+    name: "人員列表",
+    iconComponent: UserFilled,
+    noAuth: true,
+  },
+  {
+    path: "/groups",
+    name: "組別管理",
+    iconComponent: UserFilled,
+    permission: "canEditWorkers",
+  },
+  {
+    path: "/attendance",
+    name: "打卡系統",
+    iconComponent: Clock,
+    permission: "canClockIn",
+  },
+  {
+    path: "/time-records",
+    name: "工時記錄",
+    iconComponent: Calendar,
+    adminOnly: true,
+  },
   { path: "/salary", name: "薪資管理", iconComponent: Money, adminOnly: true },
-  { path: "/activity-logs", name: "活動資料", iconComponent: Document, adminOnly: true },
-  { path: "/user-management", name: "用戶管理", iconComponent: Setting, adminOnly: true },
+  {
+    path: "/activity-logs",
+    name: "活動資料",
+    iconComponent: Document,
+    adminOnly: true,
+  },
+  {
+    path: "/user-management",
+    name: "用戶管理",
+    iconComponent: Setting,
+    adminOnly: true,
+  },
 ];
 
 const visibleDesktopNavs = computed(() => {
@@ -206,24 +267,30 @@ const visibleDesktopNavs = computed(() => {
     if (nav.noAuth) {
       return true;
     }
-    
+
     // 如果用戶沒有認證，只顯示不需要認證的項目
     if (!authStore.isLoggedIn && !localStorage.getItem("auth_token")) {
       return false;
     }
-    
+
     // 如果需要認證但用戶未認證，不顯示
-    if (nav.requiresAuth && (!authStore.isLoggedIn && !localStorage.getItem("auth_token"))) {
+    if (
+      nav.requiresAuth &&
+      !authStore.isLoggedIn &&
+      !localStorage.getItem("auth_token")
+    ) {
       return false;
     }
-    
+
     // 如果是管理員專用選項，檢查是否為管理員或 evelyn
     if (nav.adminOnly) {
       return authStore.isAdminOrEvelyn;
     }
     // 如果需要特定權限，檢查權限
     if (nav.permission) {
-      return authStore.hasPermission(nav.permission) || authStore.isAdminOrEvelyn;
+      return (
+        authStore.hasPermission(nav.permission) || authStore.isAdminOrEvelyn
+      );
     }
     return true;
   });
@@ -268,24 +335,30 @@ const visibleMobileNavs = computed(() => {
     if (nav.noAuth) {
       return true;
     }
-    
+
     // 如果用戶沒有認證，只顯示不需要認證的項目
     if (!authStore.isLoggedIn && !localStorage.getItem("auth_token")) {
       return false;
     }
-    
+
     // 如果需要認證但用戶未認證，不顯示
-    if (nav.requiresAuth && (!authStore.isLoggedIn && !localStorage.getItem("auth_token"))) {
+    if (
+      nav.requiresAuth &&
+      !authStore.isLoggedIn &&
+      !localStorage.getItem("auth_token")
+    ) {
       return false;
     }
-    
+
     // 如果是管理員專用選項，檢查是否為管理員或 evelyn
     if (nav.adminOnly) {
       return authStore.isAdminOrEvelyn;
     }
     // 如果需要特定權限，檢查權限
     if (nav.permission) {
-      return authStore.hasPermission(nav.permission) || authStore.isAdminOrEvelyn;
+      return (
+        authStore.hasPermission(nav.permission) || authStore.isAdminOrEvelyn
+      );
     }
     return true;
   });
@@ -317,7 +390,7 @@ const handleLogout = async () => {
         console.warn("登出過程中發生錯誤:", error);
         ElMessage.success("已登出");
       }
-      
+
       // 無論如何都跳轉到登入頁面
       await router.push("/login");
     }
@@ -327,7 +400,7 @@ const handleLogout = async () => {
       // 用戶主動取消，不顯示錯誤訊息
       return;
     }
-    
+
     // 其他錯誤（例如確認對話框錯誤）
     console.error("登出確認過程錯誤:", error);
     ElMessage.error("登出確認失敗");

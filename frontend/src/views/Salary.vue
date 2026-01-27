@@ -120,18 +120,26 @@
           <h3>工時明細</h3>
           <el-descriptions :column="1" border>
             <el-descriptions-item label="基本工時">
-              <strong style="color: #67c23a;">{{ salaryData.workTime.baseWorkingHours }} 小時</strong>
+              <strong style="color: #67c23a"
+                >{{ salaryData.workTime.baseWorkingHours }} 小時</strong
+              >
               <el-text type="success" size="small">
-                ({{ salaryData.workTime.workingDays }} 天 × {{ salaryData.worker.baseWorkingHours }} 小時/天)
+                ({{ salaryData.workTime.workingDays }} 天 ×
+                {{ salaryData.worker.baseWorkingHours }} 小時/天)
               </el-text>
             </el-descriptions-item>
             <el-descriptions-item label="加班工時">
-              <strong style="color: #e6a23c;">{{ salaryData.workTime.totalAdditionalHours }} 小時</strong>
+              <strong style="color: #e6a23c"
+                >{{ salaryData.workTime.totalAdditionalHours }} 小時</strong
+              >
             </el-descriptions-item>
             <el-descriptions-item label="薪資計算工時">
-              <strong style="color: #409eff;">{{ salaryData.workTime.totalSalaryHours }} 小時</strong>
+              <strong style="color: #409eff"
+                >{{ salaryData.workTime.totalSalaryHours }} 小時</strong
+              >
               <el-text type="primary" size="small">
-                ({{ salaryData.workTime.baseWorkingHours }} + {{ salaryData.workTime.totalAdditionalHours }})
+                ({{ salaryData.workTime.baseWorkingHours }} +
+                {{ salaryData.workTime.totalAdditionalHours }})
               </el-text>
             </el-descriptions-item>
           </el-descriptions>
@@ -142,13 +150,20 @@
           <el-descriptions :column="1" border>
             <el-descriptions-item label="基本薪資">
               <div>
-                <strong style="font-size: 16px; color: #67c23a;">{{ salaryData.salary.baseSalary }} 元</strong>
+                <strong style="font-size: 16px; color: #67c23a"
+                  >{{ salaryData.salary.baseSalary }} 元</strong
+                >
               </div>
-              <div style="font-size: 14px; color: #409eff; margin-top: 4px;">
-                {{ salaryData.worker.baseHourlyWage }} 元/時 × {{ salaryData.workTime.totalSalaryHours }} 小時 = {{ salaryData.salary.baseSalary }} 元
+              <div style="font-size: 14px; color: #409eff; margin-top: 4px">
+                {{ salaryData.worker.baseHourlyWage }} 元/時 ×
+                {{ salaryData.workTime.totalSalaryHours }} 小時 =
+                {{ salaryData.salary.baseSalary }} 元
               </div>
             </el-descriptions-item>
-            <el-descriptions-item label="額外薪資" v-if="salaryData.salary.extraSalary !== 0">
+            <el-descriptions-item
+              label="額外薪資"
+              v-if="salaryData.salary.extraSalary !== 0"
+            >
               <span
                 :class="
                   salaryData.salary.extraSalary >= 0
@@ -161,11 +176,15 @@
               </span>
             </el-descriptions-item>
             <el-descriptions-item label="總薪資">
-              <strong style="font-size: 18px; color: #f56c6c;">
+              <strong style="font-size: 18px; color: #f56c6c">
                 {{ salaryData.salary.totalSalary }} 元
               </strong>
-              <div style="font-size: 12px; color: #666; margin-top: 4px;">
-                基本薪資 {{ salaryData.salary.baseSalary }} 元{{ salaryData.salary.extraSalary !== 0 ? ` + 額外薪資 ${salaryData.salary.extraSalary} 元` : '' }}
+              <div style="font-size: 12px; color: #666; margin-top: 4px">
+                基本薪資 {{ salaryData.salary.baseSalary }} 元{{
+                  salaryData.salary.extraSalary !== 0
+                    ? ` + 額外薪資 ${salaryData.salary.extraSalary} 元`
+                    : ""
+                }}
               </div>
             </el-descriptions-item>
           </el-descriptions>
@@ -389,19 +408,24 @@
           </span>
         </el-form-item>
 
-        <el-form-item label="薪資調整預覽" v-if="totalSalaryForm.targetTotalSalary && currentEstimatedSalary">
-          <div style="padding: 10px; background: #f5f7fa; border-radius: 4px;">
-            <div style="margin-bottom: 8px;">
+        <el-form-item
+          label="薪資調整預覽"
+          v-if="totalSalaryForm.targetTotalSalary && currentEstimatedSalary"
+        >
+          <div style="padding: 10px; background: #f5f7fa; border-radius: 4px">
+            <div style="margin-bottom: 8px">
               目前預估薪資：<strong>{{ currentEstimatedSalary }} 元</strong>
             </div>
-            <div style="margin-bottom: 8px;">
-              目標總薪資：<strong>{{ totalSalaryForm.targetTotalSalary }} 元</strong>
+            <div style="margin-bottom: 8px">
+              目標總薪資：<strong
+                >{{ totalSalaryForm.targetTotalSalary }} 元</strong
+              >
             </div>
             <div>
               調整金額：
-              <el-tag 
-                :type="salaryAdjustment >= 0 ? 'success' : 'danger'" 
-                style="margin-left: 8px;"
+              <el-tag
+                :type="salaryAdjustment >= 0 ? 'success' : 'danger'"
+                style="margin-left: 8px"
               >
                 {{ salaryAdjustment >= 0 ? "+" : "" }}{{ salaryAdjustment }} 元
               </el-tag>
@@ -425,7 +449,10 @@
           type="primary"
           @click="handleTotalSalaryAdjust"
           :loading="submitting"
-          :disabled="!totalSalaryForm.targetTotalSalary || totalSalaryForm.targetTotalSalary <= 0"
+          :disabled="
+            !totalSalaryForm.targetTotalSalary ||
+            totalSalaryForm.targetTotalSalary <= 0
+          "
         >
           確認調整
         </el-button>
@@ -531,7 +558,7 @@ const currentWage = computed(() => {
 // 目前預估薪資（使用後端相同邏輯）
 const currentEstimatedSalary = computed(() => {
   if (!salaryData.value) return 0;
-  
+
   // 直接使用後端計算的總薪資
   return salaryData.value.salary?.totalSalary || 0;
 });
@@ -722,9 +749,9 @@ const handleTotalSalaryAdjust = async () => {
     }
 
     ElMessage.success(
-      `總薪資設定成功！設定為 ${result.data.targetTotalSalary} 元`
+      `總薪資設定成功！設定為 ${result.data.targetTotalSalary} 元`,
     );
-    
+
     totalSalaryDialogVisible.value = false;
 
     // 重新載入薪資調整記錄

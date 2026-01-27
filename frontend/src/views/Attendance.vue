@@ -384,7 +384,10 @@ const handleGroupChange = () => {
 
 const filterWorkers = () => {
   let filtered = [...workers.value];
-  console.log("Attendance.vue: filterWorkers 開始，工讀生數量:", filtered.length);
+  console.log(
+    "Attendance.vue: filterWorkers 開始，工讀生數量:",
+    filtered.length,
+  );
 
   if (groupBy.value === "floor" && selectedFloor.value) {
     filtered = filtered.filter((w) => w.floor === selectedFloor.value);
@@ -397,15 +400,18 @@ const filterWorkers = () => {
   // 為每位工讀生添加今日出勤狀態，保持現有的clocking狀態
   filteredWorkers.value = filtered.map((worker) => {
     // 查找現有的工讀生記錄以保持clocking狀態
-    const existing = filteredWorkers.value.find(fw => fw.id === worker.id);
+    const existing = filteredWorkers.value.find((fw) => fw.id === worker.id);
     return {
       ...worker,
       todayAttendance: worker.todayAttendance || null,
       clocking: existing?.clocking || false, // 保持現有的clocking狀態
     };
   });
-  
-  console.log("Attendance.vue: 最終篩選工讀生數量:", filteredWorkers.value.length);
+
+  console.log(
+    "Attendance.vue: 最終篩選工讀生數量:",
+    filteredWorkers.value.length,
+  );
 };
 
 // 快速打卡功能
@@ -423,7 +429,7 @@ const handleQuickClock = async (worker, type) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ workerId: worker.id }),
     });
@@ -432,7 +438,7 @@ const handleQuickClock = async (worker, type) => {
 
     if (data.success) {
       ElMessage.success(`${worker.name} ${action}打卡成功`);
-      
+
       // 立即更新本地狀態
       if (type === "in") {
         if (!worker.todayAttendance) {
@@ -445,7 +451,7 @@ const handleQuickClock = async (worker, type) => {
         }
         worker.todayAttendance.clockOut = new Date().toISOString();
       }
-      
+
       // 重新載入數據確保同步
       await loadTodayAttendance();
     } else {
@@ -553,17 +559,19 @@ const loadTodayAttendance = async () => {
       filteredWorker.todayAttendance = attendance || null;
     });
 
-    console.log("今日考勤記錄載入完成，工讀生狀態:", workers.value.map(w => ({
-      name: w.name,
-      clockIn: w.todayAttendance?.clockIn,
-      clockOut: w.todayAttendance?.clockOut
-    })));
-    
+    console.log(
+      "今日考勤記錄載入完成，工讀生狀態:",
+      workers.value.map((w) => ({
+        name: w.name,
+        clockIn: w.todayAttendance?.clockIn,
+        clockOut: w.todayAttendance?.clockOut,
+      })),
+    );
+
     // 強制更新視圖
     nextTick(() => {
       console.log("視圖更新完成");
     });
-
   } catch (error) {
     console.error("載入今日考勤記錄失敗:", error);
   }
@@ -574,18 +582,27 @@ const refreshData = async () => {
   loading.value = true;
   console.log("Attendance.vue: refreshData 開始");
   try {
-    console.log("Attendance.vue: 載入工讀生數據前，目前工讀生數量:", workers.value.length);
+    console.log(
+      "Attendance.vue: 載入工讀生數據前，目前工讀生數量:",
+      workers.value.length,
+    );
     await Promise.all([
       workersStore.fetchWorkers(),
       groupsStore.fetchGroups(),
       loadTodayAttendance(),
     ]);
-    console.log("Attendance.vue: 載入工讀生數據後，工讀生數量:", workers.value.length);
+    console.log(
+      "Attendance.vue: 載入工讀生數據後，工讀生數量:",
+      workers.value.length,
+    );
     console.log("Attendance.vue: 工讀生數據:", workers.value);
-    
+
     // 重新篩選工讀生
     filterWorkers();
-    console.log("Attendance.vue: 篩選後工讀生數量:", filteredWorkers.value.length);
+    console.log(
+      "Attendance.vue: 篩選後工讀生數量:",
+      filteredWorkers.value.length,
+    );
   } catch (error) {
     console.error("重新整理數據失敗:", error);
   } finally {

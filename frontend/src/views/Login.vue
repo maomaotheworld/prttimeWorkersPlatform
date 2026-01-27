@@ -62,7 +62,7 @@
       </el-form>
 
       <!-- 訪客模式 - 已隱藏 -->
-      <div class="guest-section" style="display: none;">
+      <div class="guest-section" style="display: none">
         <el-divider>
           <span class="divider-text">或</span>
         </el-divider>

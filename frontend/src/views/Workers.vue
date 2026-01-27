@@ -153,16 +153,32 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="floor" label="樓層" :width="isMobile ? '50' : '80'" />
-        <el-table-column prop="job" label="工作" :width="isMobile ? '100' : '150'">
+        <el-table-column
+          prop="floor"
+          label="樓層"
+          :width="isMobile ? '50' : '80'"
+        />
+        <el-table-column
+          prop="job"
+          label="工作"
+          :width="isMobile ? '100' : '150'"
+        >
           <template #default="{ row }">
-            <span style="font-size: 12px;" :title="row.job">
-              {{ row.job || '-' }}
+            <span style="font-size: 12px" :title="row.job">
+              {{ row.job || "-" }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="hourlyWage" label="時薪" :width="isMobile ? '60' : '80'" />
-        <el-table-column prop="baseHours" label="基本時數" :width="isMobile ? '60' : '90'" />
+        <el-table-column
+          prop="hourlyWage"
+          label="時薪"
+          :width="isMobile ? '60' : '80'"
+        />
+        <el-table-column
+          prop="baseHours"
+          label="基本時數"
+          :width="isMobile ? '60' : '90'"
+        />
         <el-table-column label="累積工時" :width="isMobile ? '60' : '90'">
           <template #default="{ row }">
             {{ row.baseHours + (row.additionalHours || 0) }}
@@ -170,7 +186,7 @@
         </el-table-column>
         <el-table-column label="薪資總額" :width="isMobile ? '80' : '100'">
           <template #default="{ row }">
-            <span style="color: #67c23a; font-weight: bold;">
+            <span style="color: #67c23a; font-weight: bold">
               {{ calculateTotalSalary(row) }}元
             </span>
           </template>
@@ -208,7 +224,7 @@
                 @command="(command) => handleMobileAction(command, row)"
                 trigger="click"
               >
-                <el-button size="small" type="primary" style="padding: 4px 8px;">
+                <el-button size="small" type="primary" style="padding: 4px 8px">
                   ⋯
                 </el-button>
                 <template #dropdown>
@@ -279,7 +295,7 @@
         </el-table-column>
         <el-table-column prop="job" label="工作" width="120">
           <template #default="{ row }">
-            <span style="font-size: 12px;">
+            <span style="font-size: 12px">
               {{ row.job || "-" }}
             </span>
           </template>
@@ -371,8 +387,8 @@
           <el-input v-model="workerForm.floor" placeholder="請輸入樓層" />
         </el-form-item>
         <el-form-item label="工作">
-          <el-input 
-            v-model="workerForm.job" 
+          <el-input
+            v-model="workerForm.job"
             placeholder="請輸入工作內容 (選填)"
             type="textarea"
             :rows="2"
@@ -1375,7 +1391,7 @@ onMounted(async () => {
   .el-table {
     overflow-x: auto;
   }
-  
+
   .el-table .el-table__body-wrapper {
     overflow-x: auto;
   }

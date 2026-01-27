@@ -42,13 +42,17 @@ export const useAuthStore = defineStore("auth", {
     // 是否為 evelyn（超級管理員）
     isEvelyn: (state) => {
       const username = state.user?.username || state.user?.name || "";
-      return ['evelyn', 'evelyn.pan'].includes(username.toLowerCase());
+      return ["evelyn", "evelyn.pan"].includes(username.toLowerCase());
     },
 
     // ?�否?�管?�員或 evelyn
     isAdminOrEvelyn: (state) => {
-      return state.user?.role === "admin" || 
-             ['evelyn', 'evelyn.pan'].includes((state.user?.username || state.user?.name || "").toLowerCase());
+      return (
+        state.user?.role === "admin" ||
+        ["evelyn", "evelyn.pan"].includes(
+          (state.user?.username || state.user?.name || "").toLowerCase(),
+        )
+      );
     },
 
     // 權�?檢查輔助?��?
@@ -63,9 +67,9 @@ export const useAuthStore = defineStore("auth", {
       const token = localStorage.getItem("auth_token");
       const userData = localStorage.getItem("auth_user");
 
-      console.log("初始化認證狀態:", { 
-        hasToken: !!token, 
-        hasUserData: !!userData 
+      console.log("初始化認證狀態:", {
+        hasToken: !!token,
+        hasUserData: !!userData,
       });
 
       if (token && userData) {
@@ -77,7 +81,7 @@ export const useAuthStore = defineStore("auth", {
 
           console.log("認證狀態已恢復:", {
             isLoggedIn: this.isLoggedIn,
-            user: this.user?.name
+            user: this.user?.name,
           });
 
           // 暫時註解掉驗證token，避免立即登出
@@ -200,10 +204,10 @@ export const useAuthStore = defineStore("auth", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${this.token}`
-            }
+              Authorization: `Bearer ${this.token}`,
+            },
           });
-          
+
           if (!response.ok) {
             console.warn("登出API請求失敗，HTTP狀態:", response.status);
           }
@@ -212,7 +216,7 @@ export const useAuthStore = defineStore("auth", {
         // API錯誤不影響前端登出流程
         console.warn("登出API請求失敗，但仍會清除前端狀態:", error.message);
       }
-      
+
       // 無論API是否成功，都清除前端狀態
       this.token = null;
       this.user = null;
@@ -240,7 +244,7 @@ export const useAuthStore = defineStore("auth", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${this.token}`
+            Authorization: `Bearer ${this.token}`,
           },
         });
 
@@ -273,7 +277,7 @@ export const useAuthStore = defineStore("auth", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${this.token}`
+            Authorization: `Bearer ${this.token}`,
           },
         });
 
@@ -326,9 +330,12 @@ export const useAuthStore = defineStore("auth", {
     // 建立管理員帳號（僅特定用戶可用）
     async createAdmin(userData) {
       // 只有 evelyn 可以創建管理員
-      const allowedUsers = ['evelyn', 'evelyn.pan'];
+      const allowedUsers = ["evelyn", "evelyn.pan"];
       if (!allowedUsers.includes(this.user?.username)) {
-        return { success: false, message: "權限不足，只有Evelyn可以創建管理員帳號" };
+        return {
+          success: false,
+          message: "權限不足，只有Evelyn可以創建管理員帳號",
+        };
       }
 
       try {

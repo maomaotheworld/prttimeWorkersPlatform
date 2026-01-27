@@ -142,7 +142,9 @@
                 style="margin: 2px"
               >
                 {{ adj.hours > 0 ? "+" : "" }}{{ adj.hours }}h: {{ adj.reason }}
-                <small v-if="adj.operatorName" class="operator-info"> - by {{ adj.operatorName }}</small>
+                <small v-if="adj.operatorName" class="operator-info">
+                  - by {{ adj.operatorName }}</small
+                >
               </el-tag>
             </div>
             <span v-else class="info-text">-</span>
@@ -339,7 +341,7 @@ const fetchRecords = async () => {
 
     // 後端返回格式：{ success: true, data: [...], message: "..." }
     const rawRecords = result.data || [];
-    
+
     // 按日期和創建時間降序排序，新記錄在上
     records.value = rawRecords.sort((a, b) => {
       // 首先按日期降序排序
@@ -347,13 +349,12 @@ const fetchRecords = async () => {
       if (dateComparison !== 0) {
         return dateComparison;
       }
-      
+
       // 如果日期相同，按創建時間降序排序
       const createdAtA = new Date(a.createdAt || a.date);
       const createdAtB = new Date(b.createdAt || b.date);
       return createdAtB - createdAtA;
     });
-    
   } catch (error) {
     console.error("載入工作記錄失敗:", error);
     ElMessage.error(error.message || "載入工作記錄失敗");

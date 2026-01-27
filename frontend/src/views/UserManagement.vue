@@ -9,7 +9,12 @@
         <p class="page-description">管理系統用戶帳號，新增小組長帳號</p>
       </div>
       <div class="header-actions">
-        <el-button type="danger" :icon="Plus" @click="showCreateAdminDialog = true" v-if="isEvelyn">
+        <el-button
+          type="danger"
+          :icon="Plus"
+          @click="showCreateAdminDialog = true"
+          v-if="isEvelyn"
+        >
           新增管理員
         </el-button>
         <el-button type="primary" :icon="Plus" @click="showCreateDialog = true">
@@ -169,7 +174,7 @@
         :closable="false"
         style="margin-bottom: 20px"
       />
-      
+
       <el-form
         ref="createAdminFormRef"
         :model="createAdminForm"
@@ -287,7 +292,10 @@ const isMobile = computed(() => window.innerWidth <= 768);
 
 // 只有evelyn可以創建管理員
 const isEvelyn = computed(() => {
-  return authStore.user?.username === 'evelyn' || authStore.user?.username === 'evelyn.pan';
+  return (
+    authStore.user?.username === "evelyn" ||
+    authStore.user?.username === "evelyn.pan"
+  );
 });
 
 // 方法
@@ -367,13 +375,13 @@ const handleCreateAdmin = async () => {
     // 二次確認
     try {
       await ElMessageBox.confirm(
-        '創建管理員將賦予該用戶完全的系統權限，確定要繼續嗎？',
-        '創建管理員確認',
+        "創建管理員將賦予該用戶完全的系統權限，確定要繼續嗎？",
+        "創建管理員確認",
         {
-          confirmButtonText: '確認創建',
-          cancelButtonText: '取消',
-          type: 'warning',
-        }
+          confirmButtonText: "確認創建",
+          cancelButtonText: "取消",
+          type: "warning",
+        },
       );
     } catch (error) {
       return; // 用戶取消

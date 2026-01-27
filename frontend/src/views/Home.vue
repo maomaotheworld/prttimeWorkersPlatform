@@ -2,10 +2,7 @@
   <div class="home-container">
     <!-- 訪客顯示空白頁面 -->
     <div v-if="!isAuthenticated" class="guest-home">
-      <el-empty 
-        description="請登入以查看系統內容" 
-        :image-size="200"
-      >
+      <el-empty description="請登入以查看系統內容" :image-size="200">
         <el-button type="primary" @click="$router.push('/login')">
           前往登入
         </el-button>
@@ -14,93 +11,93 @@
 
     <!-- 已認證用戶顯示完整首頁內容 -->
     <template v-else>
-    <div class="welcome-section">
-      <el-card class="welcome-card">
-        <div class="welcome-content">
-          <el-icon size="48" class="welcome-icon"><Management /></el-icon>
-          <h1 class="welcome-title">歡迎使用工讀生管理平台</h1>
-          <p class="welcome-desc">高效管理工讀生工時、薪資與組別的專業平台</p>
-        </div>
-      </el-card>
-    </div>
-
-    <div class="stats-section">
-      <h2 class="section-title">系統概覽</h2>
-      <div class="stats-grid">
-        <el-card class="stat-card">
-          <el-statistic title="總工讀生數" :value="stats.totalWorkers">
-            <template #prefix>
-              <el-icon style="vertical-align: middle"><User /></el-icon>
-            </template>
-          </el-statistic>
-        </el-card>
-
-        <el-card class="stat-card">
-          <el-statistic title="總組別數" :value="stats.totalGroups">
-            <template #prefix>
-              <el-icon style="vertical-align: middle"><UserFilled /></el-icon>
-            </template>
-          </el-statistic>
-        </el-card>
-
-        <el-card class="stat-card">
-          <el-statistic title="今日打卡" :value="stats.todayClockedIn">
-            <template #prefix>
-              <el-icon style="vertical-align: middle"><Clock /></el-icon>
-            </template>
-          </el-statistic>
-        </el-card>
-
-        <el-card class="stat-card">
-          <el-statistic
-            title="本月總工時"
-            :value="stats.monthlyHours"
-            suffix="小時"
-          >
-            <template #prefix>
-              <el-icon style="vertical-align: middle"><Calendar /></el-icon>
-            </template>
-          </el-statistic>
-        </el-card>
-      </div>
-    </div>
-
-    <div class="quick-actions">
-      <h2 class="section-title">快速操作</h2>
-      <div class="actions-grid">
-        <el-card
-          v-for="action in quickActions"
-          :key="action.name"
-          class="action-card"
-          @click="$router.push(action.path)"
-          shadow="hover"
-        >
-          <div class="action-content">
-            <el-icon size="32" :color="action.color">
-              <component :is="action.icon" />
-            </el-icon>
-            <h3>{{ action.name }}</h3>
-            <p>{{ action.desc }}</p>
+      <div class="welcome-section">
+        <el-card class="welcome-card">
+          <div class="welcome-content">
+            <el-icon size="48" class="welcome-icon"><Management /></el-icon>
+            <h1 class="welcome-title">歡迎使用工讀生管理平台</h1>
+            <p class="welcome-desc">高效管理工讀生工時、薪資與組別的專業平台</p>
           </div>
         </el-card>
       </div>
-    </div>
 
-    <div class="recent-section" v-if="!isMobile">
-      <h2 class="section-title">最近活動</h2>
-      <el-card>
-        <el-timeline>
-          <el-timeline-item
-            v-for="activity in recentActivities"
-            :key="activity.id"
-            :timestamp="activity.timestamp"
-            :color="activity.color"
+      <div class="stats-section">
+        <h2 class="section-title">系統概覽</h2>
+        <div class="stats-grid">
+          <el-card class="stat-card">
+            <el-statistic title="總工讀生數" :value="stats.totalWorkers">
+              <template #prefix>
+                <el-icon style="vertical-align: middle"><User /></el-icon>
+              </template>
+            </el-statistic>
+          </el-card>
+
+          <el-card class="stat-card">
+            <el-statistic title="總組別數" :value="stats.totalGroups">
+              <template #prefix>
+                <el-icon style="vertical-align: middle"><UserFilled /></el-icon>
+              </template>
+            </el-statistic>
+          </el-card>
+
+          <el-card class="stat-card">
+            <el-statistic title="今日打卡" :value="stats.todayClockedIn">
+              <template #prefix>
+                <el-icon style="vertical-align: middle"><Clock /></el-icon>
+              </template>
+            </el-statistic>
+          </el-card>
+
+          <el-card class="stat-card">
+            <el-statistic
+              title="本月總工時"
+              :value="stats.monthlyHours"
+              suffix="小時"
+            >
+              <template #prefix>
+                <el-icon style="vertical-align: middle"><Calendar /></el-icon>
+              </template>
+            </el-statistic>
+          </el-card>
+        </div>
+      </div>
+
+      <div class="quick-actions">
+        <h2 class="section-title">快速操作</h2>
+        <div class="actions-grid">
+          <el-card
+            v-for="action in quickActions"
+            :key="action.name"
+            class="action-card"
+            @click="$router.push(action.path)"
+            shadow="hover"
           >
-            {{ activity.content }}
-          </el-timeline-item>
-        </el-timeline>
-      </el-card>
-    </div>
+            <div class="action-content">
+              <el-icon size="32" :color="action.color">
+                <component :is="action.icon" />
+              </el-icon>
+              <h3>{{ action.name }}</h3>
+              <p>{{ action.desc }}</p>
+            </div>
+          </el-card>
+        </div>
+      </div>
+
+      <div class="recent-section" v-if="!isMobile">
+        <h2 class="section-title">最近活動</h2>
+        <el-card>
+          <el-timeline>
+            <el-timeline-item
+              v-for="activity in recentActivities"
+              :key="activity.id"
+              :timestamp="activity.timestamp"
+              :color="activity.color"
+            >
+              {{ activity.content }}
+            </el-timeline-item>
+          </el-timeline>
+        </el-card>
+      </div>
     </template>
   </div>
 </template>

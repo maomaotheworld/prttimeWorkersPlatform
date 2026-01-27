@@ -143,6 +143,15 @@ export default defineComponent({
     // 計算屬性 - 使用本地的響應式資料
     const workers = computed(() => workersData.value);
     const groups = computed(() => groupsData.value);
+    
+    // 組別映射 - 從 groupsData 創建 ID 到名稱的映射
+    const groupMapping = computed(() => {
+      const mapping = {};
+      groupsData.value.forEach(group => {
+        mapping[group.id] = group.name;
+      });
+      return mapping;
+    });
 
     // 可用樓層列表
     const availableFloors = computed(() => {
@@ -154,10 +163,16 @@ export default defineComponent({
 
     // 篩選後的工讀生列表
     const filteredWorkers = computed(() => {
+      console.log("PersonnelList: 計算 filteredWorkers");
+      console.log("PersonnelList: workers.value:", workers.value);
+      console.log("PersonnelList: groupMapping.value:", groupMapping.value);
+      
       let result = workers.value.map((worker) => ({
         ...worker,
         groupName: groupMapping.value[worker.groupId] || worker.group || "",
       }));
+
+      console.log("PersonnelList: 映射後的工讀生:", result);
 
       // 姓名搜尋
       if (searchName.value.trim()) {
@@ -180,6 +195,7 @@ export default defineComponent({
         );
       }
 
+      console.log("PersonnelList: 最終篩選結果:", result);
       return result;
     });
 
@@ -369,6 +385,7 @@ export default defineComponent({
       // 計算屬性
       workers,
       groups,
+      groupMapping,
       availableFloors,
       filteredWorkers,
 

@@ -193,7 +193,12 @@ export default defineComponent({
         const fullUrl = `${API_BASE_URL}/api/workers`;
         console.log("PersonnelList: 完整 API URL:", fullUrl);
         
-        const response = await window.fetch(fullUrl, {
+        // 備用方案：也試試 getApiUrl
+        const backupUrl = getApiUrl("/api/workers");
+        console.log("PersonnelList: 備用 API URL:", backupUrl);
+        
+        // 使用主要 URL
+        let response = await window.fetch(fullUrl, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -204,6 +209,20 @@ export default defineComponent({
 
         console.log("PersonnelList: Workers API 回應狀態:", response.status, response.statusText);
         console.log("PersonnelList: Workers API response object:", response);
+
+        // 如果主要 URL 失敗，嘗試備用 URL
+        if (!response.ok && response.status !== 304) {
+          console.log("PersonnelList: 主要 URL 失敗，嘗試備用 URL...");
+          response = await window.fetch(backupUrl, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+            },
+            cache: 'no-store',
+          });
+          console.log("PersonnelList: 備用 API 回應狀態:", response.status, response.statusText);
+        }
 
         if (!response.ok && response.status !== 304) {
           throw new Error(`載入工讀生失敗: ${response.status} ${response.statusText}`);
@@ -238,7 +257,12 @@ export default defineComponent({
         const fullUrl = `${API_BASE_URL}/api/groups`;
         console.log("PersonnelList: 完整 Groups API URL:", fullUrl);
         
-        const response = await window.fetch(fullUrl, {
+        // 備用方案：也試試 getApiUrl
+        const backupUrl = getApiUrl("/api/groups");
+        console.log("PersonnelList: 備用 Groups API URL:", backupUrl);
+        
+        // 使用主要 URL
+        let response = await window.fetch(fullUrl, {
           method: "GET", 
           headers: {
             "Content-Type": "application/json",
@@ -249,6 +273,20 @@ export default defineComponent({
 
         console.log("PersonnelList: Groups API 回應狀態:", response.status, response.statusText);
         console.log("PersonnelList: Groups API response object:", response);
+
+        // 如果主要 URL 失敗，嘗試備用 URL
+        if (!response.ok && response.status !== 304) {
+          console.log("PersonnelList: Groups 主要 URL 失敗，嘗試備用 URL...");
+          response = await window.fetch(backupUrl, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+            },
+            cache: 'no-store',
+          });
+          console.log("PersonnelList: Groups 備用 API 回應狀態:", response.status, response.statusText);
+        }
 
         if (!response.ok && response.status !== 304) {
           throw new Error(`載入組別失敗: ${response.status} ${response.statusText}`);
@@ -277,6 +315,8 @@ export default defineComponent({
     // 方法 - 專為訪客模式設計的載入邏輯
     const loadData = async () => {
       console.log("PersonnelList: 開始載入數據（訪客模式）...");
+      console.log("PersonnelList: 環境變數 VITE_API_URL:", import.meta.env.VITE_API_URL);
+      console.log("PersonnelList: 所有環境變數:", import.meta.env);
       loading.value = true;
       try {
         // 分別載入，不使用 Promise.all，方便除錯

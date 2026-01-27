@@ -195,13 +195,24 @@ export default defineComponent({
 
     // 方法
     const loadData = async () => {
+      console.log("開始載入數據...");
       loading.value = true;
       try {
-        // 同時載入工讀生數據和組別映射
-        const [workersResponse, groupMappingData] = await Promise.all([
-          loadWorkersData(),
-          getGroupIdToNameMapping(),
-        ]);
+        // 分別載入工讀生數據和組別映射，避免某一個失敗影響另一個
+        console.log("正在載入工讀生數據...");
+        const workersResponse = await loadWorkersData().catch(error => {
+          console.error("載入工讀生數據失敗:", error);
+          return [];
+        });
+        
+        console.log("正在載入組別映射...");
+        const groupMappingData = await getGroupIdToNameMapping().catch(error => {
+          console.error("載入組別映射失敗:", error);
+          return {};
+        });
+
+        console.log("工讀生數據:", workersResponse);
+        console.log("組別映射數據:", groupMappingData);
 
         // 更新資料
         workersData.value = workersResponse;
@@ -210,12 +221,20 @@ export default defineComponent({
         // 只有在有 token 時才嘗試載入 groups store
         const token = localStorage.getItem("auth_token");
         if (token) {
-          await groupsStore.loadGroups();
+          console.log("載入 groups store...");
+          try {
+            await groupsStore.loadGroups();
+          } catch (error) {
+            console.error("載入 groups store 失敗:", error);
+          }
         }
+        
+        console.log("數據載入完成!");
       } catch (error) {
         console.error("載入數據時發生錯誤:", error);
       } finally {
         loading.value = false;
+        console.log("載入狀態設為 false");
       }
     };
 
@@ -225,6 +244,7 @@ export default defineComponent({
         const token = localStorage.getItem("auth_token");
         const headers = {
           "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
         };
         
         // 如果有 token 才添加 Authorization header
@@ -232,15 +252,21 @@ export default defineComponent({
           headers.Authorization = `Bearer ${token}`;
         }
 
+        console.log("正在請求工讀生 API:", getApiUrl("/api/workers"));
         const response = await fetch(getApiUrl("/api/workers"), {
           headers: headers,
+          cache: 'no-store',
         });
 
-        if (!response.ok) {
-          throw new Error("獲取工讀生列表失敗");
+        console.log("工讀生 API 回應狀態:", response.status, response.statusText);
+
+        // 304 Not Modified 也被視為成功
+        if (!response.ok && response.status !== 304) {
+          throw new Error(`獲取工讀生列表失敗: ${response.status} ${response.statusText}`);
         }
 
         const result = await response.json();
+        console.log("Workers API 回應:", result);
         return result.success ? result.data : [];
       } catch (error) {
         console.error("載入工讀生資料失敗:", error);
@@ -254,6 +280,7 @@ export default defineComponent({
         const token = localStorage.getItem("auth_token");
         const headers = {
           "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
         };
         
         // 如果有 token 才添加 Authorization header
@@ -261,15 +288,21 @@ export default defineComponent({
           headers.Authorization = `Bearer ${token}`;
         }
 
+        console.log("正在請求組別 API:", getApiUrl("/api/groups"));
         const response = await fetch(getApiUrl("/api/groups"), {
           headers: headers,
+          cache: 'no-store',
         });
 
-        if (!response.ok) {
-          throw new Error("獲取組別列表失敗");
+        console.log("組別 API 回應狀態:", response.status, response.statusText);
+
+        // 304 Not Modified 也被視為成功
+        if (!response.ok && response.status !== 304) {
+          throw new Error(`獲取組別列表失敗: ${response.status} ${response.statusText}`);
         }
 
         const result = await response.json();
+        console.log("Groups API 回應:", result);
         const mapping = {};
 
         if (result.success && result.data) {

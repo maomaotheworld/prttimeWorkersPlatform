@@ -80,16 +80,14 @@
 
             <el-table-column prop="groupId" label="組別" width="150" sortable>
               <template #default="scope">
-                <el-tag 
+                <el-tag
                   v-if="groupMapping[scope.row.groupId]"
                   size="small"
                   :style="getGroupTagStyle(groupMapping[scope.row.groupId])"
                 >
                   {{ groupMapping[scope.row.groupId] }}
                 </el-tag>
-                <el-tag v-else size="small" type="info">
-                  未分組
-                </el-tag>
+                <el-tag v-else size="small" type="info"> 未分組 </el-tag>
               </template>
             </el-table-column>
 
@@ -106,9 +104,7 @@
                 <el-tag type="success" size="small" v-if="scope.row.job">
                   {{ scope.row.job }}
                 </el-tag>
-                <el-tag type="info" size="small" v-else>
-                  未設定
-                </el-tag>
+                <el-tag type="info" size="small" v-else> 未設定 </el-tag>
               </template>
             </el-table-column>
           </el-table>
@@ -144,7 +140,19 @@ export default defineComponent({
 
     // 計算屬性
     const workers = computed(() => workersData.value);
-    const groups = computed(() => groupsStore.groups);
+    const groups = computed(() => {
+      // 優先使用 groupsStore 的數據
+      if (groupsStore.groups && groupsStore.groups.length > 0) {
+        return groupsStore.groups;
+      }
+      
+      // 訪客模式下從 groupMapping 生成組別列表
+      const groupList = [];
+      for (const [id, name] of Object.entries(groupMapping.value)) {
+        groupList.push({ id: parseInt(id), name: name });
+      }
+      return groupList;
+    });
 
     // 可用樓層列表
     const availableFloors = computed(() => {
@@ -194,13 +202,16 @@ export default defineComponent({
           loadWorkersData(),
           getGroupIdToNameMapping(),
         ]);
-        
+
         // 更新資料
         workersData.value = workersResponse;
         groupMapping.value = groupMappingData;
-        
-        // 也載入組別數據用於篩選器
-        await groupsStore.loadGroups();
+
+        // 只有在有 token 時才嘗試載入 groups store
+        const token = localStorage.getItem("auth_token");
+        if (token) {
+          await groupsStore.loadGroups();
+        }
       } catch (error) {
         console.error("載入數據時發生錯誤:", error);
       } finally {
@@ -211,10 +222,18 @@ export default defineComponent({
     // 直接載入工讀生資料
     const loadWorkersData = async () => {
       try {
+        const token = localStorage.getItem("auth_token");
+        const headers = {
+          "Content-Type": "application/json",
+        };
+        
+        // 如果有 token 才添加 Authorization header
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+
         const response = await fetch(getApiUrl("/api/workers"), {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-          },
+          headers: headers,
         });
 
         if (!response.ok) {
@@ -232,10 +251,18 @@ export default defineComponent({
     // 獲取group ID到名稱的映射
     const getGroupIdToNameMapping = async () => {
       try {
+        const token = localStorage.getItem("auth_token");
+        const headers = {
+          "Content-Type": "application/json",
+        };
+        
+        // 如果有 token 才添加 Authorization header
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+
         const response = await fetch(getApiUrl("/api/groups"), {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-          },
+          headers: headers,
         });
 
         if (!response.ok) {

@@ -5,12 +5,12 @@ const { v4: uuidv4 } = require("uuid");
 const moment = require("moment");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const fs = require("fs");
-const path = require("path");
+const { initDatabase } = require("./database");
+const { WorkersDAO, GroupsDAO, UsersDAO } = require("./dao");
 
 const app = express();
 const PORT = process.env.PORT || 3005;
-const JWT_SECRET = "your-secret-key-here"; // 實際專案中應使用環境變數
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-here";
 
 // 中間件
 app.use(
@@ -2013,11 +2013,26 @@ app.use("*", (req, res) => {
   });
 });
 
-// 啟動伺服器，綁定到所有網路介面以支援區域網路存取
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 伺服器運行在 http://0.0.0.0:${PORT}`);
-  console.log(`📱 區域網路存取: http://[你的電腦IP]:${PORT}`);
-  console.log(
-    `💡 要獲取電腦IP，請執行: ipconfig (Windows) 或 ifconfig (Mac/Linux)`,
-  );
-});
+// 啟動伺服器並初始化資料庫
+async function startServer() {
+  try {
+    // 初始化資料庫
+    await initDatabase();
+    
+    // 啟動伺服器
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`🚀 伺服器運行在 http://0.0.0.0:${PORT}`);
+      console.log(`📱 區域網路存取: http://[你的電腦IP]:${PORT}`);
+      console.log(`💾 使用 PostgreSQL 資料庫持久化儲存`);
+      console.log(
+        `💡 要獲取電腦IP，請執行: ipconfig (Windows) 或 ifconfig (Mac/Linux)`,
+      );
+    });
+  } catch (error) {
+    console.error('伺服器啟動失敗:', error);
+    process.exit(1);
+  }
+}
+
+// 啟動伺服器
+startServer();

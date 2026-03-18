@@ -2018,8 +2018,14 @@ app.use("*", (req, res) => {
 // 啟動伺服器並初始化資料庫
 async function startServer() {
   try {
+    console.log("🚀 開始啟動伺服器...");
+    console.log("環境:", process.env.NODE_ENV || "development");
+    console.log("Port:", PORT);
+    
     // 初始化資料庫
+    console.log("📦 初始化資料庫...");
     await initDatabase();
+    console.log("✅ 資料庫初始化成功");
 
     // 啟動伺服器
     app.listen(PORT, "0.0.0.0", () => {
@@ -2027,12 +2033,23 @@ async function startServer() {
       console.log(`📱 區域網路存取: http://[你的電腦IP]:${PORT}`);
       console.log(`💾 使用 PostgreSQL 資料庫持久化儲存`);
       console.log(
-        `💡 要獲取電腦IP，請執行: ipconfig (Windows) 或 ifconfig (Mac/Linux)`,
+        `💡 要獲取電腦IP,請執行: ipconfig (Windows) 或 ifconfig (Mac/Linux)`,
       );
+      console.log(`✅ 伺服器啟動成功!`);
     });
   } catch (error) {
-    console.error("伺服器啟動失敗:", error);
-    process.exit(1);
+    console.error("❌ 伺服器啟動失敗:", error.message);
+    console.error("錯誤堆棧:", error.stack);
+    
+    // 在 Vercel 環境中,即使資料庫連接失敗也要啟動伺服器
+    if (process.env.VERCEL) {
+      console.warn("⚠️ 在 Vercel 環境中檢測到錯誤,嘗試繼續啟動...");
+      app.listen(PORT, "0.0.0.0", () => {
+        console.log(`⚠️ 伺服器已啟動但資料庫未連接: http://0.0.0.0:${PORT}`);
+      });
+    } else {
+      process.exit(1);
+    }
   }
 }
 

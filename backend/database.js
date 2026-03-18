@@ -14,6 +14,12 @@ const pool = new Pool({
 async function initDatabase() {
   try {
     console.log("正在初始化資料庫...");
+    console.log("DATABASE_URL:", process.env.DATABASE_URL ? "已設置" : "未設置");
+    
+    // 測試資料庫連接
+    const client = await pool.connect();
+    console.log("✅ 資料庫連接成功");
+    client.release();
 
     // 創建 users 表
     await pool.query(`
@@ -142,9 +148,19 @@ async function initDatabase() {
       console.log("預設組別已創建");
     }
 
-    console.log("資料庫初始化完成！");
+    console.log("資料庫初始化完成!");
   } catch (error) {
-    console.error("資料庫初始化失敗:", error);
+    console.error("❌ 資料庫初始化失敗:", error.message);
+    console.error("錯誤詳情:", error);
+    
+    // 如果是連接錯誤,提供更詳細的信息
+    if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
+      console.error("⚠️ 無法連接到資料庫,請檢查:");
+      console.error("1. DATABASE_URL 環境變數是否正確設置");
+      console.error("2. 資料庫服務是否正在運行");
+      console.error("3. 網絡連接是否正常");
+    }
+    
     throw error;
   }
 }

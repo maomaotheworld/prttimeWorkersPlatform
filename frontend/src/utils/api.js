@@ -5,7 +5,9 @@ import { ElMessage } from "element-plus";
 const getBaseURL = () => {
   // 如果有設定環境變數,使用環境變數
   if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
+    // 確保 URL 以 /api 結尾
+    const url = import.meta.env.VITE_API_URL;
+    return url.endsWith('/api') ? url : `${url}/api`;
   }
 
   // 開發環境:本地環境使用代理

@@ -20,6 +20,7 @@
 ### 2. 設置環境變數
 
 在 Railway 的環境變數中添加：
+
 - `DATABASE_URL`: (Railway 會自動生成)
 - `JWT_SECRET`: 一個安全的密鑰字串 (例如: `super-secret-jwt-key-2024`)
 - `NODE_ENV`: `production`
@@ -36,6 +37,7 @@
 ### 4. 資料庫自動初始化
 
 新版本會自動：
+
 - 創建所需的資料表
 - 設置預設管理員帳戶 (用戶名: evelyn, 密碼: evelyn123)
 - 創建預設組別
@@ -43,6 +45,7 @@
 ## 資料表結構
 
 系統會自動創建以下資料表：
+
 - `users`: 使用者帳戶
 - `workers`: 工讀生資料
 - `groups`: 組別資料

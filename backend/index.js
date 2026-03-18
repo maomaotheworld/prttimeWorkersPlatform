@@ -2018,7 +2018,7 @@ async function startServer() {
   try {
     // 初始化資料庫
     await initDatabase();
-    
+
     // 啟動伺服器
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 伺服器運行在 http://0.0.0.0:${PORT}`);
@@ -2029,7 +2029,7 @@ async function startServer() {
       );
     });
   } catch (error) {
-    console.error('伺服器啟動失敗:', error);
+    console.error("伺服器啟動失敗:", error);
     process.exit(1);
   }
 }

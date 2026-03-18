@@ -135,7 +135,7 @@ export default defineComponent({
     const filterFloor = ref("");
     const filterGroup = ref("");
     const loading = ref(false);
-    
+
     // PersonnelList 專用的響應式資料
     const workersData = ref([]);
     const groupsData = ref([]);
@@ -143,11 +143,11 @@ export default defineComponent({
     // 計算屬性 - 使用本地的響應式資料
     const workers = computed(() => workersData.value);
     const groups = computed(() => groupsData.value);
-    
+
     // 組別映射 - 從 groupsData 創建 ID 到名稱的映射
     const groupMapping = computed(() => {
       const mapping = {};
-      groupsData.value.forEach(group => {
+      groupsData.value.forEach((group) => {
         mapping[group.id] = group.name;
       });
       return mapping;
@@ -166,7 +166,7 @@ export default defineComponent({
       console.log("PersonnelList: 計算 filteredWorkers");
       console.log("PersonnelList: workers.value:", workers.value);
       console.log("PersonnelList: groupMapping.value:", groupMapping.value);
-      
+
       let result = workers.value.map((worker) => ({
         ...worker,
         groupName: groupMapping.value[worker.groupId] || worker.group || "",
@@ -203,12 +203,13 @@ export default defineComponent({
     const loadWorkersForGuests = async () => {
       try {
         console.log("PersonnelList: 正在載入工讀生資料（訪客模式）");
-        
+
         // 直接構建完整 URL，避免 getApiUrl 的問題
-        const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3005";
+        const API_BASE_URL =
+          import.meta.env.VITE_API_URL || "http://localhost:3005";
         const fullUrl = `${API_BASE_URL}/api/workers`;
         console.log("PersonnelList: 完整 API URL:", fullUrl);
-        
+
         console.log("PersonnelList: 準備發送 fetch 請求...");
         const response = await fetch(fullUrl, {
           method: "GET",
@@ -217,21 +218,32 @@ export default defineComponent({
           },
         });
 
-        console.log("PersonnelList: Workers API 回應狀態:", response.status, response.statusText);
+        console.log(
+          "PersonnelList: Workers API 回應狀態:",
+          response.status,
+          response.statusText,
+        );
         console.log("PersonnelList: Workers API response object:", response);
-        console.log("PersonnelList: Response headers:", [...response.headers.entries()]);
+        console.log("PersonnelList: Response headers:", [
+          ...response.headers.entries(),
+        ]);
 
         if (!response.ok && response.status !== 304) {
-          throw new Error(`載入工讀生失敗: ${response.status} ${response.statusText}`);
+          throw new Error(
+            `載入工讀生失敗: ${response.status} ${response.statusText}`,
+          );
         }
 
         console.log("PersonnelList: 準備解析 JSON...");
         const result = await response.json();
         console.log("PersonnelList: 收到工讀生資料:", result);
-        
+
         if (result && result.success && result.data) {
           workersData.value = result.data;
-          console.log("PersonnelList: 工讀生資料更新完成，數量:", result.data.length);
+          console.log(
+            "PersonnelList: 工讀生資料更新完成，數量:",
+            result.data.length,
+          );
           return result.data;
         } else {
           console.error("PersonnelList: API 回應格式錯誤:", result);
@@ -251,35 +263,47 @@ export default defineComponent({
     const loadGroupsForGuests = async () => {
       try {
         console.log("PersonnelList: 正在載入組別資料（訪客模式）");
-        
+
         // 直接構建完整 URL，避免 getApiUrl 的問題
-        const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3005";
+        const API_BASE_URL =
+          import.meta.env.VITE_API_URL || "http://localhost:3005";
         const fullUrl = `${API_BASE_URL}/api/groups`;
         console.log("PersonnelList: 完整 Groups API URL:", fullUrl);
-        
+
         console.log("PersonnelList: 準備發送 Groups fetch 請求...");
         const response = await fetch(fullUrl, {
-          method: "GET", 
+          method: "GET",
           headers: {
             "Content-Type": "application/json",
           },
         });
 
-        console.log("PersonnelList: Groups API 回應狀態:", response.status, response.statusText);
+        console.log(
+          "PersonnelList: Groups API 回應狀態:",
+          response.status,
+          response.statusText,
+        );
         console.log("PersonnelList: Groups API response object:", response);
-        console.log("PersonnelList: Groups Response headers:", [...response.headers.entries()]);
+        console.log("PersonnelList: Groups Response headers:", [
+          ...response.headers.entries(),
+        ]);
 
         if (!response.ok && response.status !== 304) {
-          throw new Error(`載入組別失敗: ${response.status} ${response.statusText}`);
+          throw new Error(
+            `載入組別失敗: ${response.status} ${response.statusText}`,
+          );
         }
 
         console.log("PersonnelList: 準備解析 Groups JSON...");
         const result = await response.json();
         console.log("PersonnelList: 收到組別資料:", result);
-        
+
         if (result && result.success && result.data) {
           groupsData.value = result.data;
-          console.log("PersonnelList: 組別資料更新完成，數量:", result.data.length);
+          console.log(
+            "PersonnelList: 組別資料更新完成，數量:",
+            result.data.length,
+          );
           return result.data;
         } else {
           console.error("PersonnelList: Groups API 回應格式錯誤:", result);
@@ -299,22 +323,34 @@ export default defineComponent({
     // 方法 - 專為訪客模式設計的載入邏輯
     const loadData = async () => {
       console.log("PersonnelList: 開始載入數據（訪客模式）...");
-      console.log("PersonnelList: 環境變數 VITE_API_URL:", import.meta.env.VITE_API_URL);
+      console.log(
+        "PersonnelList: 環境變數 VITE_API_URL:",
+        import.meta.env.VITE_API_URL,
+      );
       console.log("PersonnelList: 所有環境變數:", import.meta.env);
       loading.value = true;
       try {
         // 分別載入，不使用 Promise.all，方便除錯
         console.log("PersonnelList: 開始載入工讀生資料...");
         const workersResult = await loadWorkersForGuests();
-        console.log("PersonnelList: 工讀生載入結果:", workersResult?.length || 0);
-        
+        console.log(
+          "PersonnelList: 工讀生載入結果:",
+          workersResult?.length || 0,
+        );
+
         console.log("PersonnelList: 開始載入組別資料...");
         const groupsResult = await loadGroupsForGuests();
         console.log("PersonnelList: 組別載入結果:", groupsResult?.length || 0);
-        
+
         console.log("PersonnelList: 所有數據載入完成");
-        console.log("PersonnelList: 最終工讀生數據:", workersData.value?.length || 0);
-        console.log("PersonnelList: 最終組別數據:", groupsData.value?.length || 0);
+        console.log(
+          "PersonnelList: 最終工讀生數據:",
+          workersData.value?.length || 0,
+        );
+        console.log(
+          "PersonnelList: 最終組別數據:",
+          groupsData.value?.length || 0,
+        );
       } catch (error) {
         console.error("PersonnelList: 載入數據失敗:", error);
       } finally {

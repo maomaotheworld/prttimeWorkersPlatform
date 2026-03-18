@@ -1,16 +1,20 @@
-const { Pool } = require('pg');
+const { Pool } = require("pg");
 
 // 資料庫連接池配置
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://localhost:5432/workers_db',
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  connectionString:
+    process.env.DATABASE_URL || "postgresql://localhost:5432/workers_db",
+  ssl:
+    process.env.NODE_ENV === "production"
+      ? { rejectUnauthorized: false }
+      : false,
 });
 
 // 資料庫初始化
 async function initDatabase() {
   try {
-    console.log('正在初始化資料庫...');
-    
+    console.log("正在初始化資料庫...");
+
     // 創建 users 表
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
@@ -70,7 +74,7 @@ async function initDatabase() {
       )
     `);
 
-    // 創建 activity_logs 表  
+    // 創建 activity_logs 表
     await pool.query(`
       CREATE TABLE IF NOT EXISTS activity_logs (
         id SERIAL PRIMARY KEY,
@@ -83,55 +87,64 @@ async function initDatabase() {
 
     // 檢查是否需要創建預設管理員帳戶
     const adminExists = await pool.query(
-      "SELECT id FROM users WHERE role = 'admin' LIMIT 1"
+      "SELECT id FROM users WHERE role = 'admin' LIMIT 1",
     );
 
     if (adminExists.rows.length === 0) {
-      console.log('創建預設管理員帳戶...');
-      const bcrypt = require('bcryptjs');
-      const hashedPassword = await bcrypt.hash('evelyn123', 10);
-      
-      await pool.query(`
+      console.log("創建預設管理員帳戶...");
+      const bcrypt = require("bcryptjs");
+      const hashedPassword = await bcrypt.hash("evelyn123", 10);
+
+      await pool.query(
+        `
         INSERT INTO users (id, username, password, role, permissions)
         VALUES ($1, $2, $3, $4, $5)
-      `, [
-        'admin001',
-        'evelyn',
-        hashedPassword,
-        'admin',
-        JSON.stringify({
-          canManageUsers: true,
-          canEditWorkers: true,
-          canImportData: true,
-          canClockIn: true,
-          canEditTime: true,
-          canViewReports: true,
-          canDeleteData: true
-        })
-      ]);
-      console.log('預設管理員帳戶已創建: 用戶名 evelyn, 密碼 evelyn123');
+      `,
+        [
+          "admin001",
+          "evelyn",
+          hashedPassword,
+          "admin",
+          JSON.stringify({
+            canManageUsers: true,
+            canEditWorkers: true,
+            canImportData: true,
+            canClockIn: true,
+            canEditTime: true,
+            canViewReports: true,
+            canDeleteData: true,
+          }),
+        ],
+      );
+      console.log("預設管理員帳戶已創建: 用戶名 evelyn, 密碼 evelyn123");
     }
 
     // 檢查是否需要創建預設組別
     const groupsExists = await pool.query("SELECT id FROM groups LIMIT 1");
     if (groupsExists.rows.length === 0) {
-      console.log('創建預設組別...');
+      console.log("創建預設組別...");
       const defaultGroups = [
-        '數學組', '英文組', '理化組', '國文組', '社會組', '生物組', '地科組'
+        "數學組",
+        "英文組",
+        "理化組",
+        "國文組",
+        "社會組",
+        "生物組",
+        "地科組",
       ];
 
       for (const groupName of defaultGroups) {
         await pool.query(
-          'INSERT INTO groups (name, description) VALUES ($1, $2)',
-          [groupName, `${groupName}的工讀生`]
+          "INSERT INTO groups (name, description) VALUES ($1, $2)",
+          [groupName, `${groupName}的工讀生`],
         );
       }
-      console.log('預設組別已創建');
+      console.log("預設組別已創建");
     }
 
-    console.log('資料庫初始化完成！');
+    console.log("資料庫初始化完成！");
   } catch (error) {
-    console.error('資料庫初始化失敗:', error);
+    console.error("資料庫初始化失敗:", error);
     throw error;
   }
 }
@@ -139,5 +152,5 @@ async function initDatabase() {
 // 導出資料庫連接池和初始化函數
 module.exports = {
   pool,
-  initDatabase
+  initDatabase,
 };

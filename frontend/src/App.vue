@@ -259,6 +259,12 @@ const desktopNavs = [
     iconComponent: Setting,
     adminOnly: true,
   },
+  {
+    path: "/permissions-matrix",
+    name: "權限矩陣",
+    iconComponent: Setting,
+    evelynOnly: true,
+  },
 ];
 
 const visibleDesktopNavs = computed(() => {
@@ -280,6 +286,11 @@ const visibleDesktopNavs = computed(() => {
       !localStorage.getItem("auth_token")
     ) {
       return false;
+    }
+
+    // 如果是 Evelyn 專用選項，只顯示給 Evelyn
+    if (nav.evelynOnly) {
+      return authStore.isEvelyn;
     }
 
     // 如果是管理員專用選項，檢查是否為管理員或 evelyn
@@ -322,6 +333,12 @@ const mobileNavs = [
     adminOnly: true,
   },
   {
+    path: "/permissions-matrix",
+    name: "權限",
+    icon: "Setting",
+    evelynOnly: true,
+  },
+  {
     path: "/groups",
     name: "組別",
     icon: "UserFilled",
@@ -348,6 +365,11 @@ const visibleMobileNavs = computed(() => {
       !localStorage.getItem("auth_token")
     ) {
       return false;
+    }
+
+    // 如果是 Evelyn 專用選項，只顯示給 Evelyn
+    if (nav.evelynOnly) {
+      return authStore.isEvelyn;
     }
 
     // 如果是管理員專用選項，檢查是否為管理員或 evelyn

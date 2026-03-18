@@ -102,6 +102,17 @@ const routes = [
       requiredPermission: "canManageUsers",
     },
   },
+  {
+    path: "/permissions-matrix",
+    name: "PermissionsMatrix",
+    component: () => import("../views/PermissionsMatrix.vue"),
+    meta: {
+      title: "權限矩陣",
+      requiresAuth: true,
+      allowedRoles: ["admin"],
+      evelynOnly: true,
+    },
+  },
 ];
 
 const router = createRouter({

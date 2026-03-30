@@ -414,6 +414,67 @@ const createSessionRow = (session = {}) => ({
   clockOut: session.clockOut || "",
 });
 
+const updateWorkerClockingState = (workerId, value) => {
+  const targetWorker = filteredWorkers.value.find((item) => item.id === workerId);
+  if (targetWorker) {
+    targetWorker.clocking = value;
+  }
+};
+
+const applyAttendanceRecordToWorker = (worker, record) => {
+  const existingSessions = getTodaySessions(worker.todayAttendance).map((session) => ({
+    ...session,
+  }));
+  const sessionIndex = existingSessions.findIndex((session) => session.id === record.id);
+  const nextSession = {
+    id: record.id,
+    date: record.date,
+    clockIn: record.clockIn || null,
+    clockOut: record.clockOut || null,
+    totalHours: record.totalHours || 0,
+    additionalHours: record.additionalHours || 0,
+    note: record.note || "",
+  };
+
+  if (sessionIndex === -1) {
+    existingSessions.push(nextSession);
+  } else {
+    existingSessions[sessionIndex] = nextSession;
+  }
+
+  existingSessions.sort((a, b) => {
+    const aTime = a.clockIn || a.clockOut || a.date;
+    const bTime = b.clockIn || b.clockOut || b.date;
+    return new Date(aTime) - new Date(bTime);
+  });
+
+  const openSession = [...existingSessions]
+    .reverse()
+    .find((session) => session.clockIn && !session.clockOut);
+  const firstClockIn = existingSessions.find((session) => session.clockIn)?.clockIn || null;
+  const lastClockOut = openSession
+    ? null
+    : [...existingSessions].reverse().find((session) => session.clockOut)?.clockOut || null;
+
+  worker.todayAttendance = {
+    date: moment(record.date).format("YYYY-MM-DD"),
+    clockIn: firstClockIn,
+    clockOut: lastClockOut,
+    sessions: existingSessions,
+    sessionCount: existingSessions.filter((session) => session.clockIn).length,
+    totalHours: parseFloat(
+      existingSessions.reduce((sum, session) => sum + (session.totalHours || 0), 0).toFixed(2),
+    ),
+    totalAdditionalHours: parseFloat(
+      existingSessions
+        .reduce((sum, session) => sum + (session.additionalHours || 0), 0)
+        .toFixed(2),
+    ),
+    hasOpenSession: !!openSession,
+    openSessionId: openSession?.id || null,
+  };
+};
+
 const updateCurrentTime = () => {
   currentTime.value = moment().format("YYYY/MM/DD HH:mm:ss");
 };
@@ -467,12 +528,10 @@ const filterWorkers = () => {
 
   // 為每位工讀生添加今日出勤狀態，保持現有的clocking狀態
   filteredWorkers.value = filtered.map((worker) => {
-    // 查找現有的工讀生記錄以保持clocking狀態
-    const existing = filteredWorkers.value.find((fw) => fw.id === worker.id);
     return {
       ...worker,
       todayAttendance: worker.todayAttendance || null,
-      clocking: existing?.clocking || false, // 保持現有的clocking狀態
+      clocking: false,
     };
   });
 
@@ -506,6 +565,8 @@ const handleQuickClock = async (worker, type) => {
 
     if (data.success) {
       ElMessage.success(`${worker.name} ${action}打卡成功`);
+      applyAttendanceRecordToWorker(worker, data.data);
+      updateWorkerClockingState(worker.id, false);
 
       // 重新載入數據確保同步
       await refreshData();
@@ -517,6 +578,7 @@ const handleQuickClock = async (worker, type) => {
     ElMessage.error(`${worker.name} 打卡失敗: ` + (error.message || error));
   } finally {
     worker.clocking = false;
+    updateWorkerClockingState(worker.id, false);
   }
 };
 

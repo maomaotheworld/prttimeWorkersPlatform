@@ -391,7 +391,18 @@
           <el-input v-model="workerForm.name" placeholder="請輸入姓名" />
         </el-form-item>
         <el-form-item label="組別" prop="group">
-          <el-input v-model="workerForm.group" placeholder="請輸入組別" />
+          <el-select
+            v-model="workerForm.group"
+            placeholder="請選擇組別"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="group in allGroups"
+              :key="group.id"
+              :label="group.name"
+              :value="group.id"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="樓層" prop="floor">
           <el-input v-model="workerForm.floor" placeholder="請輸入樓層" />
@@ -625,6 +636,7 @@ interface Worker {
   id: string;
   workerNumber: string;
   name: string;
+  groupId?: string;
   group: string;
   floor: string;
   hourlyWage: number;
@@ -737,7 +749,7 @@ const workerForm = reactive({
 const workerRules = {
   workerNumber: [{ required: true, message: "請輸入編號", trigger: "blur" }],
   name: [{ required: true, message: "請輸入姓名", trigger: "blur" }],
-  group: [{ required: true, message: "請輸入組別", trigger: "blur" }],
+  group: [{ required: true, message: "請選擇組別", trigger: "change" }],
   floor: [{ required: true, message: "請輸入樓層", trigger: "blur" }],
   hourlyWage: [{ required: true, message: "請輸入時薪", trigger: "blur" }],
   baseHours: [{ required: true, message: "請輸入基本時數", trigger: "blur" }],
@@ -905,6 +917,7 @@ const fetchWorkers = async () => {
         id: worker.id,
         workerNumber: worker.number || worker.workerNumber || "",
         name: worker.name || "",
+        groupId: worker.groupId || "",
         group: groupMapping[worker.groupId] || worker.group || "",
         floor: worker.floor || "",
         job: worker.job || "", // 新增工作欄位映射
@@ -1198,7 +1211,10 @@ const showEditWorker = (worker: Worker) => {
   workerForm.id = worker.id || worker._id || "";
   workerForm.workerNumber = worker.workerNumber || worker.worker_number || "";
   workerForm.name = worker.name || "";
-  workerForm.group = worker.group || "";
+  workerForm.group =
+    worker.groupId ||
+    allGroups.value.find((group) => group.name === worker.group)?.id ||
+    "";
   workerForm.floor = worker.floor || "";
   workerForm.job = worker.job || ""; // 新增工作欄位映射
   workerForm.hourlyWage =

@@ -116,6 +116,7 @@ export const useWorkersStore = defineStore("workers", () => {
       if (result.success && result.data) {
         result.data.forEach((group) => {
           mapping[group.name] = group.id;
+          mapping[group.id] = group.id;
         });
       }
 
@@ -133,6 +134,8 @@ export const useWorkersStore = defineStore("workers", () => {
       // 獲取group映射
       const groupMapping = await getGroupMapping();
       console.log("Workers store: Group映射", groupMapping);
+      const resolvedGroupId =
+        groupMapping[workerData.group] || workerData.group || "group-1";
 
       // 根據後端API格式準備數據
       const requestData = {
@@ -140,7 +143,7 @@ export const useWorkersStore = defineStore("workers", () => {
         name: String(workerData.name || "").trim(),
         baseHourlyWage: Number(workerData.hourlyWage) || 0,
         baseWorkingHours: Number(workerData.baseHours) || 8,
-        groupId: groupMapping[workerData.group] || "group-1", // 如果找不到對應組別，使用預設值
+        groupId: resolvedGroupId,
         floor: String(workerData.floor || "").trim(),
         job: String(workerData.job || "").trim(), // 新增工作欄位
         // 設置預設值
@@ -198,6 +201,8 @@ export const useWorkersStore = defineStore("workers", () => {
       // 獲取group映射
       const groupMapping = await getGroupMapping();
       console.log("Workers store: Group映射", groupMapping);
+      const resolvedGroupId =
+        groupMapping[workerData.group] || workerData.group || "group-1";
 
       // 根據後端API格式準備數據
       const requestData = {
@@ -205,7 +210,7 @@ export const useWorkersStore = defineStore("workers", () => {
         name: String(workerData.name || "").trim(),
         baseHourlyWage: Number(workerData.hourlyWage) || 0,
         baseWorkingHours: Number(workerData.baseHours) || 8,
-        groupId: groupMapping[workerData.group] || "group-1", // 如果找不到對應組別，使用預設值
+        groupId: resolvedGroupId,
         floor: String(workerData.floor || "").trim(),
         job: String(workerData.job || "").trim(), // 新增工作欄位
         // 保持其他欄位不變

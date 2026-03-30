@@ -194,7 +194,7 @@
         <el-table-column
           fixed="right"
           label="操作"
-          :width="isMobile ? '60' : '200'"
+          :width="isMobile ? '60' : '280'"
         >
           <template #default="{ row }">
             <!-- 桌面版：顯示所有按鈕 -->
@@ -212,6 +212,13 @@
                 @click="showAdjustHours(row)"
               >
                 工時
+              </el-button>
+              <el-button
+                size="small"
+                type="success"
+                @click="showSalaryAdjust(row)"
+              >
+                加薪
               </el-button>
               <el-button size="small" type="danger" @click="confirmDelete(row)">
                 刪除
@@ -234,6 +241,9 @@
                     </el-dropdown-item>
                     <el-dropdown-item command="hours">
                       <el-icon><Clock /></el-icon>調整工時
+                    </el-dropdown-item>
+                    <el-dropdown-item command="salary">
+                      加薪 / 減薪
                     </el-dropdown-item>
                     <el-dropdown-item command="delete" divided>
                       <el-icon><Delete /></el-icon>刪除
@@ -552,11 +562,59 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <el-dialog
+      v-model="showSalaryAdjustDialog"
+      title="薪資調整"
+      width="420px"
+    >
+      <div v-if="salaryWorker" style="margin-bottom: 16px">
+        <strong>{{ salaryWorker.workerNumber }} - {{ salaryWorker.name }}</strong>
+      </div>
+
+      <el-form label-width="90px">
+        <el-form-item label="調整類型">
+          <el-radio-group v-model="salaryForm.type">
+            <el-radio label="increase">加薪</el-radio>
+            <el-radio label="decrease">減薪</el-radio>
+          </el-radio-group>
+        </el-form-item>
+
+        <el-form-item label="調整金額">
+          <el-input-number
+            v-model="salaryForm.amount"
+            :min="1"
+            :step="100"
+            style="width: 100%"
+          />
+        </el-form-item>
+
+        <el-form-item label="調整原因">
+          <el-input
+            v-model="salaryForm.reason"
+            type="textarea"
+            :rows="3"
+            placeholder="請輸入加薪或減薪原因"
+          />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="showSalaryAdjustDialog = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="salaryAdjusting"
+          @click="submitSalaryAdjust"
+        >
+          確認
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from "vue";
+import { ref, reactive, computed, onMounted, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Edit, Delete, Clock, ArrowDown } from "@element-plus/icons-vue";
 import * as XLSX from "xlsx";
@@ -577,11 +635,36 @@ interface Worker {
 const workersStore = useWorkersStore();
 const workers = ref<Worker[]>([]);
 const loading = ref(false);
+const WORKERS_FILTER_STORAGE_KEY = "workers-page-filters";
 
 // 篩選相關
 const filterType = ref("all"); // 'all', 'group', 'floor'
 const selectedGroup = ref("");
 const selectedFloor = ref("");
+const restoreWorkersFilters = () => {
+  try {
+    const savedFilters = localStorage.getItem(WORKERS_FILTER_STORAGE_KEY);
+    if (!savedFilters) return;
+
+    const parsedFilters = JSON.parse(savedFilters);
+    filterType.value = parsedFilters.filterType || "all";
+    selectedGroup.value = parsedFilters.selectedGroup || "";
+    selectedFloor.value = parsedFilters.selectedFloor || "";
+  } catch (error) {
+    console.warn("恢復工讀生篩選條件失敗:", error);
+  }
+};
+
+const persistWorkersFilters = () => {
+  localStorage.setItem(
+    WORKERS_FILTER_STORAGE_KEY,
+    JSON.stringify({
+      filterType: filterType.value,
+      selectedGroup: selectedGroup.value,
+      selectedFloor: selectedFloor.value,
+    }),
+  );
+};
 
 // 手機版當前編輯工讀生
 const currentEditingWorker = ref<Worker | null>(null);
@@ -676,6 +759,14 @@ const batchAccumulatedHoursForm = reactive({
   hours: 1,
   reason: "",
 });
+const showSalaryAdjustDialog = ref(false);
+const salaryAdjusting = ref(false);
+const salaryWorker = ref<Worker | null>(null);
+const salaryForm = reactive({
+  type: "increase",
+  amount: 100,
+  reason: "",
+});
 
 // 手機版操作處理
 const handleMobileAction = (command: string, row: Worker) => {
@@ -685,6 +776,9 @@ const handleMobileAction = (command: string, row: Worker) => {
       break;
     case "hours":
       showAdjustHours(row);
+      break;
+    case "salary":
+      showSalaryAdjust(row);
       break;
     case "delete":
       confirmDelete(row);
@@ -736,6 +830,60 @@ const resetFilter = () => {
   filterType.value = "all";
   selectedGroup.value = "";
   selectedFloor.value = "";
+  persistWorkersFilters();
+};
+
+const showSalaryAdjust = (worker: Worker) => {
+  salaryWorker.value = worker;
+  salaryForm.type = "increase";
+  salaryForm.amount = 100;
+  salaryForm.reason = "";
+  showSalaryAdjustDialog.value = true;
+};
+
+const submitSalaryAdjust = async () => {
+  if (!salaryWorker.value) return;
+  if (!salaryForm.reason.trim()) {
+    ElMessage.warning("請填寫調整原因");
+    return;
+  }
+  if (!salaryForm.amount || salaryForm.amount <= 0) {
+    ElMessage.warning("調整金額必須大於 0");
+    return;
+  }
+
+  try {
+    salaryAdjusting.value = true;
+
+    const token = localStorage.getItem("auth_token");
+    const response = await fetch(getApiUrl("/api/salary-adjustments"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        workerId: salaryWorker.value.id,
+        type: salaryForm.type,
+        amount: salaryForm.amount,
+        reason: salaryForm.reason,
+      }),
+    });
+
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || "薪資調整失敗");
+    }
+
+    ElMessage.success(
+      `${salaryWorker.value.name}${salaryForm.type === "increase" ? "加薪" : "減薪"}紀錄已建立`,
+    );
+    showSalaryAdjustDialog.value = false;
+  } catch (error: any) {
+    ElMessage.error("薪資調整失敗: " + (error.message || error));
+  } finally {
+    salaryAdjusting.value = false;
+  }
 };
 
 const fetchWorkers = async () => {
@@ -1298,9 +1446,14 @@ const submitBatchWage = async () => {
 };
 
 onMounted(async () => {
+  restoreWorkersFilters();
   await fetchWorkers();
   // 載入組別數據用於篩選
   await workersStore.fetchGroups();
+});
+
+watch([filterType, selectedGroup, selectedFloor], () => {
+  persistWorkersFilters();
 });
 </script>
 

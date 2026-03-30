@@ -7,7 +7,7 @@ export const useWorkersStore = defineStore("workers", () => {
   const groups = ref([]);
   const loading = ref(false);
 
-  const fetchWorkers = async () => {
+  const fetchWorkers = async (options = {}) => {
     try {
       loading.value = true;
       console.log("Workers store: 獲取工讀生列表");
@@ -23,7 +23,19 @@ export const useWorkersStore = defineStore("workers", () => {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const response = await fetch(getApiUrl("/api/workers"), {
+      const searchParams = new URLSearchParams();
+      if (options.includeTodayAttendance) {
+        searchParams.set("includeTodayAttendance", "true");
+      }
+      if (options.date) {
+        searchParams.set("date", options.date);
+      }
+
+      const workersEndpoint = searchParams.size
+        ? `/api/workers?${searchParams.toString()}`
+        : "/api/workers";
+
+      const response = await fetch(getApiUrl(workersEndpoint), {
         method: "GET",
         headers: headers,
       });

@@ -7,7 +7,7 @@ const { v4: uuidv4 } = require("uuid");
 const moment = require("moment");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const { initDatabase } = require("./database");
+const { initDatabase, getAppState, saveAppState } = require("./database");
 const { WorkersDAO, GroupsDAO, UsersDAO } = require("./dao");
 
 const app = express();
@@ -33,6 +33,19 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // 資料檔案路徑
 const dataDir = path.join(__dirname, "data");
 const usersFilePath = path.join(dataDir, "users.json");
+const workersFilePath = path.join(dataDir, "workers.json");
+const groupsFilePath = path.join(dataDir, "groups.json");
+const timeRecordsFilePath = path.join(dataDir, "timeRecords.json");
+const salaryAdjustmentsFilePath = path.join(
+  dataDir,
+  "salaryAdjustments.json",
+);
+
+const DEFAULT_GROUPS = [
+  { id: "group-1", name: "前台組", description: "負責前台接待工作" },
+  { id: "group-2", name: "後台組", description: "負責後台作業" },
+  { id: "group-3", name: "清潔組", description: "負責環境清潔維護" },
+];
 
 // 確保資料目錄存在
 if (!fs.existsSync(dataDir)) {
@@ -63,126 +76,109 @@ function saveUsers(userData) {
 
 let usersData = loadUsers();
 
-// 載入工作人員數據
-function loadWorkers() {
-  try {
-    const data = fs.readFileSync(
-      path.join(__dirname, "data", "workers.json"),
-      "utf8",
-    );
-    const loadedWorkers = JSON.parse(data);
-
-    // 確保每個工讀生都有 job 欄位
-    return loadedWorkers.map((worker) => ({
-      ...worker,
-      job: worker.job || "", // 如果沒有 job 欄位，設為空字串
-    }));
-  } catch (err) {
-    console.log("無法載入工作人員數據，使用空陣列:", err.message);
-    return [];
-  }
+function cloneData(data) {
+  return JSON.parse(JSON.stringify(data));
 }
 
-// 儲存工作人員數據
-function saveWorkers() {
+function readJsonFile(filePath, fallbackValue) {
   try {
-    fs.writeFileSync(
-      path.join(__dirname, "data", "workers.json"),
-      JSON.stringify(workers, null, 2),
-    );
-  } catch (err) {
-    console.error("儲存工作人員數據失敗:", err);
-  }
-}
-
-// 載入組別數據
-function loadGroups() {
-  try {
-    const data = fs.readFileSync(
-      path.join(__dirname, "data", "groups.json"),
-      "utf8",
-    );
+    const data = fs.readFileSync(filePath, "utf8");
     return JSON.parse(data);
   } catch (err) {
-    console.log("無法載入組別數據,使用預設組別:", err.message);
-    return [
-      { id: "group-1", name: "前台組", description: "負責前台接待工作" },
-      { id: "group-2", name: "後台組", description: "負責後台作業" },
-      { id: "group-3", name: "清潔組", description: "負責環境清潔維護" },
-    ];
+    return cloneData(fallbackValue);
   }
 }
 
-// 儲存組別數據
-function saveGroups() {
+function normalizeWorkers(workerList = []) {
+  return workerList.map((worker) => ({
+    ...worker,
+    job: worker.job || "",
+  }));
+}
+
+async function loadPersistedCollection(
+  stateKey,
+  filePath,
+  fallbackValue,
+  normalize = (value) => value,
+) {
   try {
-    fs.writeFileSync(
-      path.join(__dirname, "data", "groups.json"),
-      JSON.stringify(groups, null, 2),
-    );
-  } catch (err) {
-    console.error("儲存組別數據失敗:", err);
+    const dbState = await getAppState(stateKey);
+    if (dbState !== null) {
+      return normalize(dbState);
+    }
+
+    const fileState = normalize(readJsonFile(filePath, fallbackValue));
+    await saveAppState(stateKey, fileState);
+    return fileState;
+  } catch (error) {
+    console.error(`載入 ${stateKey} 持久化資料失敗:`, error);
+    throw error;
   }
 }
 
-// 載入工時記錄數據
-function loadTimeRecords() {
+async function persistCollection(stateKey, filePath, data) {
+  const snapshot = cloneData(data);
+  await saveAppState(stateKey, snapshot);
+
   try {
-    const data = fs.readFileSync(
-      path.join(__dirname, "data", "timeRecords.json"),
-      "utf8",
-    );
-    return JSON.parse(data);
+    fs.writeFileSync(filePath, JSON.stringify(snapshot, null, 2));
   } catch (err) {
-    console.log("無法載入工時記錄數據,使用空陣列:", err.message);
-    return [];
+    console.warn(`同步 ${stateKey} 到本機備份檔失敗:`, err.message);
   }
 }
 
-// 儲存工時記錄數據
-function saveTimeRecords() {
-  try {
-    fs.writeFileSync(
-      path.join(__dirname, "data", "timeRecords.json"),
-      JSON.stringify(timeRecords, null, 2),
-    );
-  } catch (err) {
-    console.error("儲存工時記錄數據失敗:", err);
-  }
+async function initializeAppData() {
+  workers = await loadPersistedCollection(
+    "workers",
+    workersFilePath,
+    [],
+    normalizeWorkers,
+  );
+  groups = await loadPersistedCollection(
+    "groups",
+    groupsFilePath,
+    DEFAULT_GROUPS,
+  );
+  timeRecords = await loadPersistedCollection(
+    "timeRecords",
+    timeRecordsFilePath,
+    [],
+  );
+  salaryAdjustments = await loadPersistedCollection(
+    "salaryAdjustments",
+    salaryAdjustmentsFilePath,
+    [],
+  );
 }
 
-// 載入薪資調整數據
-function loadSalaryAdjustments() {
-  try {
-    const data = fs.readFileSync(
-      path.join(__dirname, "data", "salaryAdjustments.json"),
-      "utf8",
-    );
-    return JSON.parse(data);
-  } catch (err) {
-    console.log("無法載入薪資調整數據,使用空陣列:", err.message);
-    return [];
-  }
+async function saveWorkers() {
+  await persistCollection("workers", workersFilePath, normalizeWorkers(workers));
 }
 
-// 儲存薪資調整數據
-function saveSalaryAdjustments() {
-  try {
-    fs.writeFileSync(
-      path.join(__dirname, "data", "salaryAdjustments.json"),
-      JSON.stringify(salaryAdjustments, null, 2),
-    );
-  } catch (err) {
-    console.error("儲存薪資調整數據失敗:", err);
-  }
+async function saveGroups() {
+  await persistCollection("groups", groupsFilePath, groups);
 }
 
-// 模擬資料庫（實際專案中應使用真實資料庫）
-let workers = loadWorkers();
-let groups = loadGroups();
-let timeRecords = loadTimeRecords();
-let salaryAdjustments = loadSalaryAdjustments();
+async function saveTimeRecords() {
+  await persistCollection("timeRecords", timeRecordsFilePath, timeRecords);
+}
+
+async function saveSalaryAdjustments() {
+  await persistCollection(
+    "salaryAdjustments",
+    salaryAdjustmentsFilePath,
+    salaryAdjustments,
+  );
+}
+
+let workers = [];
+let groups = [];
+let timeRecords = [];
+let salaryAdjustments = [];
 let activityLogs = [];
+const asyncHandler = (handler) => (req, res, next) =>
+  Promise.resolve(handler(req, res, next)).catch(next);
 
 // 日誌記錄輔助函數
 const logActivity = (
@@ -433,7 +429,7 @@ app.get(
   "/api/auth/users",
   authenticateToken,
   requireRole(["admin"]),
-  (req, res) => {
+  asyncHandler(async (req, res) => {
     const users = usersData.users.map((user) => ({
       id: user.id,
       username: user.username,
@@ -444,12 +440,12 @@ app.get(
       createdAt: user.createdAt,
     }));
 
-    res.json({
-      success: true,
-      data: users,
-      message: "用戶列表獲取成功",
-    });
-  },
+  res.json({
+    success: true,
+    data: users,
+    message: "用戶列表獲取成功",
+  });
+  }),
 );
 
 // 新增leader用戶（僅admin）
@@ -457,7 +453,7 @@ app.post(
   "/api/auth/create-leader",
   authenticateToken,
   requireRole(["admin"]),
-  (req, res) => {
+  asyncHandler(async (req, res) => {
     try {
       const { username, password, name, email } = req.body;
 
@@ -529,7 +525,7 @@ app.post(
         error: error.message,
       });
     }
-  },
+  }),
 );
 
 // 新增admin用戶（僅evelyn用戶可用）
@@ -621,7 +617,7 @@ app.delete(
   "/api/auth/users/:id",
   authenticateToken,
   requireRole(["admin"]),
-  (req, res) => {
+  asyncHandler(async (req, res) => {
     try {
       const userId = req.params.id;
 
@@ -664,17 +660,46 @@ app.delete(
         error: error.message,
       });
     }
-  },
+  }),
 );
 
 // API 路由
 
 // === 工讀生管理 ===
+const getWorkersWithTodayAttendance = (
+  targetDate = moment().format("YYYY-MM-DD"),
+) => {
+  const attendanceByWorkerId = new Map();
+
+  timeRecords.forEach((record) => {
+    if (moment(record.date).format("YYYY-MM-DD") !== targetDate) {
+      return;
+    }
+
+    const existingRecord = attendanceByWorkerId.get(record.workerId);
+    if (!existingRecord || new Date(record.date) > new Date(existingRecord.date)) {
+      attendanceByWorkerId.set(record.workerId, record);
+    }
+  });
+
+  return workers.map((worker) => ({
+    ...worker,
+    todayAttendance: attendanceByWorkerId.get(worker.id) || null,
+  }));
+};
+
 // 獲取所有工讀生
 app.get("/api/workers", (req, res) => {
+  const includeTodayAttendance = req.query.includeTodayAttendance === "true";
+  const targetDate = req.query.date
+    ? moment(req.query.date).format("YYYY-MM-DD")
+    : moment().format("YYYY-MM-DD");
+
   res.json({
     success: true,
-    data: workers,
+    data: includeTodayAttendance
+      ? getWorkersWithTodayAttendance(targetDate)
+      : workers,
     message: "工讀生列表獲取成功",
   });
 });
@@ -696,7 +721,9 @@ app.get("/api/workers/:id", (req, res) => {
 });
 
 // 新增工讀生
-app.post("/api/workers", (req, res) => {
+app.post(
+  "/api/workers",
+  asyncHandler(async (req, res) => {
   const {
     number,
     name,
@@ -773,7 +800,7 @@ app.post("/api/workers", (req, res) => {
   };
 
   workers.push(newWorker);
-  saveWorkers();
+    await saveWorkers();
 
   // 記錄活動日誌
   logActivity(
@@ -784,15 +811,18 @@ app.post("/api/workers", (req, res) => {
     `新增工讀生：編號 ${newWorker.number}，樓層 ${newWorker.floor || "未設定"}`,
   );
 
-  res.status(201).json({
-    success: true,
-    data: newWorker,
-    message: "工讀生新增成功",
-  });
-});
+    res.status(201).json({
+      success: true,
+      data: newWorker,
+      message: "工讀生新增成功",
+    });
+  }),
+);
 
 // 更新工讀生
-app.put("/api/workers/:id", (req, res) => {
+app.put(
+  "/api/workers/:id",
+  asyncHandler(async (req, res) => {
   const {
     number,
     name,
@@ -866,7 +896,7 @@ app.put("/api/workers/:id", (req, res) => {
     updatedAt: new Date().toISOString(),
   };
 
-  saveWorkers();
+    await saveWorkers();
 
   // 記錄活動日誌
   logActivity(
@@ -877,15 +907,18 @@ app.put("/api/workers/:id", (req, res) => {
     `更新工讀生資料：編號 ${workers[workerIndex].number}`,
   );
 
-  res.json({
-    success: true,
-    data: workers[workerIndex],
-    message: "工讀生資料更新成功",
-  });
-});
+    res.json({
+      success: true,
+      data: workers[workerIndex],
+      message: "工讀生資料更新成功",
+    });
+  }),
+);
 
 // 刪除工讀生
-app.delete("/api/workers/:id", (req, res) => {
+app.delete(
+  "/api/workers/:id",
+  asyncHandler(async (req, res) => {
   const workerIndex = workers.findIndex((w) => w.id === req.params.id);
 
   if (workerIndex === -1) {
@@ -897,7 +930,7 @@ app.delete("/api/workers/:id", (req, res) => {
 
   const deletedWorker = workers[workerIndex];
   workers.splice(workerIndex, 1);
-  saveWorkers();
+    await saveWorkers();
 
   // 記錄活動日誌
   logActivity(
@@ -908,14 +941,15 @@ app.delete("/api/workers/:id", (req, res) => {
     `刪除工讀生：編號 ${deletedWorker.number}`,
   );
 
-  res.json({
-    success: true,
-    message: "工讀生刪除成功",
-  });
-});
+    res.json({
+      success: true,
+      message: "工讀生刪除成功",
+    });
+  }),
+);
 
 // 調整個別工讀生的累積工時
-app.post("/api/workers/:id/additional-hours", authenticateToken, (req, res) => {
+app.post("/api/workers/:id/additional-hours", authenticateToken, asyncHandler(async (req, res) => {
   const workerId = req.params.id;
   const { type, hours, reason } = req.body;
 
@@ -1001,7 +1035,7 @@ app.post("/api/workers/:id/additional-hours", authenticateToken, (req, res) => {
     timeRecords[recordIndex].adjustedAt = new Date().toISOString();
   }
 
-  saveTimeRecords();
+  await saveTimeRecords();
 
   // 記錄活動日誌
   const actionText = type === "add" ? "增加" : "減少";
@@ -1022,10 +1056,10 @@ app.post("/api/workers/:id/additional-hours", authenticateToken, (req, res) => {
     },
     message: `成功${actionText} ${Math.abs(adjustHours)} 小時`,
   });
-});
+}));
 
 // 批次更新工讀生薪資時數
-app.put("/api/workers/batch-update-wage", (req, res) => {
+app.put("/api/workers/batch-update-wage", asyncHandler(async (req, res) => {
   const { workerIds, baseHourlyWage, baseWorkingHours } = req.body;
 
   // 驗證必要參數
@@ -1078,7 +1112,7 @@ app.put("/api/workers/batch-update-wage", (req, res) => {
     }
   });
 
-  saveWorkers();
+  await saveWorkers();
 
   let message = `成功更新 ${updatedWorkers.length} 名工讀生的薪資時數`;
   if (notFoundWorkers.length > 0) {
@@ -1094,7 +1128,7 @@ app.put("/api/workers/batch-update-wage", (req, res) => {
     },
     message,
   });
-});
+}));
 
 // === 組別管理 ===
 // 獲取所有組別
@@ -1107,7 +1141,7 @@ app.get("/api/groups", (req, res) => {
 });
 
 // 新增組別
-app.post("/api/groups", (req, res) => {
+app.post("/api/groups", asyncHandler(async (req, res) => {
   const { name, description } = req.body;
 
   if (!name) {
@@ -1133,17 +1167,17 @@ app.post("/api/groups", (req, res) => {
   };
 
   groups.push(newGroup);
-  saveGroups(); // 持久化數據
+  await saveGroups(); // 持久化數據
 
   res.status(201).json({
     success: true,
     data: newGroup,
     message: "組別新增成功",
   });
-});
+}));
 
 // 更新組別
-app.put("/api/groups/:id", (req, res) => {
+app.put("/api/groups/:id", asyncHandler(async (req, res) => {
   const { name, description } = req.body;
   const groupIndex = groups.findIndex((g) => g.id === req.params.id);
 
@@ -1172,17 +1206,17 @@ app.put("/api/groups/:id", (req, res) => {
       description !== undefined ? description : groups[groupIndex].description,
   };
 
-  saveGroups(); // 持久化數據
+  await saveGroups(); // 持久化數據
 
   res.json({
     success: true,
     data: groups[groupIndex],
     message: "組別更新成功",
   });
-});
+}));
 
 // 刪除組別
-app.delete("/api/groups/:id", (req, res) => {
+app.delete("/api/groups/:id", asyncHandler(async (req, res) => {
   const groupIndex = groups.findIndex((g) => g.id === req.params.id);
 
   if (groupIndex === -1) {
@@ -1202,13 +1236,13 @@ app.delete("/api/groups/:id", (req, res) => {
   }
 
   groups.splice(groupIndex, 1);
-  saveGroups(); // 持久化數據
+  await saveGroups(); // 持久化數據
 
   res.json({
     success: true,
     message: "組別刪除成功",
   });
-});
+}));
 
 // === 工時記錄 ===
 // 獲取工時記錄
@@ -1235,7 +1269,7 @@ app.get("/api/time-records", (req, res) => {
 });
 
 // 上班打卡
-app.post("/api/time-records/clock-in", (req, res) => {
+app.post("/api/time-records/clock-in", asyncHandler(async (req, res) => {
   const { workerId } = req.body;
 
   if (!workerId) {
@@ -1284,7 +1318,7 @@ app.post("/api/time-records/clock-in", (req, res) => {
   };
 
   timeRecords.push(newRecord);
-  saveTimeRecords(); // 持久化數據
+  await saveTimeRecords(); // 持久化數據
 
   // 記錄活動日誌
   const clockInWorker = workers.find((w) => w.id === workerId);
@@ -1301,10 +1335,10 @@ app.post("/api/time-records/clock-in", (req, res) => {
     data: newRecord,
     message: "上班打卡成功",
   });
-});
+}));
 
 // 下班打卡
-app.post("/api/time-records/clock-out", (req, res) => {
+app.post("/api/time-records/clock-out", asyncHandler(async (req, res) => {
   const { workerId } = req.body;
 
   if (!workerId) {
@@ -1339,14 +1373,14 @@ app.post("/api/time-records/clock-out", (req, res) => {
   timeRecords[recordIndex].clockOut = clockOutTime.toISOString();
   timeRecords[recordIndex].totalHours = parseFloat(totalHours.toFixed(2));
 
-  saveTimeRecords(); // 持久化數據
+  await saveTimeRecords(); // 持久化數據
 
   res.json({
     success: true,
     data: timeRecords[recordIndex],
     message: "下班打卡成功",
   });
-});
+}));
 
 // 獲取所有工讀生的額外工時
 app.get("/api/time-records/additional-hours", authenticateToken, (req, res) => {
@@ -1387,7 +1421,7 @@ app.get("/api/time-records/additional-hours", authenticateToken, (req, res) => {
 app.post(
   "/api/time-records/additional-hours",
   authenticateToken,
-  (req, res) => {
+  asyncHandler(async (req, res) => {
     const { workerId, date, hours, reason, adjustmentType, adjustedBy } =
       req.body;
 
@@ -1498,7 +1532,7 @@ app.post(
       record = timeRecords[recordIndex];
     }
 
-    saveTimeRecords(); // 持久化數據
+    await saveTimeRecords(); // 持久化數據
 
     // 記錄活動日誌（包含操作者資訊）
     const actionType = actualHours >= 0 ? "新增" : "扣除";
@@ -1516,11 +1550,11 @@ app.post(
       data: record,
       message: `時數${actionType}成功`,
     });
-  },
+  }),
 );
 
 // 編輯打卡時間
-app.post("/api/time-records/edit-time", (req, res) => {
+app.post("/api/time-records/edit-time", asyncHandler(async (req, res) => {
   const { workerId, clockIn, clockOut, note, date } = req.body;
 
   if (!workerId || !date) {
@@ -1587,7 +1621,7 @@ app.post("/api/time-records/edit-time", (req, res) => {
     );
   }
 
-  saveTimeRecords(); // 持久化數據
+  await saveTimeRecords(); // 持久化數據
 
   // 記錄活動日誌
   const details = [];
@@ -1610,7 +1644,7 @@ app.post("/api/time-records/edit-time", (req, res) => {
     data: record,
     message: "打卡時間編輯成功",
   });
-});
+}));
 
 // === 薪資調整 ===
 // 獲取薪資調整記錄
@@ -1632,7 +1666,7 @@ app.get("/api/salary-adjustments", (req, res) => {
 });
 
 // 新增薪資調整
-app.post("/api/salary-adjustments", (req, res) => {
+app.post("/api/salary-adjustments", asyncHandler(async (req, res) => {
   const { workerId, type, amount, reason } = req.body;
 
   if (!workerId || !type || !amount || !reason) {
@@ -1670,7 +1704,7 @@ app.post("/api/salary-adjustments", (req, res) => {
   };
 
   salaryAdjustments.push(newAdjustment);
-  saveSalaryAdjustments(); // 持久化數據
+  await saveSalaryAdjustments(); // 持久化數據
 
   // 記錄活動日誌
   const actionText = type === "increase" ? "加薪" : "減薪";
@@ -1687,10 +1721,10 @@ app.post("/api/salary-adjustments", (req, res) => {
     data: newAdjustment,
     message: "薪資調整記錄新增成功",
   });
-});
+}));
 
 // 調整總薪資（直接設定總薪資金額）
-app.post("/api/salary-adjustments/total", (req, res) => {
+app.post("/api/salary-adjustments/total", asyncHandler(async (req, res) => {
   const { workerId, targetTotalSalary, reason } = req.body;
 
   if (!workerId || !targetTotalSalary || targetTotalSalary <= 0 || !reason) {
@@ -1768,7 +1802,7 @@ app.post("/api/salary-adjustments/total", (req, res) => {
       salaryAdjustments.push(adjustment);
     }
 
-    saveSalaryAdjustments();
+    await saveSalaryAdjustments();
 
     // 記錄活動日誌
     logActivity(
@@ -1797,7 +1831,7 @@ app.post("/api/salary-adjustments/total", (req, res) => {
       message: "總薪資設定失敗: " + error.message,
     });
   }
-});
+}));
 
 // === 統計資訊 ===
 // 獲取總覽統計
@@ -2008,6 +2042,15 @@ app.delete("/api/activity-logs", (req, res) => {
   }
 });
 
+app.use((error, req, res, next) => {
+  console.error("API 錯誤:", error);
+  res.status(500).json({
+    success: false,
+    message: "伺服器處理請求時發生錯誤",
+    error: error.message,
+  });
+});
+
 app.use("*", (req, res) => {
   res.status(404).json({
     success: false,
@@ -2026,12 +2069,14 @@ async function startServer() {
     console.log("📦 初始化資料庫...");
     await initDatabase();
     console.log("✅ 資料庫初始化成功");
+    await initializeAppData();
+    console.log("✅ 應用資料載入成功");
 
     // 啟動伺服器
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 伺服器運行在 http://0.0.0.0:${PORT}`);
       console.log(`📱 區域網路存取: http://[你的電腦IP]:${PORT}`);
-      console.log(`💾 使用 PostgreSQL 資料庫持久化儲存`);
+      console.log(`💾 使用 PostgreSQL app_state 持久化儲存`);
       console.log(
         `💡 要獲取電腦IP,請執行: ipconfig (Windows) 或 ifconfig (Mac/Linux)`,
       );
@@ -2040,16 +2085,7 @@ async function startServer() {
   } catch (error) {
     console.error("❌ 伺服器啟動失敗:", error.message);
     console.error("錯誤堆棧:", error.stack);
-    
-    // 在 Vercel 環境中,即使資料庫連接失敗也要啟動伺服器
-    if (process.env.VERCEL) {
-      console.warn("⚠️ 在 Vercel 環境中檢測到錯誤,嘗試繼續啟動...");
-      app.listen(PORT, "0.0.0.0", () => {
-        console.log(`⚠️ 伺服器已啟動但資料庫未連接: http://0.0.0.0:${PORT}`);
-      });
-    } else {
-      process.exit(1);
-    }
+    process.exit(1);
   }
 }
 

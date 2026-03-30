@@ -382,6 +382,10 @@ const handleGroupChange = () => {
   filterWorkers();
 };
 
+const applyTodayAttendance = () => {
+  filterWorkers();
+};
+
 const filterWorkers = () => {
   let filtered = [...workers.value];
   console.log(
@@ -453,7 +457,7 @@ const handleQuickClock = async (worker, type) => {
       }
 
       // 重新載入數據確保同步
-      await loadTodayAttendance();
+      await refreshData();
     } else {
       throw new Error(data.message || "打卡失敗");
     }
@@ -509,71 +513,12 @@ const handleTimeEdit = async () => {
     editTimeDialogVisible.value = false;
 
     // 重新載入數據
-    await loadTodayAttendance();
+    await refreshData();
   } catch (error) {
     console.error("時間編輯失敗:", error);
     ElMessage.error(error.message || "時間編輯失敗");
   } finally {
     submitting.value = false;
-  }
-};
-
-// 載入今日考勤記錄
-const loadTodayAttendance = async () => {
-  try {
-    const today = moment().format("YYYY-MM-DD");
-    const token = authStore.token;
-    const response = await fetch(getApiUrl(`/api/time-records?date=${today}`), {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.message || "載入考勤記錄失敗");
-    }
-
-    // 後端返回格式：{ success: true, data: [...], message: "..." }
-    const records = result.data || [];
-
-    console.log("載入的考勤記錄:", records);
-
-    // 為每位工讀生設定今日出勤狀態
-    workers.value.forEach((worker) => {
-      const attendance = records.find(
-        (record) => record.workerId === worker.id,
-      );
-      // 使用 Vue.set 確保響應式更新
-      worker.todayAttendance = attendance || null;
-    });
-
-    // 同時更新篩選後的工讀生列表中的todayAttendance
-    filteredWorkers.value.forEach((filteredWorker) => {
-      const attendance = records.find(
-        (record) => record.workerId === filteredWorker.id,
-      );
-      // 使用 Vue.set 確保響應式更新
-      filteredWorker.todayAttendance = attendance || null;
-    });
-
-    console.log(
-      "今日考勤記錄載入完成，工讀生狀態:",
-      workers.value.map((w) => ({
-        name: w.name,
-        clockIn: w.todayAttendance?.clockIn,
-        clockOut: w.todayAttendance?.clockOut,
-      })),
-    );
-
-    // 強制更新視圖
-    nextTick(() => {
-      console.log("視圖更新完成");
-    });
-  } catch (error) {
-    console.error("載入今日考勤記錄失敗:", error);
   }
 };
 
@@ -586,10 +531,13 @@ const refreshData = async () => {
       "Attendance.vue: 載入工讀生數據前，目前工讀生數量:",
       workers.value.length,
     );
+    const today = moment().format("YYYY-MM-DD");
     await Promise.all([
-      workersStore.fetchWorkers(),
+      workersStore.fetchWorkers({
+        includeTodayAttendance: true,
+        date: today,
+      }),
       groupsStore.fetchGroups(),
-      loadTodayAttendance(),
     ]);
     console.log(
       "Attendance.vue: 載入工讀生數據後，工讀生數量:",
@@ -597,8 +545,7 @@ const refreshData = async () => {
     );
     console.log("Attendance.vue: 工讀生數據:", workers.value);
 
-    // 重新篩選工讀生
-    filterWorkers();
+    applyTodayAttendance();
     console.log(
       "Attendance.vue: 篩選後工讀生數量:",
       filteredWorkers.value.length,

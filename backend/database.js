@@ -91,6 +91,14 @@ async function initDatabase() {
       )
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS app_state (
+        key VARCHAR(100) PRIMARY KEY,
+        value JSONB NOT NULL DEFAULT '[]'::jsonb,
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
     // 檢查是否需要創建預設管理員帳戶
     const adminExists = await pool.query(
       "SELECT id FROM users WHERE role = 'admin' LIMIT 1",
@@ -165,8 +173,30 @@ async function initDatabase() {
   }
 }
 
+async function getAppState(key) {
+  const result = await pool.query(
+    "SELECT value FROM app_state WHERE key = $1 LIMIT 1",
+    [key],
+  );
+  return result.rows[0]?.value ?? null;
+}
+
+async function saveAppState(key, value) {
+  await pool.query(
+    `
+      INSERT INTO app_state (key, value, updated_at)
+      VALUES ($1, $2::jsonb, NOW())
+      ON CONFLICT (key)
+      DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+    `,
+    [key, JSON.stringify(value)],
+  );
+}
+
 // 導出資料庫連接池和初始化函數
 module.exports = {
   pool,
   initDatabase,
+  getAppState,
+  saveAppState,
 };

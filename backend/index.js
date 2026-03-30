@@ -7,12 +7,17 @@ const { v4: uuidv4 } = require("uuid");
 const moment = require("moment");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const nodemailer = require("nodemailer");
+const XLSX = require("xlsx");
 const { initDatabase, getAppState, saveAppState } = require("./database");
 const { WorkersDAO, GroupsDAO, UsersDAO } = require("./dao");
 
 const app = express();
 const PORT = process.env.PORT || 3005;
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-here";
+const EVELYN_USERNAMES = ["evelyn", "evelyn.pan"];
+const BACKUP_EMAIL_TO =
+  process.env.BACKUP_EMAIL_TO || "tina83pan@yahoo.com.tw";
 
 // 中間件
 app.use(
@@ -261,6 +266,175 @@ const requireRole = (roles) => {
     next();
   };
 };
+
+function isEvelynIdentifier(value = "") {
+  return EVELYN_USERNAMES.includes(String(value).trim().toLowerCase());
+}
+
+function isEvelynUser(user) {
+  return (
+    isEvelynIdentifier(user?.username) || isEvelynIdentifier(user?.name)
+  );
+}
+
+const requireEvelyn = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: "未登入",
+    });
+  }
+
+  if (!isEvelynUser(req.user)) {
+    return res.status(403).json({
+      success: false,
+      message: "權限不足，只有 Evelyn 可以執行此操作",
+    });
+  }
+
+  next();
+};
+
+function normalizeWorkbookValue(value) {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  if (Array.isArray(value) || typeof value === "object") {
+    return JSON.stringify(value);
+  }
+
+  return value;
+}
+
+function toWorksheetRows(records, fallbackLabel = "無資料") {
+  if (!records.length) {
+    return [{ message: fallbackLabel }];
+  }
+
+  return records.map((record) =>
+    Object.fromEntries(
+      Object.entries(record).map(([key, value]) => [
+        key,
+        normalizeWorkbookValue(value),
+      ]),
+    ),
+  );
+}
+
+function appendWorkbookSheet(workbook, name, rows, fallbackLabel) {
+  const worksheet = XLSX.utils.json_to_sheet(
+    toWorksheetRows(rows, fallbackLabel),
+  );
+  XLSX.utils.book_append_sheet(workbook, worksheet, name);
+}
+
+function createBackupWorkbook(scope, requestedBy) {
+  const workbook = XLSX.utils.book_new();
+
+  appendWorkbookSheet(
+    workbook,
+    "summary",
+    [
+      {
+        scope,
+        generatedAt: new Date().toISOString(),
+        requestedBy: requestedBy?.username || requestedBy?.name || "unknown",
+        backupEmailTo: BACKUP_EMAIL_TO,
+        workersCount: workers.length,
+        groupsCount: groups.length,
+        timeRecordsCount: timeRecords.length,
+        salaryAdjustmentsCount: salaryAdjustments.length,
+        usersCount: usersData.users.length,
+        activityLogsCount: activityLogs.length,
+      },
+    ],
+    "無摘要資料",
+  );
+  appendWorkbookSheet(workbook, "workers", workers, "無工讀生資料");
+  appendWorkbookSheet(workbook, "groups", groups, "無組別資料");
+  appendWorkbookSheet(
+    workbook,
+    "timeRecords",
+    timeRecords,
+    "無打卡與工時紀錄",
+  );
+  appendWorkbookSheet(
+    workbook,
+    "salaryAdjustments",
+    salaryAdjustments,
+    "無薪資調整紀錄",
+  );
+  appendWorkbookSheet(workbook, "users", usersData.users, "無使用者資料");
+  appendWorkbookSheet(workbook, "activityLogs", activityLogs, "無操作紀錄");
+
+  return {
+    filename: `workers-platform-backup-${scope}-${moment().format(
+      "YYYYMMDD-HHmmss",
+    )}.xlsx`,
+    buffer: XLSX.write(workbook, {
+      type: "buffer",
+      bookType: "xlsx",
+    }),
+  };
+}
+
+function createMailTransporter() {
+  const {
+    SMTP_HOST,
+    SMTP_PORT,
+    SMTP_USER,
+    SMTP_PASS,
+    SMTP_FROM,
+    SMTP_SECURE,
+  } = process.env;
+
+  if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS || !SMTP_FROM) {
+    throw new Error(
+      "尚未設定 SMTP 郵件環境變數，請先設定 SMTP_HOST、SMTP_PORT、SMTP_USER、SMTP_PASS、SMTP_FROM",
+    );
+  }
+
+  return nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: Number(SMTP_PORT),
+    secure: SMTP_SECURE === "true" || Number(SMTP_PORT) === 465,
+    auth: {
+      user: SMTP_USER,
+      pass: SMTP_PASS,
+    },
+  });
+}
+
+async function sendBackupEmail({ scope, requestedBy, backupFile }) {
+  const transporter = createMailTransporter();
+  const requestedByName =
+    requestedBy?.name || requestedBy?.username || "未知使用者";
+
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM,
+    to: BACKUP_EMAIL_TO,
+    subject: `工讀生系統資料備份 - ${scope} - ${moment().format(
+      "YYYY-MM-DD HH:mm:ss",
+    )}`,
+    text: [
+      "這封信是系統在清除資料前自動寄出的 Excel 備份。",
+      `備份範圍：${scope}`,
+      `操作人員：${requestedByName}`,
+      `寄送時間：${new Date().toISOString()}`,
+      "",
+      "附件包含工讀生、組別、打卡紀錄、薪資調整、使用者與操作紀錄。",
+    ].join("\n"),
+    attachments: [
+      {
+        filename: backupFile.filename,
+        content: backupFile.buffer,
+        contentType:
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      },
+    ],
+  });
+}
 
 // === 健康檢查和根路徑 ===
 app.get("/", (req, res) => {
@@ -532,8 +706,7 @@ app.post(
 app.post("/api/auth/create-admin", authenticateToken, (req, res) => {
   try {
     // 只有特定用戶可以創建管理員
-    const allowedUsers = ["evelyn", "evelyn.pan"];
-    if (!allowedUsers.includes(req.user.username)) {
+    if (!isEvelynUser(req.user)) {
       return res.status(403).json({
         success: false,
         message: "權限不足，只有Evelyn可以創建管理員帳號",
@@ -663,9 +836,143 @@ app.delete(
   }),
 );
 
+app.post(
+  "/api/admin/cleanup/salary-records",
+  authenticateToken,
+  requireEvelyn,
+  asyncHandler(async (req, res) => {
+    const backupFile = createBackupWorkbook("salary-records", req.user);
+    await sendBackupEmail({
+      scope: "清空薪資紀錄前備份",
+      requestedBy: req.user,
+      backupFile,
+    });
+
+    const clearedSalaryAdjustments = salaryAdjustments.length;
+    salaryAdjustments = [];
+    await saveSalaryAdjustments();
+
+    logActivity(
+      "cleanup",
+      "salary-records",
+      "all",
+      "薪資調整紀錄",
+      `清空全部薪資調整紀錄，共 ${clearedSalaryAdjustments} 筆；已先寄送 Excel 備份到 ${BACKUP_EMAIL_TO}`,
+      req.user.id,
+    );
+
+    res.json({
+      success: true,
+      data: {
+        clearedSalaryAdjustments,
+        backupSentTo: BACKUP_EMAIL_TO,
+      },
+      message: `已寄出備份郵件，並清空 ${clearedSalaryAdjustments} 筆薪資調整紀錄`,
+    });
+  }),
+);
+
+app.post(
+  "/api/admin/cleanup/all-data",
+  authenticateToken,
+  requireEvelyn,
+  asyncHandler(async (req, res) => {
+    const backupFile = createBackupWorkbook("all-data", req.user);
+    await sendBackupEmail({
+      scope: "清空所有工讀生資料前備份",
+      requestedBy: req.user,
+      backupFile,
+    });
+
+    const clearedCounts = {
+      workers: workers.length,
+      timeRecords: timeRecords.length,
+      salaryAdjustments: salaryAdjustments.length,
+    };
+
+    workers = [];
+    timeRecords = [];
+    salaryAdjustments = [];
+
+    await Promise.all([saveWorkers(), saveTimeRecords(), saveSalaryAdjustments()]);
+
+    logActivity(
+      "cleanup",
+      "all-worker-data",
+      "all",
+      "所有工讀生資料",
+      `清空工讀生 ${clearedCounts.workers} 筆、打卡紀錄 ${clearedCounts.timeRecords} 筆、薪資調整 ${clearedCounts.salaryAdjustments} 筆；已先寄送 Excel 備份到 ${BACKUP_EMAIL_TO}`,
+      req.user.id,
+    );
+
+    res.json({
+      success: true,
+      data: {
+        ...clearedCounts,
+        backupSentTo: BACKUP_EMAIL_TO,
+      },
+      message:
+        "已寄出備份郵件，並清空所有工讀生、打卡紀錄與薪資調整資料",
+    });
+  }),
+);
+
 // API 路由
 
 // === 工讀生管理 ===
+const buildDailyAttendance = (
+  records,
+  targetDate = moment().format("YYYY-MM-DD"),
+) => {
+  if (!records.length) {
+    return null;
+  }
+
+  const sessions = [...records]
+    .sort((a, b) => {
+      const aTime = a.clockIn || a.clockOut || a.createdAt || a.date;
+      const bTime = b.clockIn || b.clockOut || b.createdAt || b.date;
+      return new Date(aTime) - new Date(bTime);
+    })
+    .map((record) => ({
+      id: record.id,
+      date: moment(record.date).format("YYYY-MM-DD"),
+      clockIn: record.clockIn || null,
+      clockOut: record.clockOut || null,
+      totalHours: record.totalHours || 0,
+      additionalHours: record.additionalHours || 0,
+      note: record.note || "",
+    }));
+
+  const firstClockInSession = sessions.find((session) => session.clockIn);
+  const lastClockOutSession = [...sessions]
+    .reverse()
+    .find((session) => session.clockOut);
+  const openSession = [...sessions]
+    .reverse()
+    .find((session) => session.clockIn && !session.clockOut);
+
+  return {
+    date: targetDate,
+    clockIn: firstClockInSession?.clockIn || null,
+    clockOut: openSession ? null : lastClockOutSession?.clockOut || null,
+    sessions,
+    sessionCount: sessions.filter((session) => session.clockIn).length,
+    totalHours: parseFloat(
+      sessions
+        .reduce((sum, session) => sum + (session.totalHours || 0), 0)
+        .toFixed(2),
+    ),
+    totalAdditionalHours: parseFloat(
+      sessions
+        .reduce((sum, session) => sum + (session.additionalHours || 0), 0)
+        .toFixed(2),
+    ),
+    hasOpenSession: !!openSession,
+    openSessionId: openSession?.id || null,
+  };
+};
+
 const getWorkersWithTodayAttendance = (
   targetDate = moment().format("YYYY-MM-DD"),
 ) => {
@@ -676,15 +983,16 @@ const getWorkersWithTodayAttendance = (
       return;
     }
 
-    const existingRecord = attendanceByWorkerId.get(record.workerId);
-    if (!existingRecord || new Date(record.date) > new Date(existingRecord.date)) {
-      attendanceByWorkerId.set(record.workerId, record);
-    }
+    const existingRecords = attendanceByWorkerId.get(record.workerId) || [];
+    existingRecords.push(record);
+    attendanceByWorkerId.set(record.workerId, existingRecords);
   });
 
   return workers.map((worker) => ({
     ...worker,
-    todayAttendance: attendanceByWorkerId.get(worker.id) || null,
+    todayAttendance:
+      buildDailyAttendance(attendanceByWorkerId.get(worker.id) || [], targetDate) ||
+      null,
   }));
 };
 
@@ -1290,15 +1598,16 @@ app.post("/api/time-records/clock-in", asyncHandler(async (req, res) => {
 
   const today = moment().format("YYYY-MM-DD");
 
-  // 檢查今天是否已經上班打卡
-  const existingRecord = timeRecords.find(
+  // 檢查今天是否仍有未完成的上班打卡
+  const openRecord = timeRecords.find(
     (r) =>
       r.workerId === workerId &&
       moment(r.date).format("YYYY-MM-DD") === today &&
-      r.clockIn,
+      r.clockIn &&
+      !r.clockOut,
   );
 
-  if (existingRecord && !existingRecord.clockOut) {
+  if (openRecord) {
     return res.status(400).json({
       success: false,
       message: "今日已經上班打卡，請先下班打卡",
@@ -1351,13 +1660,19 @@ app.post("/api/time-records/clock-out", asyncHandler(async (req, res) => {
   const today = moment().format("YYYY-MM-DD");
 
   // 找到今天的上班記錄
-  const recordIndex = timeRecords.findIndex(
-    (r) =>
-      r.workerId === workerId &&
-      moment(r.date).format("YYYY-MM-DD") === today &&
-      r.clockIn &&
-      !r.clockOut,
-  );
+  let recordIndex = -1;
+  for (let i = timeRecords.length - 1; i >= 0; i -= 1) {
+    const record = timeRecords[i];
+    if (
+      record.workerId === workerId &&
+      moment(record.date).format("YYYY-MM-DD") === today &&
+      record.clockIn &&
+      !record.clockOut
+    ) {
+      recordIndex = i;
+      break;
+    }
+  }
 
   if (recordIndex === -1) {
     return res.status(400).json({
@@ -1555,7 +1870,7 @@ app.post(
 
 // 編輯打卡時間
 app.post("/api/time-records/edit-time", asyncHandler(async (req, res) => {
-  const { workerId, clockIn, clockOut, note, date } = req.body;
+  const { workerId, clockIn, clockOut, note, date, sessions } = req.body;
 
   if (!workerId || !date) {
     return res.status(400).json({
@@ -1575,73 +1890,154 @@ app.post("/api/time-records/edit-time", asyncHandler(async (req, res) => {
 
   const targetDate = moment(date).format("YYYY-MM-DD");
 
-  // 查找或創建當日工時記錄
-  let record = timeRecords.find(
+  const now = new Date().toISOString();
+  const existingRecords = timeRecords.filter(
     (r) =>
       r.workerId === workerId &&
       moment(r.date).format("YYYY-MM-DD") === targetDate,
   );
 
-  const now = new Date().toISOString();
+  const preservedAdditionalHours = existingRecords.reduce(
+    (sum, record) => sum + (record.additionalHours || 0),
+    0,
+  );
+  const preservedAdjustments = existingRecords.flatMap(
+    (record) => record.adjustments || [],
+  );
+  const preservedCreatedAt = existingRecords[0]?.createdAt || now;
 
-  if (!record) {
-    // 創建新記錄
-    record = {
-      id: uuidv4(),
-      workerId,
-      date: new Date(date).toISOString(),
-      clockIn: clockIn || null,
-      clockOut: clockOut || null,
-      totalHours: 0,
-      additionalHours: 0,
-      note: note || "",
-      createdAt: now,
-      updatedAt: now,
-    };
-    timeRecords.push(record);
-  } else {
-    // 更新現有記錄
-    const recordIndex = timeRecords.findIndex((r) => r.id === record.id);
-    timeRecords[recordIndex] = {
-      ...timeRecords[recordIndex],
-      clockIn: clockIn || timeRecords[recordIndex].clockIn,
-      clockOut: clockOut || timeRecords[recordIndex].clockOut,
-      note: note || timeRecords[recordIndex].note,
-      updatedAt: now,
-    };
-    record = timeRecords[recordIndex];
+  timeRecords = timeRecords.filter(
+    (r) =>
+      !(
+        r.workerId === workerId &&
+        moment(r.date).format("YYYY-MM-DD") === targetDate
+      ),
+  );
+
+  const normalizedSessions = Array.isArray(sessions)
+    ? sessions
+        .filter((session) => session?.clockIn || session?.clockOut)
+        .map((session) => {
+          const startTime = session.clockIn ? moment(session.clockIn) : null;
+          const endTime = session.clockOut ? moment(session.clockOut) : null;
+          const totalHours =
+            startTime && endTime
+              ? parseFloat(endTime.diff(startTime, "hours", true).toFixed(2))
+              : 0;
+
+          return {
+            id: session.id || uuidv4(),
+            workerId,
+            date: session.clockIn
+              ? new Date(session.clockIn).toISOString()
+              : new Date(date).toISOString(),
+            clockIn: session.clockIn || null,
+            clockOut: session.clockOut || null,
+            totalHours,
+            additionalHours: 0,
+            adjustments: [],
+            note: note || session.note || "",
+            createdAt: now,
+            updatedAt: now,
+          };
+        })
+        .sort((a, b) => {
+          const aTime = a.clockIn || a.clockOut || a.date;
+          const bTime = b.clockIn || b.clockOut || b.date;
+          return new Date(aTime) - new Date(bTime);
+        })
+    : [];
+
+  let recordsToSave = normalizedSessions;
+
+  if (!Array.isArray(sessions)) {
+    recordsToSave = [
+      {
+        id: existingRecords[0]?.id || uuidv4(),
+        workerId,
+        date: new Date(date).toISOString(),
+        clockIn: clockIn || existingRecords[0]?.clockIn || null,
+        clockOut: clockOut || existingRecords[0]?.clockOut || null,
+        totalHours: 0,
+        additionalHours: preservedAdditionalHours,
+        adjustments: preservedAdjustments,
+        note: note || existingRecords[0]?.note || "",
+        createdAt: preservedCreatedAt,
+        updatedAt: now,
+      },
+    ];
   }
 
-  // 計算工作時間
-  if (record.clockIn && record.clockOut) {
-    const startTime = moment(record.clockIn);
-    const endTime = moment(record.clockOut);
-    record.totalHours = parseFloat(
-      endTime.diff(startTime, "hours", true).toFixed(1),
-    );
+  if (!recordsToSave.length && (preservedAdditionalHours !== 0 || preservedAdjustments.length > 0)) {
+    recordsToSave = [
+      {
+        id: existingRecords[0]?.id || uuidv4(),
+        workerId,
+        date: new Date(date).toISOString(),
+        clockIn: null,
+        clockOut: null,
+        totalHours: 0,
+        additionalHours: preservedAdditionalHours,
+        adjustments: preservedAdjustments,
+        note: note || existingRecords[0]?.note || "",
+        createdAt: preservedCreatedAt,
+        updatedAt: now,
+      },
+    ];
   }
+
+  recordsToSave = recordsToSave.map((record, index) => {
+    const startTime = record.clockIn ? moment(record.clockIn) : null;
+    const endTime = record.clockOut ? moment(record.clockOut) : null;
+
+    return {
+      ...record,
+      totalHours:
+        startTime && endTime
+          ? parseFloat(endTime.diff(startTime, "hours", true).toFixed(2))
+          : 0,
+      additionalHours: index === 0 ? preservedAdditionalHours : 0,
+      adjustments: index === 0 ? preservedAdjustments : [],
+      note: note || record.note || "",
+      createdAt: index === 0 ? preservedCreatedAt : record.createdAt || now,
+      updatedAt: now,
+    };
+  });
+
+  timeRecords.push(...recordsToSave);
 
   await saveTimeRecords(); // 持久化數據
 
   // 記錄活動日誌
   const details = [];
-  if (clockIn)
-    details.push(`上班時間：${moment(clockIn).format("YYYY-MM-DD HH:mm")}`);
-  if (clockOut)
-    details.push(`下班時間：${moment(clockOut).format("YYYY-MM-DD HH:mm")}`);
+  if (Array.isArray(sessions)) {
+    details.push(
+      `時段數：${recordsToSave.filter((record) => record.clockIn).length}`,
+    );
+    recordsToSave.forEach((record, index) => {
+      details.push(
+        `第${index + 1}段：${record.clockIn ? moment(record.clockIn).format("MM/DD HH:mm") : "--"} ~ ${record.clockOut ? moment(record.clockOut).format("MM/DD HH:mm") : "--"}`,
+      );
+    });
+  } else {
+    if (clockIn)
+      details.push(`上班時間：${moment(clockIn).format("YYYY-MM-DD HH:mm")}`);
+    if (clockOut)
+      details.push(`下班時間：${moment(clockOut).format("YYYY-MM-DD HH:mm")}`);
+  }
   if (note) details.push(`備註：${note}`);
 
   logActivity(
     "time-edit",
     "time-record",
-    record.id,
+    recordsToSave[0]?.id || existingRecords[0]?.id || uuidv4(),
     worker.name,
     `打卡時間編輯 - ${details.join("，")}`,
   );
 
   res.json({
     success: true,
-    data: record,
+    data: buildDailyAttendance(recordsToSave, targetDate),
     message: "打卡時間編輯成功",
   });
 }));

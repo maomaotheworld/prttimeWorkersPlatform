@@ -1,0 +1,9 @@
+#!/bin/sh
+
+last_commit_datetime=$(git log -1 --date=format-local:'%Y-%m-%d %H:%M:%S %z' --format='%cd' 2>/dev/null)
+
+if [ -n "$last_commit_datetime" ]; then
+  echo "[pre-push] 最後一次 commit 時間: $last_commit_datetime"
+else
+  echo "[pre-push] 找不到 commit 記錄"
+fi

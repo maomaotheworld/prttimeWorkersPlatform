@@ -112,30 +112,42 @@
             </template>
           </el-table-column>
 
-          <el-table-column label="打卡狀態" min-width="140">
+          <el-table-column label="打卡狀態" min-width="230">
             <template #default="{ row }">
               <div class="attendance-status">
-                <div v-if="row.todayAttendance?.clockIn" class="status-item">
-                  <el-tag type="success" size="small">
-                    上班 {{ formatTime(row.todayAttendance.clockIn) }}
-                  </el-tag>
-                </div>
-                <div v-if="row.todayAttendance?.clockOut" class="status-item">
-                  <el-tag type="warning" size="small">
-                    下班 {{ formatTime(row.todayAttendance.clockOut) }}
-                  </el-tag>
-                </div>
-                <div v-if="!row.todayAttendance?.clockIn" class="status-item">
+                <template v-if="getTodaySessions(row.todayAttendance).length">
+                  <div class="status-item">
+                    <el-tag type="primary" size="small">
+                      {{ getAttendanceSummary(row.todayAttendance) }}
+                    </el-tag>
+                  </div>
+
+                  <template
+                    v-for="session in getTodaySessions(row.todayAttendance)"
+                    :key="session.id"
+                  >
+                    <div v-if="session.clockIn" class="status-item">
+                      <el-tag type="success" size="small">
+                        {{ formatAttendanceLabel("上班", session.clockIn) }}
+                      </el-tag>
+                    </div>
+                    <div v-if="session.clockOut" class="status-item">
+                      <el-tag type="warning" size="small">
+                        {{ formatAttendanceLabel("下班", session.clockOut) }}
+                      </el-tag>
+                    </div>
+                  </template>
+
+                  <div
+                    v-if="hasOpenSession(row.todayAttendance)"
+                    class="status-item"
+                  >
+                    <el-tag type="primary" size="small">工作中</el-tag>
+                  </div>
+                </template>
+
+                <div v-else class="status-item">
                   <el-tag type="info" size="small">未打卡</el-tag>
-                </div>
-                <div
-                  v-else-if="
-                    row.todayAttendance?.clockIn &&
-                    !row.todayAttendance?.clockOut
-                  "
-                  class="status-item"
-                >
-                  <el-tag type="primary" size="small">工作中</el-tag>
                 </div>
               </div>
             </template>
@@ -143,25 +155,27 @@
 
           <el-table-column
             label="操作"
-            :width="isMobile ? 80 : 200"
+            :width="isMobile ? 90 : 230"
             fixed="right"
           >
             <template #default="{ row }">
               <div class="action-buttons">
-                <!-- 上班打卡按鈕 -->
                 <el-button
-                  v-if="!row.todayAttendance?.clockIn"
+                  v-if="!hasOpenSession(row.todayAttendance)"
                   type="success"
                   size="small"
                   @click="handleQuickClock(row, 'in')"
                   :loading="row.clocking"
                 >
-                  上班打卡
+                  {{
+                    getTodaySessions(row.todayAttendance).length
+                      ? "再次上班"
+                      : "上班打卡"
+                  }}
                 </el-button>
 
-                <!-- 下班打卡按鈕 -->
                 <el-button
-                  v-else-if="!row.todayAttendance?.clockOut"
+                  v-else
                   type="warning"
                   size="small"
                   @click="handleQuickClock(row, 'out')"
@@ -193,38 +207,64 @@
       :width="isMobile ? '95%' : '500px'"
       center
     >
-      <el-form :model="timeEditForm" label-width="100px">
-        <el-form-item label="工讀生">
-          <el-input
-            :value="`${timeEditForm.workerNumber} - ${timeEditForm.workerName}`"
-            readonly
-          />
-        </el-form-item>
+        <el-form :model="timeEditForm" label-width="100px">
+          <el-form-item label="工讀生">
+            <el-input
+              :value="`${timeEditForm.workerNumber} - ${timeEditForm.workerName}`"
+              readonly
+            />
+          </el-form-item>
 
-        <el-form-item label="上班時間">
-          <el-date-picker
-            v-model="timeEditForm.clockIn"
-            type="datetime"
-            placeholder="選擇上班時間"
-            format="YYYY-MM-DD HH:mm"
-            value-format="YYYY-MM-DD HH:mm:ss"
-            style="width: 100%"
-          />
-        </el-form-item>
+          <div class="session-editor-header">
+            <span>今日打卡時段</span>
+            <el-button type="success" plain size="small" @click="addSessionRow">
+              新增一段
+            </el-button>
+          </div>
 
-        <el-form-item label="下班時間">
-          <el-date-picker
-            v-model="timeEditForm.clockOut"
-            type="datetime"
-            placeholder="選擇下班時間"
-            format="YYYY-MM-DD HH:mm"
-            value-format="YYYY-MM-DD HH:mm:ss"
-            style="width: 100%"
-          />
-        </el-form-item>
+          <div
+            v-for="(session, index) in timeEditForm.sessions"
+            :key="session.localId"
+            class="session-editor"
+          >
+            <div class="session-editor-row">
+              <span class="session-editor-title">第{{ index + 1 }}段</span>
+              <el-button
+                type="danger"
+                text
+                size="small"
+                :disabled="timeEditForm.sessions.length === 1"
+                @click="removeSessionRow(index)"
+              >
+                刪除
+              </el-button>
+            </div>
 
-        <el-form-item label="備註">
-          <el-input
+            <el-form-item :label="`上班時間 ${index + 1}`">
+              <el-date-picker
+                v-model="session.clockIn"
+                type="datetime"
+                placeholder="選擇上班時間"
+                format="YYYY-MM-DD HH:mm"
+                value-format="YYYY-MM-DD HH:mm:ss"
+                style="width: 100%"
+              />
+            </el-form-item>
+
+            <el-form-item :label="`下班時間 ${index + 1}`">
+              <el-date-picker
+                v-model="session.clockOut"
+                type="datetime"
+                placeholder="選擇下班時間"
+                format="YYYY-MM-DD HH:mm"
+                value-format="YYYY-MM-DD HH:mm:ss"
+                style="width: 100%"
+              />
+            </el-form-item>
+          </div>
+
+          <el-form-item label="備註">
+            <el-input
             v-model="timeEditForm.note"
             type="textarea"
             :rows="3"
@@ -250,7 +290,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { ElMessage } from "element-plus";
 import moment from "moment";
 import { Clock, Refresh } from "@element-plus/icons-vue";
@@ -298,8 +338,7 @@ const timeEditForm = ref({
   workerId: "",
   workerNumber: "",
   workerName: "",
-  clockIn: "",
-  clockOut: "",
+  sessions: [],
   note: "",
 });
 
@@ -349,6 +388,31 @@ const macaronColors = [
 const formatTime = (timeString) => {
   return moment(timeString).format("HH:mm");
 };
+
+const formatAttendanceLabel = (label, timeString) => {
+  return `${moment(timeString).format("DD")}/${label}${formatTime(timeString)}`;
+};
+
+const getTodaySessions = (attendance) => attendance?.sessions || [];
+
+const hasOpenSession = (attendance) =>
+  getTodaySessions(attendance).some((session) => session.clockIn && !session.clockOut);
+
+const getAttendanceSummary = (attendance) => {
+  const sessionCount = attendance?.sessionCount || getTodaySessions(attendance).length;
+  const totalHours = attendance?.totalHours || 0;
+  const displayHours = Number.isInteger(totalHours)
+    ? totalHours
+    : parseFloat(totalHours.toFixed(2));
+  return `共 ${sessionCount} 段 / ${displayHours} 小時`;
+};
+
+const createSessionRow = (session = {}) => ({
+  localId: session.id || `${Date.now()}-${Math.random()}`,
+  id: session.id || "",
+  clockIn: session.clockIn || "",
+  clockOut: session.clockOut || "",
+});
 
 const updateCurrentTime = () => {
   currentTime.value = moment().format("YYYY/MM/DD HH:mm:ss");
@@ -443,19 +507,6 @@ const handleQuickClock = async (worker, type) => {
     if (data.success) {
       ElMessage.success(`${worker.name} ${action}打卡成功`);
 
-      // 立即更新本地狀態
-      if (type === "in") {
-        if (!worker.todayAttendance) {
-          worker.todayAttendance = {};
-        }
-        worker.todayAttendance.clockIn = new Date().toISOString();
-      } else {
-        if (!worker.todayAttendance) {
-          worker.todayAttendance = {};
-        }
-        worker.todayAttendance.clockOut = new Date().toISOString();
-      }
-
       // 重新載入數據確保同步
       await refreshData();
     } else {
@@ -475,11 +526,27 @@ const showEditTimeDialog = (worker) => {
     workerId: worker.id,
     workerNumber: worker.number,
     workerName: worker.name,
-    clockIn: worker.todayAttendance?.clockIn || "",
-    clockOut: worker.todayAttendance?.clockOut || "",
-    note: "",
+    sessions: getTodaySessions(worker.todayAttendance).length
+      ? getTodaySessions(worker.todayAttendance).map((session) =>
+          createSessionRow(session),
+        )
+      : [createSessionRow()],
+    note: getTodaySessions(worker.todayAttendance).find((session) => session.note)?.note || "",
   };
   editTimeDialogVisible.value = true;
+};
+
+const addSessionRow = () => {
+  timeEditForm.value.sessions.push(createSessionRow());
+};
+
+const removeSessionRow = (index) => {
+  if (timeEditForm.value.sessions.length === 1) {
+    timeEditForm.value.sessions[0] = createSessionRow();
+    return;
+  }
+
+  timeEditForm.value.sessions.splice(index, 1);
 };
 
 // 處理時間編輯
@@ -496,8 +563,11 @@ const handleTimeEdit = async () => {
       },
       body: JSON.stringify({
         workerId: timeEditForm.value.workerId,
-        clockIn: timeEditForm.value.clockIn,
-        clockOut: timeEditForm.value.clockOut,
+        sessions: timeEditForm.value.sessions.map((session) => ({
+          id: session.id || undefined,
+          clockIn: session.clockIn || null,
+          clockOut: session.clockOut || null,
+        })),
         note: timeEditForm.value.note,
         date: moment().format("YYYY-MM-DD"),
       }),
@@ -689,6 +759,36 @@ onUnmounted(() => {
   justify-content: flex-end;
 }
 
+.session-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.session-editor {
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.session-editor-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.session-editor-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #606266;
+}
+
 /* ?��?端適??*/
 @media (max-width: 768px) {
   .attendance-container {
@@ -735,6 +835,12 @@ onUnmounted(() => {
 
   .attendance-status {
     gap: 2px;
+  }
+
+  .session-editor-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
   }
 }
 </style>

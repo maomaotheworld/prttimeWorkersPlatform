@@ -2,6 +2,23 @@
   <div class="salary-container">
     <div class="page-header">
       <h1 class="page-title">薪資管理</h1>
+      <div v-if="isEvelyn" class="page-header-actions">
+        <el-button
+          type="danger"
+          plain
+          :loading="cleanupSubmitting"
+          @click="handleAdminCleanup('salary-records')"
+        >
+          清空薪資
+        </el-button>
+        <el-button
+          type="danger"
+          :loading="cleanupSubmitting"
+          @click="handleAdminCleanup('all-data')"
+        >
+          清空所有資料
+        </el-button>
+      </div>
     </div>
 
     <!-- 薪資計算區域 -->
@@ -463,15 +480,19 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import moment from "moment";
 import { DocumentRemove } from "@element-plus/icons-vue";
 import { useWorkersStore } from "../stores/workers";
+import { useAuthStore } from "../stores/auth";
+import api from "../utils/api";
 
 const workersStore = useWorkersStore();
+const authStore = useAuthStore();
 
 const windowWidth = ref(window.innerWidth);
 const isMobile = computed(() => windowWidth.value <= 768);
+const isEvelyn = computed(() => authStore.isEvelyn);
 
 const workers = computed(() => workersStore.workers);
 
@@ -483,6 +504,7 @@ const adjustments = ref([]);
 const calculating = ref(false);
 const loadingAdjustments = ref(false);
 const submitting = ref(false);
+const cleanupSubmitting = ref(false);
 
 // 薪資調整對話框
 const adjustmentDialogVisible = ref(false);
@@ -804,6 +826,67 @@ const handleAddAdjustment = async () => {
   }
 };
 
+const cleanupConfigs = {
+  "salary-records": {
+    title: "清空薪資紀錄",
+    endpoint: "/admin/cleanup/salary-records",
+    message:
+      "這會先把目前所有資料匯出成 Excel 並寄到 tina83pan@yahoo.com.tw，接著清空全部薪資調整紀錄。確定繼續嗎？",
+  },
+  "all-data": {
+    title: "清空所有資料",
+    endpoint: "/admin/cleanup/all-data",
+    message:
+      "這會先把目前所有資料匯出成 Excel 並寄到 tina83pan@yahoo.com.tw，接著清空全部工讀生、打卡紀錄與薪資調整資料。確定繼續嗎？",
+  },
+};
+
+const handleAdminCleanup = async (cleanupType) => {
+  const config = cleanupConfigs[cleanupType];
+  if (!config) {
+    return;
+  }
+
+  try {
+    await ElMessageBox.confirm(config.message, config.title, {
+      confirmButtonText: "確認並寄送備份",
+      cancelButtonText: "取消",
+      type: "warning",
+    });
+
+    cleanupSubmitting.value = true;
+    const response = await api.post(config.endpoint);
+    const result = response.data;
+
+    if (!result?.success) {
+      throw new Error(result?.message || "操作失敗");
+    }
+
+    if (cleanupType === "all-data") {
+      selectedWorker.value = "";
+      salaryData.value = null;
+      adjustments.value = [];
+    } else {
+      await fetchAdjustments();
+      if (selectedWorker.value) {
+        await calculateSalary();
+      }
+    }
+
+    await workersStore.fetchWorkers();
+    ElMessage.success(result.message || "操作成功");
+  } catch (error) {
+    if (error === "cancel") {
+      return;
+    }
+
+    console.error("管理員清理資料失敗:", error);
+    ElMessage.error(error.response?.data?.message || error.message || "操作失敗");
+  } finally {
+    cleanupSubmitting.value = false;
+  }
+};
+
 onMounted(() => {
   workersStore.fetchWorkers();
 });
@@ -841,6 +924,12 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+}
+
+.page-header-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .card-header {
@@ -902,6 +991,11 @@ onMounted(() => {
   .page-header {
     flex-direction: column;
     gap: 16px;
+    align-items: stretch;
+  }
+
+  .page-header-actions {
+    width: 100%;
   }
 
   .salary-item {

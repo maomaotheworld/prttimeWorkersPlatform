@@ -15,8 +15,8 @@
         <el-card class="welcome-card">
           <div class="welcome-content">
             <el-icon size="48" class="welcome-icon"><Management /></el-icon>
-            <h1 class="welcome-title">歡迎使用工讀生管理平台</h1>
-            <p class="welcome-desc">高效管理工讀生工時、薪資與組別的專業平台</p>
+            <h1 class="welcome-title">歡迎使用管理平台</h1>
+            <p class="welcome-desc">高效管理工時、薪資與組別的專業平台</p>
           </div>
         </el-card>
       </div>

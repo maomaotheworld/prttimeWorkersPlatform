@@ -123,9 +123,7 @@ const router = createRouter({
 // 認證守衛 - 訪客權限控制
 router.beforeEach((to, from, next) => {
   // 設定頁面標題
-  document.title = to.meta.title
-    ? `${to.meta.title} - 工讀生管理平台`
-    : "工讀生管理平台";
+  document.title = to.meta.title ? `${to.meta.title} - 管理平台` : "管理平台";
 
   // 檢查認證狀態
   const token = localStorage.getItem("auth_token");

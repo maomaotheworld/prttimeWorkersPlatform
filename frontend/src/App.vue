@@ -17,7 +17,7 @@
           <div class="header-content">
             <div class="logo">
               <el-icon size="24"><Management /></el-icon>
-              <span>工讀生管理平台</span>
+              <span>管理平台</span>
             </div>
             <div class="header-actions">
               <div v-if="authStore.isLoggedIn" class="user-info">
@@ -310,7 +310,12 @@ const visibleDesktopNavs = computed(() => {
 // 底部端點配置(需要權限過濾)
 const mobileNavs = [
   { path: "/", name: "首頁", icon: "HomeFilled", requiresAuth: true },
-  { path: "/workers", name: "工讀生", icon: "User", permission: "canEditWorkers" },
+  {
+    path: "/workers",
+    name: "工讀生",
+    icon: "User",
+    permission: "canEditWorkers",
+  },
   { path: "/personnel-list", name: "人員", icon: "UserFilled", noAuth: true },
   {
     path: "/attendance",

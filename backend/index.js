@@ -60,6 +60,28 @@ const DEFAULT_GROUPS = [
 ];
 const GROUP_SHEET_NAME = "groups";
 const GROUP_SHEET_HEADERS = ["id", "name", "description", "createdAt"];
+const WORKER_SHEET_NAME = "workers";
+const WORKER_SHEET_HEADERS = [
+  "id",
+  "number",
+  "name",
+  "gender",
+  "level",
+  "groupId",
+  "floor",
+  "job",
+  "baseHourlyWage",
+  "baseWorkingHours",
+  "phone",
+  "email",
+  "address",
+  "emergencyContact",
+  "bankAccount",
+  "startDate",
+  "status",
+  "createdAt",
+  "updatedAt",
+];
 
 // 確保資料目錄存在
 if (!fs.existsSync(dataDir)) {
@@ -106,7 +128,21 @@ function readJsonFile(filePath, fallbackValue) {
 function normalizeWorkers(workerList = []) {
   return workerList.map((worker) => ({
     ...worker,
+    number: worker.number || worker.workerNumber || "",
+    gender: worker.gender || "",
+    level: Number(worker.level) || 1,
+    groupId: worker.groupId || null,
+    floor: worker.floor || "",
     job: worker.job || "",
+    baseHourlyWage: Number(worker.baseHourlyWage || worker.hourlyWage) || 0,
+    baseWorkingHours: Number(worker.baseWorkingHours || worker.baseHours) || 0,
+    phone: worker.phone || "",
+    email: worker.email || "",
+    address: worker.address || "",
+    emergencyContact: worker.emergencyContact || "",
+    bankAccount: worker.bankAccount || "",
+    startDate: worker.startDate || "",
+    status: worker.status || "",
   }));
 }
 
@@ -149,6 +185,7 @@ async function initializeAppData() {
     [],
     normalizeWorkers,
   );
+  workers = await loadWorkersFromPrimaryStore(workers);
   groups = await loadPersistedCollection(
     "groups",
     groupsFilePath,
@@ -168,6 +205,10 @@ async function initializeAppData() {
 }
 
 async function saveWorkers() {
+  if (isGoogleSheetsConfigured()) {
+    await syncWorkersToGoogleSheets(workers);
+  }
+
   await persistCollection("workers", workersFilePath, normalizeWorkers(workers));
 }
 
@@ -278,6 +319,100 @@ async function syncGroupsToGoogleSheets(groupList) {
   ];
 
   await writeSheetValues(GROUP_SHEET_NAME, rows);
+}
+
+function normalizeWorkerRecord(worker) {
+  const normalizedWorker = normalizeWorkers([worker])[0] || {};
+
+  return {
+    id: String(normalizedWorker.id || uuidv4()),
+    number: String(normalizedWorker.number || "").trim(),
+    name: String(normalizedWorker.name || "").trim(),
+    gender: String(normalizedWorker.gender || "").trim(),
+    level: Number(normalizedWorker.level) || 1,
+    groupId: normalizedWorker.groupId || "",
+    floor: String(normalizedWorker.floor || "").trim(),
+    job: String(normalizedWorker.job || "").trim(),
+    baseHourlyWage: Number(normalizedWorker.baseHourlyWage) || 0,
+    baseWorkingHours: Number(normalizedWorker.baseWorkingHours) || 0,
+    phone: String(normalizedWorker.phone || "").trim(),
+    email: String(normalizedWorker.email || "").trim(),
+    address: String(normalizedWorker.address || "").trim(),
+    emergencyContact: String(normalizedWorker.emergencyContact || "").trim(),
+    bankAccount: String(normalizedWorker.bankAccount || "").trim(),
+    startDate: String(normalizedWorker.startDate || "").trim(),
+    status: String(normalizedWorker.status || "").trim(),
+    createdAt: normalizedWorker.createdAt || new Date().toISOString(),
+    updatedAt: normalizedWorker.updatedAt || new Date().toISOString(),
+  };
+}
+
+async function loadWorkersFromGoogleSheets() {
+  const rows = await readSheetValues(WORKER_SHEET_NAME);
+
+  if (!rows.length) {
+    return [];
+  }
+
+  const hasHeaderRow = WORKER_SHEET_HEADERS.every(
+    (header, index) => (rows[0][index] || "").trim() === header,
+  );
+  const dataRows = hasHeaderRow ? rows.slice(1) : rows;
+
+  return mapSheetRowsToObjects(dataRows, WORKER_SHEET_HEADERS)
+    .map(normalizeWorkerRecord)
+    .filter((worker) => worker.number && worker.name);
+}
+
+async function loadWorkersFromPrimaryStore(fallbackWorkers) {
+  if (!isGoogleSheetsConfigured()) {
+    return normalizeWorkers(fallbackWorkers);
+  }
+
+  try {
+    const sheetWorkers = await loadWorkersFromGoogleSheets();
+
+    if (sheetWorkers.length > 0) {
+      console.log(
+        `📄 workers 已從 Google Sheets 載入 ${sheetWorkers.length} 筆`,
+      );
+      return normalizeWorkers(sheetWorkers);
+    }
+
+    if (fallbackWorkers.length > 0) {
+      await syncWorkersToGoogleSheets(fallbackWorkers);
+      console.log(
+        `📄 workers 工作表為空，已自動同步既有 ${fallbackWorkers.length} 筆資料到 Google Sheets`,
+      );
+    } else {
+      console.log("ℹ️ workers 工作表目前為空，且系統尚無既有資料");
+    }
+
+    return normalizeWorkers(fallbackWorkers);
+  } catch (error) {
+    console.warn(
+      "⚠️ 載入 Google Sheets workers 失敗，改用既有資料:",
+      error.message,
+    );
+    return normalizeWorkers(fallbackWorkers);
+  }
+}
+
+async function refreshWorkersFromPrimaryStore() {
+  workers = await loadWorkersFromPrimaryStore(workers);
+  return workers;
+}
+
+async function syncWorkersToGoogleSheets(workerList) {
+  const rows = [
+    WORKER_SHEET_HEADERS,
+    ...workerList.map((worker) => {
+      const normalizedWorker = normalizeWorkerRecord(worker);
+      return WORKER_SHEET_HEADERS.map((header) => normalizedWorker[header] ?? "");
+    }),
+  ];
+
+  await writeSheetValues(WORKER_SHEET_NAME, rows);
 }
 
 // 日誌記錄輔助函數
@@ -1092,7 +1227,8 @@ const getWorkersWithTodayAttendance = (
 };
 
 // 獲取所有工讀生
-app.get("/api/workers", (req, res) => {
+app.get("/api/workers", asyncHandler(async (req, res) => {
+  await refreshWorkersFromPrimaryStore();
   const includeTodayAttendance = req.query.includeTodayAttendance === "true";
   const targetDate = req.query.date
     ? moment(req.query.date).format("YYYY-MM-DD")
@@ -1105,10 +1241,11 @@ app.get("/api/workers", (req, res) => {
       : workers,
     message: "工讀生列表獲取成功",
   });
-});
+}));
 
 // 獲取單個工讀生
-app.get("/api/workers/:id", (req, res) => {
+app.get("/api/workers/:id", asyncHandler(async (req, res) => {
+  await refreshWorkersFromPrimaryStore();
   const worker = workers.find((w) => w.id === req.params.id);
   if (!worker) {
     return res.status(404).json({
@@ -1121,12 +1258,13 @@ app.get("/api/workers/:id", (req, res) => {
     data: worker,
     message: "工讀生資料獲取成功",
   });
-});
+}));
 
 // 新增工讀生
 app.post(
   "/api/workers",
   asyncHandler(async (req, res) => {
+  await refreshWorkersFromPrimaryStore();
   const {
     number,
     name,
@@ -1185,7 +1323,8 @@ app.post(
     });
   }
 
-  const newWorker = {
+  const previousWorkers = cloneData(workers);
+  const newWorker = normalizeWorkerRecord({
     id: uuidv4(),
     number,
     name,
@@ -1200,10 +1339,15 @@ app.post(
       baseWorkingHours !== undefined ? parseFloat(baseWorkingHours) : 0,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-  };
+  });
 
-  workers.push(newWorker);
+  try {
+    workers.push(newWorker);
     await saveWorkers();
+  } catch (error) {
+    workers = previousWorkers;
+    throw error;
+  }
 
   // 記錄活動日誌
   logActivity(
@@ -1226,6 +1370,7 @@ app.post(
 app.put(
   "/api/workers/:id",
   asyncHandler(async (req, res) => {
+  await refreshWorkersFromPrimaryStore();
   const {
     number,
     name,
@@ -1279,27 +1424,34 @@ app.put(
     });
   }
 
-  workers[workerIndex] = {
-    ...workers[workerIndex],
-    number: number || workers[workerIndex].number,
-    name: name || workers[workerIndex].name,
-    gender: gender || workers[workerIndex].gender,
-    level: level ? parseInt(level) : workers[workerIndex].level,
-    groupId: groupId !== undefined ? groupId : workers[workerIndex].groupId,
-    floor: floor !== undefined ? floor : workers[workerIndex].floor || "",
-    job: job !== undefined ? job : workers[workerIndex].job || "", // 新增工作欄位更新
-    baseHourlyWage:
-      baseHourlyWage !== undefined
-        ? parseFloat(baseHourlyWage)
-        : workers[workerIndex].baseHourlyWage || 0,
-    baseWorkingHours:
-      baseWorkingHours !== undefined
-        ? parseFloat(baseWorkingHours)
-        : workers[workerIndex].baseWorkingHours || 0,
-    updatedAt: new Date().toISOString(),
-  };
+  const previousWorkers = cloneData(workers);
+
+  try {
+    workers[workerIndex] = normalizeWorkerRecord({
+      ...workers[workerIndex],
+      number: number || workers[workerIndex].number,
+      name: name || workers[workerIndex].name,
+      gender: gender || workers[workerIndex].gender,
+      level: level ? parseInt(level) : workers[workerIndex].level,
+      groupId: groupId !== undefined ? groupId : workers[workerIndex].groupId,
+      floor: floor !== undefined ? floor : workers[workerIndex].floor || "",
+      job: job !== undefined ? job : workers[workerIndex].job || "",
+      baseHourlyWage:
+        baseHourlyWage !== undefined
+          ? parseFloat(baseHourlyWage)
+          : workers[workerIndex].baseHourlyWage || 0,
+      baseWorkingHours:
+        baseWorkingHours !== undefined
+          ? parseFloat(baseWorkingHours)
+          : workers[workerIndex].baseWorkingHours || 0,
+      updatedAt: new Date().toISOString(),
+    });
 
     await saveWorkers();
+  } catch (error) {
+    workers = previousWorkers;
+    throw error;
+  }
 
   // 記錄活動日誌
   logActivity(
@@ -1322,6 +1474,7 @@ app.put(
 app.delete(
   "/api/workers/:id",
   asyncHandler(async (req, res) => {
+  await refreshWorkersFromPrimaryStore();
   const workerIndex = workers.findIndex((w) => w.id === req.params.id);
 
   if (workerIndex === -1) {
@@ -1331,9 +1484,16 @@ app.delete(
     });
   }
 
+  const previousWorkers = cloneData(workers);
   const deletedWorker = workers[workerIndex];
-  workers.splice(workerIndex, 1);
+
+  try {
+    workers.splice(workerIndex, 1);
     await saveWorkers();
+  } catch (error) {
+    workers = previousWorkers;
+    throw error;
+  }
 
   // 記錄活動日誌
   logActivity(
@@ -1353,6 +1513,7 @@ app.delete(
 
 // 調整個別工讀生的累積工時
 app.post("/api/workers/:id/additional-hours", authenticateToken, asyncHandler(async (req, res) => {
+  await refreshWorkersFromPrimaryStore();
   const workerId = req.params.id;
   const { type, hours, reason } = req.body;
 
@@ -1463,6 +1624,7 @@ app.post("/api/workers/:id/additional-hours", authenticateToken, asyncHandler(as
 
 // 批次更新工讀生薪資時數
 app.put("/api/workers/batch-update-wage", asyncHandler(async (req, res) => {
+  await refreshWorkersFromPrimaryStore();
   const { workerIds, baseHourlyWage, baseWorkingHours } = req.body;
 
   // 驗證必要參數
@@ -1495,27 +1657,34 @@ app.put("/api/workers/batch-update-wage", asyncHandler(async (req, res) => {
     });
   }
 
+  const previousWorkers = cloneData(workers);
   const updatedWorkers = [];
   const notFoundWorkers = [];
 
-  workerIds.forEach((workerId) => {
-    const workerIndex = workers.findIndex((w) => w.id === workerId);
-    if (workerIndex !== -1) {
-      // 只更新有提供的欄位
-      if (baseHourlyWage !== undefined) {
-        workers[workerIndex].baseHourlyWage = parseFloat(baseHourlyWage);
+  try {
+    workerIds.forEach((workerId) => {
+      const workerIndex = workers.findIndex((w) => w.id === workerId);
+      if (workerIndex !== -1) {
+        // 只更新有提供的欄位
+        if (baseHourlyWage !== undefined) {
+          workers[workerIndex].baseHourlyWage = parseFloat(baseHourlyWage);
+        }
+        if (baseWorkingHours !== undefined) {
+          workers[workerIndex].baseWorkingHours = parseFloat(baseWorkingHours);
+        }
+        workers[workerIndex].updatedAt = new Date().toISOString();
+        workers[workerIndex] = normalizeWorkerRecord(workers[workerIndex]);
+        updatedWorkers.push(workers[workerIndex]);
+      } else {
+        notFoundWorkers.push(workerId);
       }
-      if (baseWorkingHours !== undefined) {
-        workers[workerIndex].baseWorkingHours = parseFloat(baseWorkingHours);
-      }
-      workers[workerIndex].updatedAt = new Date().toISOString();
-      updatedWorkers.push(workers[workerIndex]);
-    } else {
-      notFoundWorkers.push(workerId);
-    }
-  });
+    });
 
-  await saveWorkers();
+    await saveWorkers();
+  } catch (error) {
+    workers = previousWorkers;
+    throw error;
+  }
 
   let message = `成功更新 ${updatedWorkers.length} 名工讀生的薪資時數`;
   if (notFoundWorkers.length > 0) {

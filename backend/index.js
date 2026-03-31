@@ -115,6 +115,15 @@ const SALARY_ADJUSTMENT_SHEET_HEADERS = [
   "date",
   "createdAt",
 ];
+const LEGACY_SALARY_ADJUSTMENT_SHEET_HEADERS = [
+  "id",
+  "workerId",
+  "type",
+  "amount",
+  "reason",
+  "date",
+  "createdAt",
+];
 const USER_SHEET_NAME = "users";
 const USER_SHEET_HEADERS = [
   "id",
@@ -591,8 +600,24 @@ function getOperatorInfo(user) {
   };
 }
 
+function getDefaultOperatorInfo() {
+  const defaultAdmin =
+    usersData.users.find((item) => isEvelynIdentifier(item.username)) ||
+    usersData.users.find((item) => item.role === "admin") ||
+    usersData.users[0];
+
+  return {
+    operatorId: defaultAdmin?.id || "system",
+    operatorUsername:
+      defaultAdmin?.username || defaultAdmin?.name || "system",
+    operatorName:
+      defaultAdmin?.name || defaultAdmin?.username || "系統",
+  };
+}
+
 function decorateSalaryAdjustmentRecord(adjustment = {}) {
   const normalizedAdjustment = normalizeSalaryAdjustmentRecord(adjustment);
+  const fallbackOperator = getDefaultOperatorInfo();
 
   return {
     ...normalizedAdjustment,
@@ -600,12 +625,13 @@ function decorateSalaryAdjustmentRecord(adjustment = {}) {
       normalizedAdjustment.workerName ||
       getWorkerNameById(normalizedAdjustment.workerId),
     typeLabel: getSalaryAdjustmentTypeLabel(normalizedAdjustment.type),
-    operatorId: normalizedAdjustment.operatorId || "system",
-    operatorUsername: normalizedAdjustment.operatorUsername || "system",
+    operatorId: normalizedAdjustment.operatorId || fallbackOperator.operatorId,
+    operatorUsername:
+      normalizedAdjustment.operatorUsername || fallbackOperator.operatorUsername,
     operatorName:
       normalizedAdjustment.operatorName ||
       normalizedAdjustment.operatorUsername ||
-      "系統",
+      fallbackOperator.operatorName,
   };
 }
 
@@ -1132,17 +1158,45 @@ async function syncTimeRecordsToGoogleSheets(records) {
 }
 
 async function loadSalaryAdjustmentsFromGoogleSheets() {
-  return loadRecordsFromGoogleSheets(
-    SALARY_ADJUSTMENT_SHEET_NAME,
-    SALARY_ADJUSTMENT_SHEET_HEADERS,
-    normalizeSalaryAdjustmentRecord,
-    {
-      fieldParsers: {
-        amount: (value) => parseSheetNumber(value, 0),
-      },
-      filter: (record) => record.workerId,
-    },
+  const rows = await readSheetValues(SALARY_ADJUSTMENT_SHEET_NAME);
+
+  if (!rows.length) {
+    return [];
+  }
+
+  const hasCurrentHeaderRow = SALARY_ADJUSTMENT_SHEET_HEADERS.every(
+    (header, index) => (rows[0][index] || "").trim() === header,
   );
+  if (hasCurrentHeaderRow) {
+    return loadRecordsFromGoogleSheets(
+      SALARY_ADJUSTMENT_SHEET_NAME,
+      SALARY_ADJUSTMENT_SHEET_HEADERS,
+      normalizeSalaryAdjustmentRecord,
+      {
+        fieldParsers: {
+          amount: (value) => parseSheetNumber(value, 0),
+        },
+        filter: (record) => record.workerId,
+      },
+    );
+  }
+
+  const hasLegacyHeaderRow = LEGACY_SALARY_ADJUSTMENT_SHEET_HEADERS.every(
+    (header, index) => (rows[0][index] || "").trim() === header,
+  );
+  const dataRows = hasLegacyHeaderRow ? rows.slice(1) : rows;
+
+  return mapSheetRowsToObjects(dataRows, LEGACY_SALARY_ADJUSTMENT_SHEET_HEADERS, {
+    amount: (value) => parseSheetNumber(value, 0),
+  })
+    .map((record) =>
+      normalizeSalaryAdjustmentRecord({
+        ...record,
+        workerName: getWorkerNameById(record.workerId),
+        typeLabel: getSalaryAdjustmentTypeLabel(record.type),
+      }),
+    )
+    .filter((record) => record.workerId);
 }
 
 async function loadSalaryAdjustmentsFromPrimaryStore(fallbackAdjustments) {
@@ -3429,6 +3483,7 @@ app.post("/api/salary-adjustments", authenticateToken, asyncHandler(async (req, 
     newAdjustment.id,
     worker.name,
     `薪資調整：${actionText} ${amount} 元，理由：${reason}`,
+    operatorInfo.operatorId,
   );
 
   res.status(201).json({
@@ -3537,6 +3592,7 @@ app.post("/api/salary-adjustments/total", authenticateToken, asyncHandler(async 
       workerId,
       worker.name,
       `總薪資設定為 ${targetTotalSalary} 元，原因：${reason}`,
+      operatorInfo.operatorId,
     );
 
     res.json({

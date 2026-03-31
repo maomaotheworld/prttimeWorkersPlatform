@@ -7,7 +7,7 @@ const getBaseURL = () => {
   if (import.meta.env.VITE_API_URL) {
     // 確保 URL 以 /api 結尾
     const url = import.meta.env.VITE_API_URL;
-    return url.endsWith('/api') ? url : `${url}/api`;
+    return url.endsWith("/api") ? url : `${url}/api`;
   }
 
   // 開發環境:本地環境使用代理
@@ -33,12 +33,12 @@ api.interceptors.request.use(
   (config) => {
     // 從 localStorage 獲取 token
     const token = localStorage.getItem("auth_token");
-    
+
     // 如果有 token,添加到請求頭
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
     return config;
   },
   (error) => {

@@ -11,6 +11,11 @@ const nodemailer = require("nodemailer");
 const XLSX = require("xlsx");
 const { initDatabase, getAppState, saveAppState } = require("./database");
 const { WorkersDAO, GroupsDAO, UsersDAO } = require("./dao");
+const {
+  getMissingGoogleSheetsEnvVars,
+  isGoogleSheetsConfigured,
+  verifyGoogleSheetsConnection,
+} = require("./googleSheets");
 
 const app = express();
 const PORT = process.env.PORT || 3005;
@@ -2468,11 +2473,29 @@ async function startServer() {
     await initializeAppData();
     console.log("✅ 應用資料載入成功");
 
+    if (isGoogleSheetsConfigured()) {
+      console.log("📄 驗證 Google Sheets 連線...");
+      try {
+        const sheetsStatus = await verifyGoogleSheetsConnection("groups");
+        console.log(
+          `✅ Google Sheets 連線成功：已讀取 ${sheetsStatus.sheetName} 工作表，預覽 ${sheetsStatus.previewRowCount} 列`,
+        );
+      } catch (error) {
+        console.warn("⚠️ Google Sheets 驗證失敗:", error.message);
+      }
+    } else {
+      const missingEnvVars = getMissingGoogleSheetsEnvVars();
+      console.log(
+        `ℹ️ 略過 Google Sheets 驗證，缺少環境變數: ${missingEnvVars.join(", ")}`,
+      );
+    }
+
     // 啟動伺服器
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 伺服器運行在 http://0.0.0.0:${PORT}`);
       console.log(`📱 區域網路存取: http://[你的電腦IP]:${PORT}`);
       console.log(`💾 使用 PostgreSQL app_state 持久化儲存`);
+      console.log(`📄 Google Sheets 已接入啟動驗證流程`);
       console.log(
         `💡 要獲取電腦IP,請執行: ipconfig (Windows) 或 ifconfig (Mac/Linux)`,
       );

@@ -103,9 +103,14 @@ const SALARY_ADJUSTMENT_SHEET_NAME = "salary_adjustments";
 const SALARY_ADJUSTMENT_SHEET_HEADERS = [
   "id",
   "workerId",
+  "workerName",
   "type",
+  "typeLabel",
   "amount",
   "reason",
+  "operatorId",
+  "operatorUsername",
+  "operatorName",
   "date",
   "createdAt",
 ];
@@ -262,9 +267,16 @@ function normalizeSalaryAdjustmentRecord(adjustment = {}) {
   return {
     id: String(adjustment.id || uuidv4()),
     workerId: String(adjustment.workerId || "").trim(),
+    workerName: String(adjustment.workerName || "").trim(),
     type: String(adjustment.type || "").trim(),
+    typeLabel: String(
+      adjustment.typeLabel || getSalaryAdjustmentTypeLabel(adjustment.type),
+    ).trim(),
     amount: parseSheetNumber(adjustment.amount, 0),
     reason: String(adjustment.reason || "").trim(),
+    operatorId: String(adjustment.operatorId || "").trim(),
+    operatorUsername: String(adjustment.operatorUsername || "").trim(),
+    operatorName: String(adjustment.operatorName || "").trim(),
     date: adjustment.date || new Date().toISOString(),
     createdAt: adjustment.createdAt || adjustment.date || new Date().toISOString(),
   };
@@ -298,6 +310,47 @@ function normalizeActivityLogRecord(log = {}) {
     details: String(log.details || "").trim(),
     userId: String(log.userId || "system").trim(),
     createdAt: log.createdAt || new Date().toISOString(),
+  };
+}
+
+function getSalaryAdjustmentTypeLabel(type = "") {
+  return type === "increase" ? "加薪" : type === "decrease" ? "減薪" : type;
+}
+
+function getWorkerNameById(workerId = "") {
+  const worker = workers.find((item) => item.id === workerId);
+  return worker?.name || "";
+}
+
+function getOperatorInfo(user) {
+  const matchedUser = usersData.users.find(
+    (item) => item.id === user?.id || item.username === user?.username,
+  );
+
+  return {
+    operatorId: user?.id || matchedUser?.id || "system",
+    operatorUsername:
+      user?.username || matchedUser?.username || user?.name || "system",
+    operatorName:
+      matchedUser?.name || user?.name || user?.username || "系統",
+  };
+}
+
+function decorateSalaryAdjustmentRecord(adjustment = {}) {
+  const normalizedAdjustment = normalizeSalaryAdjustmentRecord(adjustment);
+
+  return {
+    ...normalizedAdjustment,
+    workerName:
+      normalizedAdjustment.workerName ||
+      getWorkerNameById(normalizedAdjustment.workerId),
+    typeLabel: getSalaryAdjustmentTypeLabel(normalizedAdjustment.type),
+    operatorId: normalizedAdjustment.operatorId || "system",
+    operatorUsername: normalizedAdjustment.operatorUsername || "system",
+    operatorName:
+      normalizedAdjustment.operatorName ||
+      normalizedAdjustment.operatorUsername ||
+      "系統",
   };
 }
 
@@ -838,7 +891,7 @@ async function syncSalaryAdjustmentsToGoogleSheets(adjustments) {
     SALARY_ADJUSTMENT_SHEET_NAME,
     SALARY_ADJUSTMENT_SHEET_HEADERS,
     adjustments,
-    normalizeSalaryAdjustmentRecord,
+    decorateSalaryAdjustmentRecord,
   );
 }
 
@@ -2872,9 +2925,10 @@ app.post("/api/time-records/edit-time", asyncHandler(async (req, res) => {
 // === 薪資調整 ===
 // 獲取薪資調整記錄
 app.get("/api/salary-adjustments", asyncHandler(async (req, res) => {
+  await refreshWorkersFromPrimaryStore();
   await refreshSalaryAdjustmentsFromPrimaryStore();
   const { workerId } = req.query;
-  let filteredAdjustments = salaryAdjustments;
+  let filteredAdjustments = salaryAdjustments.map(decorateSalaryAdjustmentRecord);
 
   if (workerId) {
     filteredAdjustments = filteredAdjustments.filter(
@@ -2890,7 +2944,9 @@ app.get("/api/salary-adjustments", asyncHandler(async (req, res) => {
 }));
 
 // 新增薪資調整
-app.post("/api/salary-adjustments", asyncHandler(async (req, res) => {
+app.post("/api/salary-adjustments", authenticateToken, asyncHandler(async (req, res) => {
+  await refreshUsersDataFromPrimaryStore();
+  await refreshWorkersFromPrimaryStore();
   await refreshSalaryAdjustmentsFromPrimaryStore();
   const { workerId, type, amount, reason } = req.body;
 
@@ -2918,15 +2974,20 @@ app.post("/api/salary-adjustments", asyncHandler(async (req, res) => {
     });
   }
 
-  const newAdjustment = {
+  const operatorInfo = getOperatorInfo(req.user);
+  const newAdjustment = decorateSalaryAdjustmentRecord({
     id: uuidv4(),
     workerId,
+    workerName: worker.name,
     type,
     amount: parseFloat(amount),
     reason,
+    operatorId: operatorInfo.operatorId,
+    operatorUsername: operatorInfo.operatorUsername,
+    operatorName: operatorInfo.operatorName,
     date: new Date().toISOString(),
     createdAt: new Date().toISOString(),
-  };
+  });
 
   salaryAdjustments.push(newAdjustment);
   await saveSalaryAdjustments(); // 持久化數據
@@ -2949,7 +3010,9 @@ app.post("/api/salary-adjustments", asyncHandler(async (req, res) => {
 }));
 
 // 調整總薪資（直接設定總薪資金額）
-app.post("/api/salary-adjustments/total", asyncHandler(async (req, res) => {
+app.post("/api/salary-adjustments/total", authenticateToken, asyncHandler(async (req, res) => {
+  await refreshUsersDataFromPrimaryStore();
+  await refreshWorkersFromPrimaryStore();
   await Promise.all([
     refreshTimeRecordsFromPrimaryStore(),
     refreshSalaryAdjustmentsFromPrimaryStore(),
@@ -3019,14 +3082,19 @@ app.post("/api/salary-adjustments/total", asyncHandler(async (req, res) => {
 
     // 如果需要額外薪資調整，新增一筆記錄
     if (Math.abs(requiredExtraSalary) >= 1) {
-      const adjustment = {
+      const operatorInfo = getOperatorInfo(req.user);
+      const adjustment = decorateSalaryAdjustmentRecord({
         id: Date.now().toString(),
         workerId,
+        workerName: worker.name,
         type: requiredExtraSalary >= 0 ? "increase" : "decrease",
         amount: Math.abs(requiredExtraSalary),
         reason: `總薪資設定：${reason}`,
+        operatorId: operatorInfo.operatorId,
+        operatorUsername: operatorInfo.operatorUsername,
+        operatorName: operatorInfo.operatorName,
         date: new Date().toISOString(),
-      };
+      });
 
       salaryAdjustments.push(adjustment);
     }

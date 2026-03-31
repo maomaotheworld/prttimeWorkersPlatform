@@ -245,7 +245,7 @@
 
         <el-table-column label="工讀生" min-width="120">
           <template #default="{ row }">
-            {{ getWorkerName(row.workerId) }}
+            {{ row.workerName || getWorkerName(row.workerId) }}
           </template>
         </el-table-column>
 
@@ -255,7 +255,7 @@
               :type="row.type === 'increase' ? 'success' : 'danger'"
               size="small"
             >
-              {{ row.type === "increase" ? "加薪" : "減薪" }}
+              {{ row.typeLabel || (row.type === "increase" ? "加薪" : "減薪") }}
             </el-tag>
           </template>
         </el-table-column>
@@ -271,6 +271,12 @@
         </el-table-column>
 
         <el-table-column prop="reason" label="原因" min-width="150" />
+
+        <el-table-column label="操作者" min-width="120">
+          <template #default="{ row }">
+            {{ row.operatorName || row.operatorUsername || "-" }}
+          </template>
+        </el-table-column>
       </el-table>
 
       <div
@@ -594,6 +600,14 @@ const salaryAdjustment = computed(() => {
 // 工具函數
 const formatDate = (date) => moment(date).format("YYYY/MM/DD");
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("auth_token");
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+};
+
 const getWorkerName = (workerId) => {
   const worker = workers.value.find((w) => w.id === workerId);
   return worker ? worker.name : "未知";
@@ -651,7 +665,9 @@ const fetchAdjustments = async () => {
       url += `?workerId=${selectedWorker.value}`;
     }
 
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: getAuthHeaders(),
+    });
     const result = await response.json();
 
     if (!response.ok) {
@@ -726,9 +742,7 @@ const calculateSalaryForWorker = async (workerId) => {
       `/api/workers/${workerId}/salary-calculation?startDate=${startDate}&endDate=${endDate}`,
       {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
       },
     );
 
@@ -754,9 +768,7 @@ const handleTotalSalaryAdjust = async () => {
 
     const response = await fetch("/api/salary-adjustments/total", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({
         workerId: totalSalaryForm.value.workerId,
         targetTotalSalary: totalSalaryForm.value.targetTotalSalary,
@@ -798,9 +810,7 @@ const handleAddAdjustment = async () => {
 
     const response = await fetch("/api/salary-adjustments", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(adjustmentForm.value),
     });
 

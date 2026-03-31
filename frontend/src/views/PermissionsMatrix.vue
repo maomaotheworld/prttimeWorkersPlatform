@@ -209,6 +209,7 @@
 import { ref, onMounted, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useAuthStore } from "@/stores/auth";
+import { getApiUrl } from "@/config/api";
 import {
   HomeFilled,
   User,
@@ -222,6 +223,14 @@ import {
 
 const authStore = useAuthStore();
 const saving = ref(false);
+
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("auth_token");
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+};
 
 // 權限數據
 const permissionsData = ref([
@@ -433,6 +442,76 @@ const addChangeLog = (action, details) => {
   }
 };
 
+const applyPermissionsConfig = (config) => {
+  const featureMap = new Map(
+    (config?.featurePermissions || []).map((item) => [item.path, item]),
+  );
+  const detailMap = new Map(
+    (config?.detailedPermissions || []).map((item) => [item.permission, item]),
+  );
+
+  permissionsData.value = permissionsData.value.map((row) => {
+    const savedRow = featureMap.get(row.path);
+    if (!savedRow) return row;
+
+    return {
+      ...row,
+      admin: !!savedRow.admin,
+      leader: !!savedRow.leader,
+      reader: !!savedRow.reader,
+      permissions: Array.isArray(savedRow.permissions)
+        ? savedRow.permissions
+        : row.permissions,
+    };
+  });
+
+  detailedPermissions.value = detailedPermissions.value.map((row) => {
+    const savedRow = detailMap.get(row.permission);
+    if (!savedRow) return row;
+
+    return {
+      ...row,
+      admin: !!savedRow.admin,
+      leader: !!savedRow.leader,
+      reader: !!savedRow.reader,
+    };
+  });
+};
+
+const fetchPermissionsConfig = async () => {
+  const response = await fetch(getApiUrl("/api/permissions/config"), {
+    headers: getAuthHeaders(),
+  });
+  const result = await response.json();
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || "載入權限設定失敗");
+  }
+
+  applyPermissionsConfig(result.data);
+};
+
+const fetchChangeHistory = async () => {
+  const response = await fetch(
+    getApiUrl("/api/activity-logs?entityType=permission-config&limit=20"),
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  const result = await response.json();
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || "載入權限修改歷史失敗");
+  }
+
+  changeHistory.value = (result.data || []).map((log) => ({
+    id: log.id,
+    action: log.action,
+    details: log.details,
+    timestamp: new Date(log.timestamp).toLocaleString("zh-TW"),
+  }));
+};
+
 // 保存權限配置
 const handleSavePermissions = async () => {
   try {
@@ -448,17 +527,39 @@ const handleSavePermissions = async () => {
 
     saving.value = true;
 
-    // 這裡可以調用 API 保存到後端
-    // await api.post("/api/permissions/save", {
-    //   permissions: permissionsData.value,
-    //   detailedPermissions: detailedPermissions.value,
-    // });
+    const response = await fetch(getApiUrl("/api/permissions/config"), {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        featurePermissions: permissionsData.value.map((row) => ({
+          key: row.path,
+          feature: row.feature,
+          path: row.path,
+          description: row.description,
+          permissions: row.permissions,
+          admin: row.admin,
+          leader: row.leader,
+          reader: row.reader,
+        })),
+        detailedPermissions: detailedPermissions.value.map((row) => ({
+          permission: row.permission,
+          label: row.label,
+          description: row.description,
+          admin: row.admin,
+          leader: row.leader,
+          reader: row.reader,
+        })),
+      }),
+    });
 
-    // 模擬保存
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || "權限配置保存失敗");
+    }
 
     ElMessage.success("權限配置保存成功");
     addChangeLog("保存權限配置", "所有權限配置已成功保存");
+    await fetchChangeHistory();
   } catch (error) {
     if (error !== "cancel") {
       ElMessage.error("保存失敗: " + error.message);
@@ -490,6 +591,12 @@ const checkAccess = () => {
 
 onMounted(() => {
   checkAccess();
+  fetchPermissionsConfig().catch((error) => {
+    ElMessage.error(error.message || "載入權限設定失敗");
+  });
+  fetchChangeHistory().catch((error) => {
+    ElMessage.error(error.message || "載入修改歷史失敗");
+  });
 });
 </script>
 

@@ -47,6 +47,7 @@ const dataDir = path.join(__dirname, "data");
 const usersFilePath = path.join(dataDir, "users.json");
 const workersFilePath = path.join(dataDir, "workers.json");
 const groupsFilePath = path.join(dataDir, "groups.json");
+const permissionsFilePath = path.join(dataDir, "permissions.json");
 const timeRecordsFilePath = path.join(dataDir, "timeRecords.json");
 const salaryAdjustmentsFilePath = path.join(
   dataDir,
@@ -137,6 +138,169 @@ const ACTIVITY_LOG_SHEET_HEADERS = [
   "details",
   "userId",
   "createdAt",
+];
+const PERMISSIONS_SHEET_NAME = "permissions";
+const PERMISSIONS_SHEET_HEADERS = [
+  "type",
+  "key",
+  "name",
+  "path",
+  "description",
+  "permissions",
+  "admin",
+  "leader",
+  "reader",
+  "updatedAt",
+];
+const DEFAULT_FEATURE_PERMISSIONS = [
+  {
+    key: "/",
+    feature: "首頁",
+    path: "/",
+    admin: true,
+    leader: true,
+    reader: true,
+    permissions: [],
+    description: "系統主頁，顯示統計數據和快速操作",
+  },
+  {
+    key: "/workers",
+    feature: "工讀生管理",
+    path: "/workers",
+    admin: true,
+    leader: true,
+    reader: false,
+    permissions: ["canEditWorkers"],
+    description: "管理工讀生資料，包括新增、編輯、刪除",
+  },
+  {
+    key: "/personnel-list",
+    feature: "人員列表",
+    path: "/personnel-list",
+    admin: true,
+    leader: true,
+    reader: true,
+    permissions: [],
+    description: "公開的人員列表頁面，無需登入即可查看",
+  },
+  {
+    key: "/groups",
+    feature: "組別管理",
+    path: "/groups",
+    admin: true,
+    leader: true,
+    reader: false,
+    permissions: ["canEditWorkers"],
+    description: "管理工讀生組別，分配組別成員",
+  },
+  {
+    key: "/attendance",
+    feature: "打卡系統",
+    path: "/attendance",
+    admin: true,
+    leader: true,
+    reader: false,
+    permissions: ["canClockIn"],
+    description: "工讀生打卡上下班功能",
+  },
+  {
+    key: "/time-records",
+    feature: "工時記錄",
+    path: "/time-records",
+    admin: true,
+    leader: false,
+    reader: false,
+    permissions: ["canEditTime"],
+    description: "查看和編輯工時記錄，調整額外工時",
+  },
+  {
+    key: "/salary",
+    feature: "薪資管理",
+    path: "/salary",
+    admin: true,
+    leader: false,
+    reader: false,
+    permissions: ["canViewReports"],
+    description: "計算和管理薪資，生成薪資報表",
+  },
+  {
+    key: "/activity-logs",
+    feature: "活動資料",
+    path: "/activity-logs",
+    admin: true,
+    leader: false,
+    reader: false,
+    permissions: [],
+    description: "查看系統操作日誌和活動記錄",
+  },
+  {
+    key: "/user-management",
+    feature: "用戶管理",
+    path: "/user-management",
+    admin: true,
+    leader: false,
+    reader: false,
+    permissions: ["canManageUsers"],
+    description: "管理系統用戶，創建和刪除帳號",
+  },
+];
+const DEFAULT_DETAILED_PERMISSIONS = [
+  {
+    permission: "canManageUsers",
+    label: "用戶管理",
+    admin: true,
+    leader: false,
+    reader: false,
+    description: "創建、編輯、刪除系統用戶帳號",
+  },
+  {
+    permission: "canEditWorkers",
+    label: "編輯工讀生",
+    admin: true,
+    leader: true,
+    reader: false,
+    description: "新增、修改、刪除工讀生資料",
+  },
+  {
+    permission: "canImportData",
+    label: "匯入數據",
+    admin: true,
+    leader: true,
+    reader: false,
+    description: "從 Excel 批量匯入工讀生資料",
+  },
+  {
+    permission: "canClockIn",
+    label: "打卡功能",
+    admin: true,
+    leader: true,
+    reader: false,
+    description: "使用打卡系統記錄上下班時間",
+  },
+  {
+    permission: "canEditTime",
+    label: "編輯工時",
+    admin: true,
+    leader: true,
+    reader: false,
+    description: "調整和修改工時記錄",
+  },
+  {
+    permission: "canViewReports",
+    label: "查看報表",
+    admin: true,
+    leader: true,
+    reader: false,
+    description: "查看統計報表和數據分析",
+  },
+  {
+    permission: "canDeleteData",
+    label: "刪除數據",
+    admin: true,
+    leader: false,
+    reader: false,
+    description: "刪除重要數據（需要管理員權限）",
+  },
 ];
 
 // 確保資料目錄存在
@@ -299,6 +463,69 @@ function normalizeUserRecord(user = {}) {
   };
 }
 
+function normalizeFeaturePermissionRecord(feature = {}) {
+  return {
+    key: String(feature.key || feature.path || "").trim(),
+    feature: String(feature.feature || "").trim(),
+    path: String(feature.path || "").trim(),
+    admin: parseSheetBoolean(feature.admin, true),
+    leader: parseSheetBoolean(feature.leader, false),
+    reader: parseSheetBoolean(feature.reader, false),
+    permissions: Array.isArray(feature.permissions)
+      ? feature.permissions
+      : parseSheetJson(feature.permissions, []),
+    description: String(feature.description || "").trim(),
+  };
+}
+
+function normalizeDetailedPermissionRecord(permission = {}) {
+  return {
+    permission: String(permission.permission || permission.key || "").trim(),
+    label: String(permission.label || permission.name || "").trim(),
+    admin: parseSheetBoolean(permission.admin, true),
+    leader: parseSheetBoolean(permission.leader, false),
+    reader: parseSheetBoolean(permission.reader, false),
+    description: String(permission.description || "").trim(),
+  };
+}
+
+function normalizePermissionsConfig(config = {}) {
+  const featureMap = new Map(
+    (config.featurePermissions || []).map((item) => {
+      const normalizedItem = normalizeFeaturePermissionRecord(item);
+      return [normalizedItem.key || normalizedItem.path, normalizedItem];
+    }),
+  );
+  const detailedMap = new Map(
+    (config.detailedPermissions || []).map((item) => {
+      const normalizedItem = normalizeDetailedPermissionRecord(item);
+      return [normalizedItem.permission, normalizedItem];
+    }),
+  );
+
+  return {
+    featurePermissions: DEFAULT_FEATURE_PERMISSIONS.map((defaultItem) => ({
+      ...defaultItem,
+      ...(featureMap.get(defaultItem.key) || {}),
+      key: defaultItem.key,
+      path: defaultItem.path,
+      feature:
+        featureMap.get(defaultItem.key)?.feature || defaultItem.feature,
+      permissions: Array.isArray(featureMap.get(defaultItem.key)?.permissions)
+        ? featureMap.get(defaultItem.key).permissions
+        : defaultItem.permissions,
+    })).map(normalizeFeaturePermissionRecord),
+    detailedPermissions: DEFAULT_DETAILED_PERMISSIONS.map((defaultItem) => ({
+      ...defaultItem,
+      ...(detailedMap.get(defaultItem.permission) || {}),
+      permission: defaultItem.permission,
+      label:
+        detailedMap.get(defaultItem.permission)?.label || defaultItem.label,
+    })).map(normalizeDetailedPermissionRecord),
+    updatedAt: config.updatedAt || new Date().toISOString(),
+  };
+}
+
 function normalizeActivityLogRecord(log = {}) {
   return {
     id: String(log.id || uuidv4()),
@@ -315,6 +542,34 @@ function normalizeActivityLogRecord(log = {}) {
 
 function getSalaryAdjustmentTypeLabel(type = "") {
   return type === "increase" ? "加薪" : type === "decrease" ? "減薪" : type;
+}
+
+function getPermissionsForRole(role = "reader", config = permissionsConfig) {
+  if (role === "admin") {
+    return Object.fromEntries(
+      config.detailedPermissions.map((item) => [item.permission, true]),
+    );
+  }
+
+  if (role === "leader") {
+    return Object.fromEntries(
+      config.detailedPermissions.map((item) => [item.permission, !!item.leader]),
+    );
+  }
+
+  return Object.fromEntries(
+    config.detailedPermissions.map((item) => [item.permission, !!item.reader]),
+  );
+}
+
+function applyPermissionsConfigToUsers() {
+  usersData = normalizeUsersData({
+    ...usersData,
+    users: usersData.users.map((user) => ({
+      ...user,
+      permissions: getPermissionsForRole(user.role),
+    })),
+  });
 }
 
 function getWorkerNameById(workerId = "") {
@@ -387,6 +642,15 @@ async function persistCollection(stateKey, filePath, data) {
 }
 
 async function initializeAppData() {
+  permissionsConfig = await loadPersistedCollection(
+    "permissionsConfig",
+    permissionsFilePath,
+    normalizePermissionsConfig(),
+    normalizePermissionsConfig,
+  );
+  permissionsConfig = await loadPermissionsConfigFromPrimaryStore(
+    permissionsConfig,
+  );
   usersData = await loadPersistedCollection(
     "usersData",
     usersFilePath,
@@ -430,6 +694,18 @@ async function initializeAppData() {
     (logs) => logs.map(normalizeActivityLogRecord),
   );
   activityLogs = await loadActivityLogsFromPrimaryStore(activityLogs);
+}
+
+async function savePermissionsConfig() {
+  if (isGoogleSheetsConfigured()) {
+    await syncPermissionsConfigToGoogleSheets(permissionsConfig);
+  }
+
+  await persistCollection(
+    "permissionsConfig",
+    permissionsFilePath,
+    normalizePermissionsConfig(permissionsConfig),
+  );
 }
 
 async function saveUsers() {
@@ -497,6 +773,7 @@ let groups = [];
 let timeRecords = [];
 let salaryAdjustments = [];
 let activityLogs = [];
+let permissionsConfig = normalizePermissionsConfig();
 const asyncHandler = (handler) => (req, res, next) =>
   Promise.resolve(handler(req, res, next)).catch(next);
 let activityLogSyncChain = Promise.resolve();
@@ -965,6 +1242,130 @@ async function loadActivityLogsFromPrimaryStore(fallbackLogs) {
   );
 }
 
+async function loadPermissionsConfigFromGoogleSheets() {
+  const rows = await readSheetValues(PERMISSIONS_SHEET_NAME);
+
+  if (!rows.length) {
+    return normalizePermissionsConfig();
+  }
+
+  const hasHeaderRow = PERMISSIONS_SHEET_HEADERS.every(
+    (header, index) => (rows[0][index] || "").trim() === header,
+  );
+  const dataRows = hasHeaderRow ? rows.slice(1) : rows;
+  const records = mapSheetRowsToObjects(dataRows, PERMISSIONS_SHEET_HEADERS, {
+    permissions: (value) => parseSheetJson(value, []),
+    admin: (value) => parseSheetBoolean(value, true),
+    leader: (value) => parseSheetBoolean(value, false),
+    reader: (value) => parseSheetBoolean(value, false),
+  });
+
+  return normalizePermissionsConfig({
+    featurePermissions: records
+      .filter((record) => record.type === "feature")
+      .map((record) => ({
+        key: record.key,
+        feature: record.name,
+        path: record.path,
+        description: record.description,
+        permissions: record.permissions,
+        admin: record.admin,
+        leader: record.leader,
+        reader: record.reader,
+      })),
+    detailedPermissions: records
+      .filter((record) => record.type === "detail")
+      .map((record) => ({
+        permission: record.key,
+        label: record.name,
+        description: record.description,
+        admin: record.admin,
+        leader: record.leader,
+        reader: record.reader,
+      })),
+    updatedAt: records[0]?.updatedAt || new Date().toISOString(),
+  });
+}
+
+async function loadPermissionsConfigFromPrimaryStore(fallbackConfig) {
+  if (!isGoogleSheetsConfigured()) {
+    return normalizePermissionsConfig(fallbackConfig);
+  }
+
+  try {
+    const sheetConfig = await loadPermissionsConfigFromGoogleSheets();
+    const hasSheetData =
+      sheetConfig.featurePermissions.length > 0 &&
+      sheetConfig.detailedPermissions.length > 0;
+
+    if (hasSheetData) {
+      console.log(
+        `📄 permissions 已從 Google Sheets 載入 ${sheetConfig.featurePermissions.length} 頁面設定 / ${sheetConfig.detailedPermissions.length} 權限設定`,
+      );
+      return normalizePermissionsConfig(sheetConfig);
+    }
+
+    await syncPermissionsConfigToGoogleSheets(fallbackConfig);
+    console.log("📄 permissions 工作表為空，已自動同步既有權限設定到 Google Sheets");
+    return normalizePermissionsConfig(fallbackConfig);
+  } catch (error) {
+    console.warn(
+      "⚠️ 載入 Google Sheets permissions 失敗，改用既有資料:",
+      error.message,
+    );
+    return normalizePermissionsConfig(fallbackConfig);
+  }
+}
+
+async function refreshPermissionsConfigFromPrimaryStore() {
+  permissionsConfig = await loadPermissionsConfigFromPrimaryStore(
+    permissionsConfig,
+  );
+  return permissionsConfig;
+}
+
+async function syncPermissionsConfigToGoogleSheets(config) {
+  const normalizedConfig = normalizePermissionsConfig(config);
+  const updatedAt = new Date().toISOString();
+  const rows = buildSheetRows(
+    PERMISSIONS_SHEET_HEADERS,
+    [
+      ...normalizedConfig.featurePermissions.map((item) => ({
+        type: "feature",
+        key: item.key,
+        name: item.feature,
+        path: item.path,
+        description: item.description,
+        permissions: item.permissions,
+        admin: item.admin,
+        leader: item.leader,
+        reader: item.reader,
+        updatedAt,
+      })),
+      ...normalizedConfig.detailedPermissions.map((item) => ({
+        type: "detail",
+        key: item.permission,
+        name: item.label,
+        path: "",
+        description: item.description,
+        permissions: [],
+        admin: item.admin,
+        leader: item.leader,
+        reader: item.reader,
+        updatedAt,
+      })),
+    ],
+    {
+      permissions: (value) => JSON.stringify(value || []),
+      admin: (value) => (value ? "true" : "false"),
+      leader: (value) => (value ? "true" : "false"),
+      reader: (value) => (value ? "true" : "false"),
+    },
+  );
+
+  await writeSheetValues(PERMISSIONS_SHEET_NAME, rows);
+}
+
 async function refreshActivityLogsFromPrimaryStore() {
   activityLogs = await loadActivityLogsFromPrimaryStore(activityLogs);
   return activityLogs;
@@ -1345,15 +1746,7 @@ app.post("/api/auth/guest-login", (req, res) => {
       id: "guest",
       username: "guest",
       role: "reader",
-      permissions: {
-        canManageUsers: false,
-        canEditWorkers: false,
-        canImportData: false,
-        canClockIn: false,
-        canEditTime: false,
-        canViewReports: true,
-        canDeleteData: false,
-      },
+      permissions: getPermissionsForRole("reader"),
     };
 
     const token = jwt.sign(guestUser, JWT_SECRET, { expiresIn: "24h" });
@@ -1404,6 +1797,58 @@ app.post("/api/auth/logout", authenticateToken, (req, res) => {
     message: "登出成功",
   });
 });
+
+app.get(
+  "/api/permissions/config",
+  authenticateToken,
+  requireEvelyn,
+  asyncHandler(async (req, res) => {
+    await refreshPermissionsConfigFromPrimaryStore();
+
+    res.json({
+      success: true,
+      data: permissionsConfig,
+      message: "權限設定獲取成功",
+    });
+  }),
+);
+
+app.put(
+  "/api/permissions/config",
+  authenticateToken,
+  requireEvelyn,
+  asyncHandler(async (req, res) => {
+    await Promise.all([
+      refreshPermissionsConfigFromPrimaryStore(),
+      refreshUsersDataFromPrimaryStore(),
+    ]);
+
+    permissionsConfig = normalizePermissionsConfig({
+      featurePermissions: req.body?.featurePermissions || [],
+      detailedPermissions: req.body?.detailedPermissions || [],
+      updatedAt: new Date().toISOString(),
+    });
+
+    applyPermissionsConfigToUsers();
+
+    await Promise.all([savePermissionsConfig(), saveUsers()]);
+
+    logActivity(
+      "permissions-save",
+      "permission-config",
+      "permissions",
+      "權限設定",
+      `更新了 ${permissionsConfig.featurePermissions.length} 項頁面權限與 ${permissionsConfig.detailedPermissions.length} 項細部權限`,
+      req.user.id,
+    );
+
+    res.json({
+      success: true,
+      data: permissionsConfig,
+      message: "權限設定保存成功",
+    });
+  }),
+);
 
 // 獲取用戶列表（僅admin）
 app.get(
@@ -1465,15 +1910,7 @@ app.post(
         email: email || "",
         createdAt: new Date().toISOString(),
         isActive: true,
-        permissions: {
-          canManageUsers: false,
-          canEditWorkers: true,
-          canImportData: true,
-          canClockIn: true,
-          canEditTime: true,
-          canViewReports: true,
-          canDeleteData: false,
-        },
+        permissions: getPermissionsForRole("leader"),
       };
 
       usersData.users.push(newUser);
@@ -1548,15 +1985,7 @@ app.post("/api/auth/create-admin", authenticateToken, asyncHandler(async (req, r
       name,
       email: email || "",
       role: "admin",
-      permissions: {
-        canManageUsers: true,
-        canEditWorkers: true,
-        canImportData: true,
-        canClockIn: true,
-        canEditTime: true,
-        canViewReports: true,
-        canDeleteData: true,
-      },
+      permissions: getPermissionsForRole("admin"),
       isActive: true,
       createdAt: new Date().toISOString(),
     };

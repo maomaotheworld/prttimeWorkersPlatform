@@ -14,6 +14,8 @@ const { WorkersDAO, GroupsDAO, UsersDAO } = require("./dao");
 const {
   getMissingGoogleSheetsEnvVars,
   isGoogleSheetsConfigured,
+  readSheetValues,
+  writeSheetValues,
   verifyGoogleSheetsConnection,
 } = require("./googleSheets");
 
@@ -56,6 +58,8 @@ const DEFAULT_GROUPS = [
   { id: "group-2", name: "後台組", description: "負責後台作業" },
   { id: "group-3", name: "清潔組", description: "負責環境清潔維護" },
 ];
+const GROUP_SHEET_NAME = "groups";
+const GROUP_SHEET_HEADERS = ["id", "name", "description", "createdAt"];
 
 // 確保資料目錄存在
 if (!fs.existsSync(dataDir)) {
@@ -150,6 +154,7 @@ async function initializeAppData() {
     groupsFilePath,
     DEFAULT_GROUPS,
   );
+  groups = await loadGroupsFromPrimaryStore(groups);
   timeRecords = await loadPersistedCollection(
     "timeRecords",
     timeRecordsFilePath,
@@ -167,6 +172,10 @@ async function saveWorkers() {
 }
 
 async function saveGroups() {
+  if (isGoogleSheetsConfigured()) {
+    await syncGroupsToGoogleSheets(groups);
+  }
+
   await persistCollection("groups", groupsFilePath, groups);
 }
 
@@ -189,6 +198,87 @@ let salaryAdjustments = [];
 let activityLogs = [];
 const asyncHandler = (handler) => (req, res, next) =>
   Promise.resolve(handler(req, res, next)).catch(next);
+
+function normalizeGroupRecord(group) {
+  return {
+    id: String(group.id || uuidv4()),
+    name: String(group.name || "").trim(),
+    description: String(group.description || "").trim(),
+    createdAt: group.createdAt || new Date().toISOString(),
+  };
+}
+
+function mapSheetRowsToObjects(rows, headers) {
+  return rows.map((row) =>
+    headers.reduce((record, header, index) => {
+      record[header] = row[index] || "";
+      return record;
+    }, {}),
+  );
+}
+
+async function loadGroupsFromGoogleSheets() {
+  const rows = await readSheetValues(GROUP_SHEET_NAME);
+
+  if (!rows.length) {
+    return [];
+  }
+
+  const hasHeaderRow = GROUP_SHEET_HEADERS.every(
+    (header, index) => (rows[0][index] || "").trim() === header,
+  );
+  const dataRows = hasHeaderRow ? rows.slice(1) : rows;
+
+  return mapSheetRowsToObjects(dataRows, GROUP_SHEET_HEADERS)
+    .map(normalizeGroupRecord)
+    .filter((group) => group.name);
+}
+
+async function loadGroupsFromPrimaryStore(fallbackGroups) {
+  if (!isGoogleSheetsConfigured()) {
+    return fallbackGroups;
+  }
+
+  try {
+    const sheetGroups = await loadGroupsFromGoogleSheets();
+
+    if (sheetGroups.length > 0) {
+      console.log(`📄 groups 已從 Google Sheets 載入 ${sheetGroups.length} 筆`);
+      return sheetGroups;
+    }
+
+    if (fallbackGroups.length > 0) {
+      await syncGroupsToGoogleSheets(fallbackGroups);
+      console.log(
+        `📄 groups 工作表為空，已自動同步既有 ${fallbackGroups.length} 筆資料到 Google Sheets`,
+      );
+    } else {
+      console.log("ℹ️ groups 工作表目前為空，且系統尚無既有資料");
+    }
+
+    return fallbackGroups;
+  } catch (error) {
+    console.warn("⚠️ 載入 Google Sheets groups 失敗，改用既有資料:", error.message);
+    return fallbackGroups;
+  }
+}
+
+async function refreshGroupsFromPrimaryStore() {
+  groups = await loadGroupsFromPrimaryStore(groups);
+  return groups;
+}
+
+async function syncGroupsToGoogleSheets(groupList) {
+  const rows = [
+    GROUP_SHEET_HEADERS,
+    ...groupList.map((group) => {
+      const normalizedGroup = normalizeGroupRecord(group);
+      return GROUP_SHEET_HEADERS.map((header) => normalizedGroup[header] || "");
+    }),
+  ];
+
+  await writeSheetValues(GROUP_SHEET_NAME, rows);
+}
 
 // 日誌記錄輔助函數
 const logActivity = (
@@ -1445,16 +1535,19 @@ app.put("/api/workers/batch-update-wage", asyncHandler(async (req, res) => {
 
 // === 組別管理 ===
 // 獲取所有組別
-app.get("/api/groups", (req, res) => {
+app.get("/api/groups", asyncHandler(async (req, res) => {
+  await refreshGroupsFromPrimaryStore();
+
   res.json({
     success: true,
     data: groups,
     message: "組別列表獲取成功",
   });
-});
+}));
 
 // 新增組別
 app.post("/api/groups", asyncHandler(async (req, res) => {
+  await refreshGroupsFromPrimaryStore();
   const { name, description } = req.body;
 
   if (!name) {
@@ -1472,6 +1565,7 @@ app.post("/api/groups", asyncHandler(async (req, res) => {
     });
   }
 
+  const previousGroups = cloneData(groups);
   const newGroup = {
     id: uuidv4(),
     name,
@@ -1479,8 +1573,13 @@ app.post("/api/groups", asyncHandler(async (req, res) => {
     createdAt: new Date().toISOString(),
   };
 
-  groups.push(newGroup);
-  await saveGroups(); // 持久化數據
+  try {
+    groups.push(newGroup);
+    await saveGroups();
+  } catch (error) {
+    groups = previousGroups;
+    throw error;
+  }
 
   res.status(201).json({
     success: true,
@@ -1491,6 +1590,7 @@ app.post("/api/groups", asyncHandler(async (req, res) => {
 
 // 更新組別
 app.put("/api/groups/:id", asyncHandler(async (req, res) => {
+  await refreshGroupsFromPrimaryStore();
   const { name, description } = req.body;
   const groupIndex = groups.findIndex((g) => g.id === req.params.id);
 
@@ -1512,14 +1612,21 @@ app.put("/api/groups/:id", asyncHandler(async (req, res) => {
     });
   }
 
-  groups[groupIndex] = {
-    ...groups[groupIndex],
-    name: name || groups[groupIndex].name,
-    description:
-      description !== undefined ? description : groups[groupIndex].description,
-  };
+  const previousGroups = cloneData(groups);
 
-  await saveGroups(); // 持久化數據
+  try {
+    groups[groupIndex] = {
+      ...groups[groupIndex],
+      name: name || groups[groupIndex].name,
+      description:
+        description !== undefined ? description : groups[groupIndex].description,
+    };
+
+    await saveGroups();
+  } catch (error) {
+    groups = previousGroups;
+    throw error;
+  }
 
   res.json({
     success: true,
@@ -1530,6 +1637,7 @@ app.put("/api/groups/:id", asyncHandler(async (req, res) => {
 
 // 刪除組別
 app.delete("/api/groups/:id", asyncHandler(async (req, res) => {
+  await refreshGroupsFromPrimaryStore();
   const groupIndex = groups.findIndex((g) => g.id === req.params.id);
 
   if (groupIndex === -1) {
@@ -1548,8 +1656,15 @@ app.delete("/api/groups/:id", asyncHandler(async (req, res) => {
     });
   }
 
-  groups.splice(groupIndex, 1);
-  await saveGroups(); // 持久化數據
+  const previousGroups = cloneData(groups);
+
+  try {
+    groups.splice(groupIndex, 1);
+    await saveGroups();
+  } catch (error) {
+    groups = previousGroups;
+    throw error;
+  }
 
   res.json({
     success: true,

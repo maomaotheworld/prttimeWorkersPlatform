@@ -1,8 +1,6 @@
 const { google } = require("googleapis");
 
-const GOOGLE_SHEETS_SCOPES = [
-  "https://www.googleapis.com/auth/spreadsheets.readonly",
-];
+const GOOGLE_SHEETS_SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
 
 function getGoogleSheetsConfig() {
   const clientEmail = process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
@@ -73,6 +71,30 @@ async function readSheetValues(sheetName, range = "A:Z") {
   return response.data.values || [];
 }
 
+async function writeSheetValues(sheetName, rows) {
+  const { spreadsheetId } = getGoogleSheetsConfig();
+  const sheets = await createGoogleSheetsClient();
+
+  await sheets.spreadsheets.values.clear({
+    spreadsheetId,
+    range: `${sheetName}!A:Z`,
+  });
+
+  if (!rows.length) {
+    return;
+  }
+
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `${sheetName}!A1`,
+    valueInputOption: "RAW",
+    requestBody: {
+      majorDimension: "ROWS",
+      values: rows,
+    },
+  });
+}
+
 async function verifyGoogleSheetsConnection(sheetName = "groups") {
   const rows = await readSheetValues(sheetName, "A1:Z5");
   const { spreadsheetId } = getGoogleSheetsConfig();
@@ -89,5 +111,6 @@ module.exports = {
   getMissingGoogleSheetsEnvVars,
   isGoogleSheetsConfigured,
   readSheetValues,
+  writeSheetValues,
   verifyGoogleSheetsConnection,
 };

@@ -52,6 +52,7 @@ const salaryAdjustmentsFilePath = path.join(
   dataDir,
   "salaryAdjustments.json",
 );
+const activityLogsFilePath = path.join(dataDir, "activityLogs.json");
 
 const DEFAULT_GROUPS = [
   { id: "group-1", name: "前台組", description: "負責前台接待工作" },
@@ -82,35 +83,63 @@ const WORKER_SHEET_HEADERS = [
   "createdAt",
   "updatedAt",
 ];
+const TIME_RECORD_SHEET_NAME = "time_records";
+const TIME_RECORD_SHEET_HEADERS = [
+  "id",
+  "workerId",
+  "date",
+  "clockIn",
+  "clockOut",
+  "totalHours",
+  "additionalHours",
+  "adjustments",
+  "adjustedBy",
+  "adjustedAt",
+  "note",
+  "createdAt",
+  "updatedAt",
+];
+const SALARY_ADJUSTMENT_SHEET_NAME = "salary_adjustments";
+const SALARY_ADJUSTMENT_SHEET_HEADERS = [
+  "id",
+  "workerId",
+  "type",
+  "amount",
+  "reason",
+  "date",
+  "createdAt",
+];
+const USER_SHEET_NAME = "users";
+const USER_SHEET_HEADERS = [
+  "id",
+  "username",
+  "password",
+  "role",
+  "name",
+  "email",
+  "isActive",
+  "permissions",
+  "createdAt",
+];
+const ACTIVITY_LOG_SHEET_NAME = "activity_logs";
+const ACTIVITY_LOG_SHEET_HEADERS = [
+  "id",
+  "timestamp",
+  "action",
+  "entityType",
+  "entityId",
+  "entityName",
+  "details",
+  "userId",
+  "createdAt",
+];
 
 // 確保資料目錄存在
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
-// 讀取用戶資料
-function loadUsers() {
-  try {
-    if (fs.existsSync(usersFilePath)) {
-      const data = fs.readFileSync(usersFilePath, "utf8");
-      return JSON.parse(data);
-    }
-  } catch (error) {
-    console.error("讀取用戶資料錯誤:", error);
-  }
-  return { users: [], lastUserId: 0 };
-}
-
-// 保存用戶資料
-function saveUsers(userData) {
-  try {
-    fs.writeFileSync(usersFilePath, JSON.stringify(userData, null, 2));
-  } catch (error) {
-    console.error("保存用戶資料錯誤:", error);
-  }
-}
-
-let usersData = loadUsers();
+let usersData = { users: [], lastUserId: 0 };
 
 function cloneData(data) {
   return JSON.parse(JSON.stringify(data));
@@ -146,6 +175,132 @@ function normalizeWorkers(workerList = []) {
   }));
 }
 
+function parseSheetNumber(value, fallbackValue = 0) {
+  const parsedValue = Number(value);
+  return Number.isFinite(parsedValue) ? parsedValue : fallbackValue;
+}
+
+function parseSheetBoolean(value, fallbackValue = false) {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const normalizedValue = value.trim().toLowerCase();
+    if (["true", "1", "yes"].includes(normalizedValue)) {
+      return true;
+    }
+    if (["false", "0", "no"].includes(normalizedValue)) {
+      return false;
+    }
+  }
+
+  if (typeof value === "number") {
+    return value !== 0;
+  }
+
+  return fallbackValue;
+}
+
+function parseSheetJson(value, fallbackValue) {
+  if (!value) {
+    return cloneData(fallbackValue);
+  }
+
+  try {
+    return JSON.parse(value);
+  } catch (error) {
+    return cloneData(fallbackValue);
+  }
+}
+
+function deriveLastUserId(userList = [], fallbackValue = 0) {
+  const maxUserId = userList.reduce((maxValue, user) => {
+    const matches = String(user.id || "").match(/(\d+)$/);
+    if (!matches) {
+      return maxValue;
+    }
+
+    return Math.max(maxValue, Number(matches[1]));
+  }, 0);
+
+  return Math.max(maxUserId, Number(fallbackValue) || 0);
+}
+
+function normalizeUsersData(userData = {}) {
+  const normalizedUsers = Array.isArray(userData.users)
+    ? userData.users.map(normalizeUserRecord).filter((user) => user.username)
+    : [];
+
+  return {
+    users: normalizedUsers,
+    lastUserId: deriveLastUserId(normalizedUsers, userData.lastUserId),
+  };
+}
+
+function normalizeTimeRecord(record = {}) {
+  return {
+    id: String(record.id || uuidv4()),
+    workerId: String(record.workerId || "").trim(),
+    date: record.date || new Date().toISOString(),
+    clockIn: record.clockIn || null,
+    clockOut: record.clockOut || null,
+    totalHours: parseSheetNumber(record.totalHours, 0),
+    additionalHours: parseSheetNumber(record.additionalHours, 0),
+    adjustments: Array.isArray(record.adjustments)
+      ? record.adjustments
+      : parseSheetJson(record.adjustments, []),
+    adjustedBy: String(record.adjustedBy || "").trim(),
+    adjustedAt: record.adjustedAt || "",
+    note: String(record.note || "").trim(),
+    createdAt: record.createdAt || new Date().toISOString(),
+    updatedAt: record.updatedAt || record.createdAt || new Date().toISOString(),
+  };
+}
+
+function normalizeSalaryAdjustmentRecord(adjustment = {}) {
+  return {
+    id: String(adjustment.id || uuidv4()),
+    workerId: String(adjustment.workerId || "").trim(),
+    type: String(adjustment.type || "").trim(),
+    amount: parseSheetNumber(adjustment.amount, 0),
+    reason: String(adjustment.reason || "").trim(),
+    date: adjustment.date || new Date().toISOString(),
+    createdAt: adjustment.createdAt || adjustment.date || new Date().toISOString(),
+  };
+}
+
+function normalizeUserRecord(user = {}) {
+  return {
+    id: String(user.id || `user-${Date.now()}`),
+    username: String(user.username || "").trim(),
+    password: String(user.password || "").trim(),
+    role: String(user.role || "reader").trim(),
+    name: String(user.name || "").trim(),
+    email: String(user.email || "").trim(),
+    isActive: parseSheetBoolean(user.isActive, true),
+    permissions:
+      user.permissions && typeof user.permissions === "object"
+        ? user.permissions
+        : parseSheetJson(user.permissions, {}),
+    createdAt: user.createdAt || new Date().toISOString(),
+  };
+}
+
+function normalizeActivityLogRecord(log = {}) {
+  return {
+    id: String(log.id || uuidv4()),
+    timestamp: log.timestamp || new Date().toISOString(),
+    action: String(log.action || "").trim(),
+    entityType: String(log.entityType || "").trim(),
+    entityId: String(log.entityId || "").trim(),
+    entityName: String(log.entityName || "").trim(),
+    details: String(log.details || "").trim(),
+    userId: String(log.userId || "system").trim(),
+    createdAt: log.createdAt || new Date().toISOString(),
+  };
+}
+
 async function loadPersistedCollection(
   stateKey,
   filePath,
@@ -179,6 +334,13 @@ async function persistCollection(stateKey, filePath, data) {
 }
 
 async function initializeAppData() {
+  usersData = await loadPersistedCollection(
+    "usersData",
+    usersFilePath,
+    { users: [], lastUserId: 0 },
+    normalizeUsersData,
+  );
+  usersData = await loadUsersDataFromPrimaryStore(usersData);
   workers = await loadPersistedCollection(
     "workers",
     workersFilePath,
@@ -196,12 +358,33 @@ async function initializeAppData() {
     "timeRecords",
     timeRecordsFilePath,
     [],
+    (records) => records.map(normalizeTimeRecord),
   );
+  timeRecords = await loadTimeRecordsFromPrimaryStore(timeRecords);
   salaryAdjustments = await loadPersistedCollection(
     "salaryAdjustments",
     salaryAdjustmentsFilePath,
     [],
+    (records) => records.map(normalizeSalaryAdjustmentRecord),
   );
+  salaryAdjustments = await loadSalaryAdjustmentsFromPrimaryStore(
+    salaryAdjustments,
+  );
+  activityLogs = await loadPersistedCollection(
+    "activityLogs",
+    activityLogsFilePath,
+    [],
+    (logs) => logs.map(normalizeActivityLogRecord),
+  );
+  activityLogs = await loadActivityLogsFromPrimaryStore(activityLogs);
+}
+
+async function saveUsers() {
+  if (isGoogleSheetsConfigured()) {
+    await syncUsersToGoogleSheets(usersData);
+  }
+
+  await persistCollection("usersData", usersFilePath, normalizeUsersData(usersData));
 }
 
 async function saveWorkers() {
@@ -221,14 +404,38 @@ async function saveGroups() {
 }
 
 async function saveTimeRecords() {
-  await persistCollection("timeRecords", timeRecordsFilePath, timeRecords);
+  if (isGoogleSheetsConfigured()) {
+    await syncTimeRecordsToGoogleSheets(timeRecords);
+  }
+
+  await persistCollection(
+    "timeRecords",
+    timeRecordsFilePath,
+    timeRecords.map(normalizeTimeRecord),
+  );
 }
 
 async function saveSalaryAdjustments() {
+  if (isGoogleSheetsConfigured()) {
+    await syncSalaryAdjustmentsToGoogleSheets(salaryAdjustments);
+  }
+
   await persistCollection(
     "salaryAdjustments",
     salaryAdjustmentsFilePath,
-    salaryAdjustments,
+    salaryAdjustments.map(normalizeSalaryAdjustmentRecord),
+  );
+}
+
+async function saveActivityLogs() {
+  if (isGoogleSheetsConfigured()) {
+    await syncActivityLogsToGoogleSheets(activityLogs);
+  }
+
+  await persistCollection(
+    "activityLogs",
+    activityLogsFilePath,
+    activityLogs.map(normalizeActivityLogRecord),
   );
 }
 
@@ -239,6 +446,7 @@ let salaryAdjustments = [];
 let activityLogs = [];
 const asyncHandler = (handler) => (req, res, next) =>
   Promise.resolve(handler(req, res, next)).catch(next);
+let activityLogSyncChain = Promise.resolve();
 
 function normalizeGroupRecord(group) {
   return {
@@ -249,13 +457,145 @@ function normalizeGroupRecord(group) {
   };
 }
 
-function mapSheetRowsToObjects(rows, headers) {
+function mapSheetRowsToObjects(rows, headers, fieldParsers = {}) {
   return rows.map((row) =>
     headers.reduce((record, header, index) => {
-      record[header] = row[index] || "";
+      const parser = fieldParsers[header];
+      const rawValue = row[index] || "";
+      record[header] = parser ? parser(rawValue) : rawValue;
       return record;
     }, {}),
   );
+}
+
+function buildSheetRows(headers, records, fieldSerializers = {}) {
+  return [
+    headers,
+    ...records.map((record) =>
+      headers.map((header) => {
+        const serializer = fieldSerializers[header];
+        const value = record[header];
+        return serializer ? serializer(value) : value ?? "";
+      }),
+    ),
+  ];
+}
+
+async function loadRecordsFromGoogleSheets(
+  sheetName,
+  headers,
+  normalizeRecord,
+  options = {},
+) {
+  const { fieldParsers = {}, filter = () => true } = options;
+  const rows = await readSheetValues(sheetName);
+
+  if (!rows.length) {
+    return [];
+  }
+
+  const hasHeaderRow = headers.every(
+    (header, index) => (rows[0][index] || "").trim() === header,
+  );
+  const dataRows = hasHeaderRow ? rows.slice(1) : rows;
+
+  return mapSheetRowsToObjects(dataRows, headers, fieldParsers)
+    .map(normalizeRecord)
+    .filter(filter);
+}
+
+async function syncRecordsToGoogleSheets(
+  sheetName,
+  headers,
+  records,
+  normalizeRecord,
+  options = {},
+) {
+  const { fieldSerializers = {} } = options;
+  const rows = buildSheetRows(
+    headers,
+    records.map((record) => normalizeRecord(record)),
+    fieldSerializers,
+  );
+  await writeSheetValues(sheetName, rows);
+}
+
+async function loadArrayDataFromPrimaryStore(
+  label,
+  sheetName,
+  fallbackRecords,
+  loadFromGoogleSheets,
+  syncToGoogleSheets,
+  normalizeRecords = (records) => records,
+) {
+  if (!isGoogleSheetsConfigured()) {
+    return normalizeRecords(fallbackRecords);
+  }
+
+  try {
+    const sheetRecords = await loadFromGoogleSheets();
+
+    if (sheetRecords.length > 0) {
+      console.log(`📄 ${label} 已從 Google Sheets 載入 ${sheetRecords.length} 筆`);
+      return normalizeRecords(sheetRecords);
+    }
+
+    if (fallbackRecords.length > 0) {
+      await syncToGoogleSheets(fallbackRecords);
+      console.log(
+        `📄 ${sheetName} 工作表為空，已自動同步既有 ${fallbackRecords.length} 筆資料到 Google Sheets`,
+      );
+    } else {
+      console.log(`ℹ️ ${sheetName} 工作表目前為空，且系統尚無既有資料`);
+    }
+
+    return normalizeRecords(fallbackRecords);
+  } catch (error) {
+    console.warn(
+      `⚠️ 載入 Google Sheets ${label} 失敗，改用既有資料:`,
+      error.message,
+    );
+    return normalizeRecords(fallbackRecords);
+  }
+}
+
+async function loadObjectDataFromPrimaryStore(
+  label,
+  sheetName,
+  fallbackData,
+  loadFromGoogleSheets,
+  syncToGoogleSheets,
+  normalizeData = (data) => data,
+) {
+  if (!isGoogleSheetsConfigured()) {
+    return normalizeData(fallbackData);
+  }
+
+  try {
+    const sheetData = await loadFromGoogleSheets();
+
+    if (sheetData.users?.length) {
+      console.log(`📄 ${label} 已從 Google Sheets 載入 ${sheetData.users.length} 筆`);
+      return normalizeData(sheetData);
+    }
+
+    if (fallbackData.users?.length) {
+      await syncToGoogleSheets(fallbackData);
+      console.log(
+        `📄 ${sheetName} 工作表為空，已自動同步既有 ${fallbackData.users.length} 筆資料到 Google Sheets`,
+      );
+    } else {
+      console.log(`ℹ️ ${sheetName} 工作表目前為空，且系統尚無既有資料`);
+    }
+
+    return normalizeData(fallbackData);
+  } catch (error) {
+    console.warn(
+      `⚠️ 載入 Google Sheets ${label} 失敗，改用既有資料:`,
+      error.message,
+    );
+    return normalizeData(fallbackData);
+  }
 }
 
 async function loadGroupsFromGoogleSheets() {
@@ -415,6 +755,187 @@ async function syncWorkersToGoogleSheets(workerList) {
   await writeSheetValues(WORKER_SHEET_NAME, rows);
 }
 
+async function loadTimeRecordsFromGoogleSheets() {
+  return loadRecordsFromGoogleSheets(
+    TIME_RECORD_SHEET_NAME,
+    TIME_RECORD_SHEET_HEADERS,
+    normalizeTimeRecord,
+    {
+      fieldParsers: {
+        totalHours: (value) => parseSheetNumber(value, 0),
+        additionalHours: (value) => parseSheetNumber(value, 0),
+        adjustments: (value) => parseSheetJson(value, []),
+      },
+      filter: (record) => record.workerId,
+    },
+  );
+}
+
+async function loadTimeRecordsFromPrimaryStore(fallbackRecords) {
+  return loadArrayDataFromPrimaryStore(
+    "time_records",
+    TIME_RECORD_SHEET_NAME,
+    fallbackRecords,
+    loadTimeRecordsFromGoogleSheets,
+    syncTimeRecordsToGoogleSheets,
+    (records) => records.map(normalizeTimeRecord),
+  );
+}
+
+async function refreshTimeRecordsFromPrimaryStore() {
+  timeRecords = await loadTimeRecordsFromPrimaryStore(timeRecords);
+  return timeRecords;
+}
+
+async function syncTimeRecordsToGoogleSheets(records) {
+  await syncRecordsToGoogleSheets(
+    TIME_RECORD_SHEET_NAME,
+    TIME_RECORD_SHEET_HEADERS,
+    records,
+    normalizeTimeRecord,
+    {
+      fieldSerializers: {
+        adjustments: (value) => JSON.stringify(value || []),
+      },
+    },
+  );
+}
+
+async function loadSalaryAdjustmentsFromGoogleSheets() {
+  return loadRecordsFromGoogleSheets(
+    SALARY_ADJUSTMENT_SHEET_NAME,
+    SALARY_ADJUSTMENT_SHEET_HEADERS,
+    normalizeSalaryAdjustmentRecord,
+    {
+      fieldParsers: {
+        amount: (value) => parseSheetNumber(value, 0),
+      },
+      filter: (record) => record.workerId,
+    },
+  );
+}
+
+async function loadSalaryAdjustmentsFromPrimaryStore(fallbackAdjustments) {
+  return loadArrayDataFromPrimaryStore(
+    "salary_adjustments",
+    SALARY_ADJUSTMENT_SHEET_NAME,
+    fallbackAdjustments,
+    loadSalaryAdjustmentsFromGoogleSheets,
+    syncSalaryAdjustmentsToGoogleSheets,
+    (records) => records.map(normalizeSalaryAdjustmentRecord),
+  );
+}
+
+async function refreshSalaryAdjustmentsFromPrimaryStore() {
+  salaryAdjustments = await loadSalaryAdjustmentsFromPrimaryStore(
+    salaryAdjustments,
+  );
+  return salaryAdjustments;
+}
+
+async function syncSalaryAdjustmentsToGoogleSheets(adjustments) {
+  await syncRecordsToGoogleSheets(
+    SALARY_ADJUSTMENT_SHEET_NAME,
+    SALARY_ADJUSTMENT_SHEET_HEADERS,
+    adjustments,
+    normalizeSalaryAdjustmentRecord,
+  );
+}
+
+async function loadUsersDataFromGoogleSheets() {
+  const users = await loadRecordsFromGoogleSheets(
+    USER_SHEET_NAME,
+    USER_SHEET_HEADERS,
+    normalizeUserRecord,
+    {
+      fieldParsers: {
+        isActive: (value) => parseSheetBoolean(value, true),
+        permissions: (value) => parseSheetJson(value, {}),
+      },
+      filter: (user) => user.username,
+    },
+  );
+
+  return normalizeUsersData({ users });
+}
+
+async function loadUsersDataFromPrimaryStore(fallbackUsersData) {
+  return loadObjectDataFromPrimaryStore(
+    "users",
+    USER_SHEET_NAME,
+    fallbackUsersData,
+    loadUsersDataFromGoogleSheets,
+    syncUsersToGoogleSheets,
+    normalizeUsersData,
+  );
+}
+
+async function refreshUsersDataFromPrimaryStore() {
+  usersData = await loadUsersDataFromPrimaryStore(usersData);
+  return usersData;
+}
+
+async function syncUsersToGoogleSheets(userData) {
+  await syncRecordsToGoogleSheets(
+    USER_SHEET_NAME,
+    USER_SHEET_HEADERS,
+    userData.users || [],
+    normalizeUserRecord,
+    {
+      fieldSerializers: {
+        isActive: (value) => (value ? "true" : "false"),
+        permissions: (value) => JSON.stringify(value || {}),
+      },
+    },
+  );
+}
+
+async function loadActivityLogsFromGoogleSheets() {
+  return loadRecordsFromGoogleSheets(
+    ACTIVITY_LOG_SHEET_NAME,
+    ACTIVITY_LOG_SHEET_HEADERS,
+    normalizeActivityLogRecord,
+    {
+      filter: (log) => log.action,
+    },
+  );
+}
+
+async function loadActivityLogsFromPrimaryStore(fallbackLogs) {
+  return loadArrayDataFromPrimaryStore(
+    "activity_logs",
+    ACTIVITY_LOG_SHEET_NAME,
+    fallbackLogs,
+    loadActivityLogsFromGoogleSheets,
+    syncActivityLogsToGoogleSheets,
+    (logs) => logs.map(normalizeActivityLogRecord).slice(-1000),
+  );
+}
+
+async function refreshActivityLogsFromPrimaryStore() {
+  activityLogs = await loadActivityLogsFromPrimaryStore(activityLogs);
+  return activityLogs;
+}
+
+async function syncActivityLogsToGoogleSheets(logs) {
+  await syncRecordsToGoogleSheets(
+    ACTIVITY_LOG_SHEET_NAME,
+    ACTIVITY_LOG_SHEET_HEADERS,
+    logs.slice(-1000),
+    normalizeActivityLogRecord,
+  );
+}
+
+function queueActivityLogsPersistence() {
+  activityLogSyncChain = activityLogSyncChain
+    .then(() => saveActivityLogs())
+    .catch((error) => {
+      console.error("同步 activity_logs 到 Google Sheets 失敗:", error.message);
+    });
+
+  return activityLogSyncChain;
+}
+
 // 日誌記錄輔助函數
 const logActivity = (
   action,
@@ -442,6 +963,8 @@ const logActivity = (
   if (activityLogs.length > 1000) {
     activityLogs = activityLogs.slice(-1000);
   }
+
+  queueActivityLogsPersistence();
 
   return log;
 };
@@ -682,7 +1205,8 @@ app.get("/health", (req, res) => {
 // === 認證相關 API ===
 
 // 登入
-app.post("/api/auth/login", async (req, res) => {
+app.post("/api/auth/login", asyncHandler(async (req, res) => {
+  await refreshUsersDataFromPrimaryStore();
   try {
     const { username, password } = req.body;
 
@@ -759,7 +1283,7 @@ app.post("/api/auth/login", async (req, res) => {
       error: error.message,
     });
   }
-});
+}));
 
 // 訪客模式登入（reader權限）
 app.post("/api/auth/guest-login", (req, res) => {
@@ -834,6 +1358,7 @@ app.get(
   authenticateToken,
   requireRole(["admin"]),
   asyncHandler(async (req, res) => {
+    await refreshUsersDataFromPrimaryStore();
     const users = usersData.users.map((user) => ({
       id: user.id,
       username: user.username,
@@ -859,6 +1384,7 @@ app.post(
   requireRole(["admin"]),
   asyncHandler(async (req, res) => {
     try {
+      await refreshUsersDataFromPrimaryStore();
       const { username, password, name, email } = req.body;
 
       if (!username || !password || !name) {
@@ -898,7 +1424,7 @@ app.post(
       };
 
       usersData.users.push(newUser);
-      saveUsers(usersData);
+      await saveUsers();
 
       logActivity(
         "create",
@@ -933,8 +1459,9 @@ app.post(
 );
 
 // 新增admin用戶（僅evelyn用戶可用）
-app.post("/api/auth/create-admin", authenticateToken, (req, res) => {
+app.post("/api/auth/create-admin", authenticateToken, asyncHandler(async (req, res) => {
   try {
+    await refreshUsersDataFromPrimaryStore();
     // 只有特定用戶可以創建管理員
     if (!isEvelynUser(req.user)) {
       return res.status(403).json({
@@ -982,7 +1509,7 @@ app.post("/api/auth/create-admin", authenticateToken, (req, res) => {
     };
 
     usersData.users.push(newUser);
-    saveUsers(usersData);
+    await saveUsers();
 
     logActivity(
       "create",
@@ -1013,7 +1540,7 @@ app.post("/api/auth/create-admin", authenticateToken, (req, res) => {
       error: error.message,
     });
   }
-});
+}));
 
 // 刪除用戶（僅admin，不可刪除自己）
 app.delete(
@@ -1022,6 +1549,7 @@ app.delete(
   requireRole(["admin"]),
   asyncHandler(async (req, res) => {
     try {
+      await refreshUsersDataFromPrimaryStore();
       const userId = req.params.id;
 
       if (userId === req.user.id) {
@@ -1041,7 +1569,7 @@ app.delete(
 
       const deletedUser = usersData.users[userIndex];
       usersData.users.splice(userIndex, 1);
-      saveUsers(usersData);
+      await saveUsers();
 
       logActivity(
         "delete",
@@ -1230,6 +1758,9 @@ const getWorkersWithTodayAttendance = (
 app.get("/api/workers", asyncHandler(async (req, res) => {
   await refreshWorkersFromPrimaryStore();
   const includeTodayAttendance = req.query.includeTodayAttendance === "true";
+  if (includeTodayAttendance) {
+    await refreshTimeRecordsFromPrimaryStore();
+  }
   const targetDate = req.query.date
     ? moment(req.query.date).format("YYYY-MM-DD")
     : moment().format("YYYY-MM-DD");
@@ -1514,6 +2045,7 @@ app.delete(
 // 調整個別工讀生的累積工時
 app.post("/api/workers/:id/additional-hours", authenticateToken, asyncHandler(async (req, res) => {
   await refreshWorkersFromPrimaryStore();
+  await refreshTimeRecordsFromPrimaryStore();
   const workerId = req.params.id;
   const { type, hours, reason } = req.body;
 
@@ -1843,7 +2375,8 @@ app.delete("/api/groups/:id", asyncHandler(async (req, res) => {
 
 // === 工時記錄 ===
 // 獲取工時記錄
-app.get("/api/time-records", (req, res) => {
+app.get("/api/time-records", asyncHandler(async (req, res) => {
+  await refreshTimeRecordsFromPrimaryStore();
   const { workerId, date } = req.query;
   let filteredRecords = timeRecords;
 
@@ -1863,10 +2396,11 @@ app.get("/api/time-records", (req, res) => {
     data: filteredRecords,
     message: "工時記錄獲取成功",
   });
-});
+}));
 
 // 上班打卡
 app.post("/api/time-records/clock-in", asyncHandler(async (req, res) => {
+  await refreshTimeRecordsFromPrimaryStore();
   const { workerId } = req.body;
 
   if (!workerId) {
@@ -1937,6 +2471,7 @@ app.post("/api/time-records/clock-in", asyncHandler(async (req, res) => {
 
 // 下班打卡
 app.post("/api/time-records/clock-out", asyncHandler(async (req, res) => {
+  await refreshTimeRecordsFromPrimaryStore();
   const { workerId } = req.body;
 
   if (!workerId) {
@@ -1987,7 +2522,8 @@ app.post("/api/time-records/clock-out", asyncHandler(async (req, res) => {
 }));
 
 // 獲取所有工讀生的額外工時
-app.get("/api/time-records/additional-hours", authenticateToken, (req, res) => {
+app.get("/api/time-records/additional-hours", authenticateToken, asyncHandler(async (req, res) => {
+  await refreshTimeRecordsFromPrimaryStore();
   try {
     // 計算每個工讀生的總額外工時
     const additionalHoursMap = {};
@@ -2019,13 +2555,14 @@ app.get("/api/time-records/additional-hours", authenticateToken, (req, res) => {
       error: error.message,
     });
   }
-});
+}));
 
 // 新增額外工時（支持疊加模式）
 app.post(
   "/api/time-records/additional-hours",
   authenticateToken,
   asyncHandler(async (req, res) => {
+    await refreshTimeRecordsFromPrimaryStore();
     const { workerId, date, hours, reason, adjustmentType, adjustedBy } =
       req.body;
 
@@ -2159,6 +2696,7 @@ app.post(
 
 // 編輯打卡時間
 app.post("/api/time-records/edit-time", asyncHandler(async (req, res) => {
+  await refreshTimeRecordsFromPrimaryStore();
   const { workerId, clockIn, clockOut, note, date, sessions } = req.body;
 
   if (!workerId || !date) {
@@ -2333,7 +2871,8 @@ app.post("/api/time-records/edit-time", asyncHandler(async (req, res) => {
 
 // === 薪資調整 ===
 // 獲取薪資調整記錄
-app.get("/api/salary-adjustments", (req, res) => {
+app.get("/api/salary-adjustments", asyncHandler(async (req, res) => {
+  await refreshSalaryAdjustmentsFromPrimaryStore();
   const { workerId } = req.query;
   let filteredAdjustments = salaryAdjustments;
 
@@ -2348,10 +2887,11 @@ app.get("/api/salary-adjustments", (req, res) => {
     data: filteredAdjustments,
     message: "薪資調整記錄獲取成功",
   });
-});
+}));
 
 // 新增薪資調整
 app.post("/api/salary-adjustments", asyncHandler(async (req, res) => {
+  await refreshSalaryAdjustmentsFromPrimaryStore();
   const { workerId, type, amount, reason } = req.body;
 
   if (!workerId || !type || !amount || !reason) {
@@ -2410,6 +2950,10 @@ app.post("/api/salary-adjustments", asyncHandler(async (req, res) => {
 
 // 調整總薪資（直接設定總薪資金額）
 app.post("/api/salary-adjustments/total", asyncHandler(async (req, res) => {
+  await Promise.all([
+    refreshTimeRecordsFromPrimaryStore(),
+    refreshSalaryAdjustmentsFromPrimaryStore(),
+  ]);
   const { workerId, targetTotalSalary, reason } = req.body;
 
   if (!workerId || !targetTotalSalary || targetTotalSalary <= 0 || !reason) {
@@ -2520,7 +3064,12 @@ app.post("/api/salary-adjustments/total", asyncHandler(async (req, res) => {
 
 // === 統計資訊 ===
 // 獲取總覽統計
-app.get("/api/dashboard/stats", (req, res) => {
+app.get("/api/dashboard/stats", asyncHandler(async (req, res) => {
+  await Promise.all([
+    refreshWorkersFromPrimaryStore(),
+    refreshGroupsFromPrimaryStore(),
+    refreshTimeRecordsFromPrimaryStore(),
+  ]);
   const totalWorkers = workers.length;
   const totalGroups = groups.length;
 
@@ -2549,10 +3098,15 @@ app.get("/api/dashboard/stats", (req, res) => {
     },
     message: "統計資訊獲取成功",
   });
-});
+}));
 
 // 計算工讀生薪資
-app.get("/api/workers/:id/salary-calculation", (req, res) => {
+app.get("/api/workers/:id/salary-calculation", asyncHandler(async (req, res) => {
+  await Promise.all([
+    refreshWorkersFromPrimaryStore(),
+    refreshTimeRecordsFromPrimaryStore(),
+    refreshSalaryAdjustmentsFromPrimaryStore(),
+  ]);
   const { startDate, endDate } = req.query;
   const workerId = req.params.id;
 
@@ -2643,7 +3197,7 @@ app.get("/api/workers/:id/salary-calculation", (req, res) => {
     },
     message: "薪資計算完成",
   });
-});
+}));
 
 // 健康檢查
 app.get("/health", (req, res) => {
@@ -2666,7 +3220,8 @@ app.use((err, req, res, next) => {
 // 404 處理
 // === 活動日誌管理 ===
 // 獲取活動日誌
-app.get("/api/activity-logs", (req, res) => {
+app.get("/api/activity-logs", asyncHandler(async (req, res) => {
+  await refreshActivityLogsFromPrimaryStore();
   const { page = 1, limit = 50, entityType, action } = req.query;
 
   let filteredLogs = [...activityLogs];
@@ -2698,12 +3253,13 @@ app.get("/api/activity-logs", (req, res) => {
     totalPages: Math.ceil(filteredLogs.length / parseInt(limit)),
     message: "活動日誌獲取成功",
   });
-});
+}));
 
 // 清空活動日誌（管理員功能）
-app.delete("/api/activity-logs", (req, res) => {
+app.delete("/api/activity-logs", asyncHandler(async (req, res) => {
   try {
     activityLogs = [];
+    await saveActivityLogs();
 
     logActivity(
       "clear",
@@ -2725,7 +3281,7 @@ app.delete("/api/activity-logs", (req, res) => {
       error: error.message,
     });
   }
-});
+}));
 
 app.use((error, req, res, next) => {
   console.error("API 錯誤:", error);

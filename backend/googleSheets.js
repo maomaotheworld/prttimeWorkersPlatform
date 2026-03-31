@@ -59,9 +59,39 @@ async function createGoogleSheetsClient() {
   });
 }
 
+async function ensureSheetExists(sheets, spreadsheetId, sheetName) {
+  const metadata = await sheets.spreadsheets.get({
+    spreadsheetId,
+    fields: "sheets.properties.title",
+  });
+  const existingSheet = metadata.data.sheets?.find(
+    (sheet) => sheet.properties?.title === sheetName,
+  );
+
+  if (existingSheet) {
+    return;
+  }
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId,
+    requestBody: {
+      requests: [
+        {
+          addSheet: {
+            properties: {
+              title: sheetName,
+            },
+          },
+        },
+      ],
+    },
+  });
+}
+
 async function readSheetValues(sheetName, range = "A:Z") {
   const { spreadsheetId } = getGoogleSheetsConfig();
   const sheets = await createGoogleSheetsClient();
+  await ensureSheetExists(sheets, spreadsheetId, sheetName);
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
     range: `${sheetName}!${range}`,
@@ -74,6 +104,7 @@ async function readSheetValues(sheetName, range = "A:Z") {
 async function writeSheetValues(sheetName, rows) {
   const { spreadsheetId } = getGoogleSheetsConfig();
   const sheets = await createGoogleSheetsClient();
+  await ensureSheetExists(sheets, spreadsheetId, sheetName);
 
   await sheets.spreadsheets.values.clear({
     spreadsheetId,

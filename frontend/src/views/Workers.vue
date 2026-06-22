@@ -317,11 +317,6 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="baseHours" label="基本工時" width="70">
-          <template #default="{ row }">
-            <span>{{ row.baseHours ?? 8 }}</span>
-          </template>
-        </el-table-column>
         <el-table-column prop="fireTraining" label="消防" width="60">
           <template #default="{ row }">
             <el-tag :type="row.fireTraining ? 'success' : 'info'" size="small">
@@ -1085,8 +1080,7 @@ const handleFileChange = (file: any) => {
       const floor = String(r[3] != null ? r[3] : "").trim();
       const job = String(r[4] != null ? r[4] : "").trim();
       const hourlyWage = r[5] != null ? Number(r[5]) : 0;
-      const baseHours = r[6] != null ? Number(r[6]) : 8;
-      const fireTrainingRaw = String(r[7] != null ? r[7] : "").trim();
+      const fireTrainingRaw = String(r[6] != null ? r[6] : "").trim();
       const fireTraining = fireTrainingRaw === "O" || fireTrainingRaw === "o";
 
       // 確保數據格式正確
@@ -1097,7 +1091,7 @@ const handleFileChange = (file: any) => {
         floor,
         job,
         hourlyWage,
-        baseHours,
+        baseHours: 8,
         fireTraining,
         valid: workerNumber && name && group && floor && hourlyWage > 0,
       };

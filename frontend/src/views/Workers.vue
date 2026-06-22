@@ -17,6 +17,13 @@
         <el-button type="primary" @click="showAddWorker">
           新增工讀生
         </el-button>
+        <el-button
+          v-if="authStore.isEvelyn"
+          type="danger"
+          @click="handleClearAllWorkers"
+        >
+          清除全部工讀生
+        </el-button>
       </div>
     </div>
 
@@ -638,6 +645,7 @@ import { Edit, Delete, Clock, ArrowDown } from "@element-plus/icons-vue";
 import * as XLSX from "xlsx";
 import { useWorkersStore } from "@/stores/workers";
 import { getApiUrl } from "@/config/api";
+import { useAuthStore } from "@/stores/auth";
 
 interface Worker {
   id: string;
@@ -652,6 +660,7 @@ interface Worker {
 }
 
 const workersStore = useWorkersStore();
+const authStore = useAuthStore();
 const workers = ref<Worker[]>([]);
 const loading = ref(false);
 const WORKERS_FILTER_STORAGE_KEY = "workers-page-filters";
@@ -1148,6 +1157,61 @@ const confirmImport = async () => {
     ElMessage.error("匯入失敗: " + error.message);
   } finally {
     importing.value = false;
+  }
+};
+
+// 清除全部工讀生（僅 evelyn）
+const handleClearAllWorkers = async () => {
+  // 第一次確認
+  try {
+    await ElMessageBox.confirm(
+      `即將刪除全部 ${workers.value.length} 位工讀生及相關打卡、薪資紀錄，此操作無法復原（系統會先寄送備份到信箱）。確定要繼續？`,
+      "⚠️ 清除全部工讀生",
+      {
+        confirmButtonText: "繼續",
+        cancelButtonText: "取消",
+        type: "warning",
+        confirmButtonClass: "el-button--danger",
+      }
+    );
+  } catch {
+    return;
+  }
+
+  // 第二次確認
+  try {
+    await ElMessageBox.confirm(
+      "請再次確認！這將永久刪除所有工讀生資料，確定執行？",
+      "⚠️ 最後確認",
+      {
+        confirmButtonText: "確定刪除全部",
+        cancelButtonText: "取消",
+        type: "error",
+        confirmButtonClass: "el-button--danger",
+      }
+    );
+  } catch {
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem("auth_token");
+    const res = await fetch(getApiUrl("/api/admin/cleanup/all-data"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const data = await res.json();
+    if (data.success) {
+      ElMessage.success(data.message || "已清除全部工讀生資料");
+      fetchWorkers();
+    } else {
+      ElMessage.error(data.message || "清除失敗");
+    }
+  } catch (error) {
+    ElMessage.error("清除失敗：" + error.message);
   }
 };
 

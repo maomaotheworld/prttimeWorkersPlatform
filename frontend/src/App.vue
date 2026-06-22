@@ -437,13 +437,8 @@ const handleLogout = async () => {
 onMounted(() => {
   window.addEventListener("resize", handleResize);
 
-  // ?��??��?證�???
+  // 初始化認證狀態
   authStore.initializeAuth();
-
-  // 載入統�?資�?
-  if (authStore.isLoggedIn) {
-    statsStore.fetchStats();
-  }
 });
 
 onUnmounted(() => {

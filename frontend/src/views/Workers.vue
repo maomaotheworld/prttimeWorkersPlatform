@@ -1085,6 +1085,13 @@ const handleFileChange = (file: any) => {
       // 更嚴格的數據處理
       const workerNumber = String(r[0] != null ? r[0] : "").trim();
       const name = String(r[1] != null ? r[1] : "").trim();
+
+      // 姓名空白、x、- 視為無效列，直接跳過不匯入
+      const INVALID_NAMES = ["", "x", "X", "-", "—", "－"];
+      if (INVALID_NAMES.includes(name)) {
+        console.log(`跳過無效姓名列 ${i}: "${name}"`);
+        continue;
+      }
       const group = String(r[2] != null ? r[2] : "").trim();
       const floor = String(r[3] != null ? r[3] : "").trim();
       const job = String(r[4] != null ? r[4] : "").trim();

@@ -2137,12 +2137,18 @@ app.post(
   authenticateToken,
   requireEvelyn,
   asyncHandler(async (req, res) => {
-    const backupFile = createBackupWorkbook("salary-records", req.user);
-    await sendBackupEmail({
-      scope: "清空薪資紀錄前備份",
-      requestedBy: req.user,
-      backupFile,
-    });
+    let backupSent = false;
+    try {
+      const backupFile = createBackupWorkbook("salary-records", req.user);
+      await sendBackupEmail({
+        scope: "清空薪資紀錄前備份",
+        requestedBy: req.user,
+        backupFile,
+      });
+      backupSent = true;
+    } catch (emailErr) {
+      console.warn("備份信件寄送失敗，繼續清除資料:", emailErr.message);
+    }
 
     const clearedSalaryAdjustments = salaryAdjustments.length;
     salaryAdjustments = [];
@@ -2153,7 +2159,7 @@ app.post(
       "salary-records",
       "all",
       "薪資調整紀錄",
-      `清空全部薪資調整紀錄，共 ${clearedSalaryAdjustments} 筆；已先寄送 Excel 備份到 ${BACKUP_EMAIL_TO}`,
+      `清空全部薪資調整紀錄，共 ${clearedSalaryAdjustments} 筆；${backupSent ? `已先寄送 Excel 備份到 ${BACKUP_EMAIL_TO}` : "備份信件寄送失敗"}`,
       req.user.id,
     );
 
@@ -2161,9 +2167,12 @@ app.post(
       success: true,
       data: {
         clearedSalaryAdjustments,
-        backupSentTo: BACKUP_EMAIL_TO,
+        backupSent,
+        backupSentTo: backupSent ? BACKUP_EMAIL_TO : null,
       },
-      message: `已寄出備份郵件，並清空 ${clearedSalaryAdjustments} 筆薪資調整紀錄`,
+      message: backupSent
+        ? `已寄出備份郵件，並清空 ${clearedSalaryAdjustments} 筆薪資調整紀錄`
+        : `已清空 ${clearedSalaryAdjustments} 筆薪資調整紀錄（備份信件寄送失敗）`,
     });
   }),
 );
@@ -2173,12 +2182,18 @@ app.post(
   authenticateToken,
   requireEvelyn,
   asyncHandler(async (req, res) => {
-    const backupFile = createBackupWorkbook("all-data", req.user);
-    await sendBackupEmail({
-      scope: "清空所有工讀生資料前備份",
-      requestedBy: req.user,
-      backupFile,
-    });
+    let backupSent = false;
+    try {
+      const backupFile = createBackupWorkbook("all-data", req.user);
+      await sendBackupEmail({
+        scope: "清空所有工讀生資料前備份",
+        requestedBy: req.user,
+        backupFile,
+      });
+      backupSent = true;
+    } catch (emailErr) {
+      console.warn("備份信件寄送失敗，繼續清除資料:", emailErr.message);
+    }
 
     const clearedCounts = {
       workers: workers.length,
@@ -2197,7 +2212,7 @@ app.post(
       "all-worker-data",
       "all",
       "所有工讀生資料",
-      `清空工讀生 ${clearedCounts.workers} 筆、打卡紀錄 ${clearedCounts.timeRecords} 筆、薪資調整 ${clearedCounts.salaryAdjustments} 筆；已先寄送 Excel 備份到 ${BACKUP_EMAIL_TO}`,
+      `清空工讀生 ${clearedCounts.workers} 筆、打卡紀錄 ${clearedCounts.timeRecords} 筆、薪資調整 ${clearedCounts.salaryAdjustments} 筆；${backupSent ? `已先寄送 Excel 備份到 ${BACKUP_EMAIL_TO}` : "備份信件寄送失敗"}`,
       req.user.id,
     );
 
@@ -2205,10 +2220,12 @@ app.post(
       success: true,
       data: {
         ...clearedCounts,
-        backupSentTo: BACKUP_EMAIL_TO,
+        backupSent,
+        backupSentTo: backupSent ? BACKUP_EMAIL_TO : null,
       },
-      message:
-        "已寄出備份郵件，並清空所有工讀生、打卡紀錄與薪資調整資料",
+      message: backupSent
+        ? "已寄出備份郵件，並清空所有工讀生、打卡紀錄與薪資調整資料"
+        : "已清空所有工讀生、打卡紀錄與薪資調整資料（備份信件寄送失敗）",
     });
   }),
 );

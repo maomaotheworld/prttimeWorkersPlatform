@@ -101,25 +101,17 @@ export const useWorkersStore = defineStore("workers", () => {
     try {
       const token = localStorage.getItem("auth_token");
       const response = await fetch(getApiUrl("/api/groups"), {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (!response.ok) {
-        throw new Error("獲取組別列表失敗");
-      }
-
+      if (!response.ok) throw new Error("獲取組別列表失敗");
       const result = await response.json();
       const mapping = {};
-
       if (result.success && result.data) {
         result.data.forEach((group) => {
           mapping[group.name] = group.id;
           mapping[group.id] = group.id;
         });
       }
-
       return mapping;
     } catch (error) {
       console.error("獲取組別映射失敗:", error);
@@ -127,15 +119,39 @@ export const useWorkersStore = defineStore("workers", () => {
     }
   };
 
+  // 找不到組別時自動建立，回傳 groupId
+  const resolveGroupId = async (groupName) => {
+    if (!groupName) return null;
+    const token = localStorage.getItem("auth_token");
+    const mapping = await getGroupMapping();
+
+    // 已存在直接回傳
+    if (mapping[groupName]) return mapping[groupName];
+
+    // 不存在 → 自動建立
+    try {
+      const res = await fetch(getApiUrl("/api/groups"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name: groupName }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        console.log(`Workers store: 自動建立組別「${groupName}」`, data.data.id);
+        return data.data.id;
+      }
+    } catch (e) {
+      console.warn("自動建立組別失敗:", e.message);
+    }
+    return null;
+  };
+
   const addWorker = async (workerData) => {
     try {
       console.log("Workers store: 新增工讀生", workerData);
 
-      // 獲取group映射
-      const groupMapping = await getGroupMapping();
-      console.log("Workers store: Group映射", groupMapping);
-      const resolvedGroupId =
-        groupMapping[workerData.group] || workerData.group || "group-1";
+      // 找不到組別時自動建立
+      const resolvedGroupId = await resolveGroupId(workerData.group) || workerData.groupId || null;
 
       // 根據後端API格式準備數據
       const requestData = {
@@ -199,11 +215,8 @@ export const useWorkersStore = defineStore("workers", () => {
     try {
       console.log("Workers store: 更新工讀生", id, workerData);
 
-      // 獲取group映射
-      const groupMapping = await getGroupMapping();
-      console.log("Workers store: Group映射", groupMapping);
-      const resolvedGroupId =
-        groupMapping[workerData.group] || workerData.group || "group-1";
+      // 找不到組別時自動建立
+      const resolvedGroupId = await resolveGroupId(workerData.group) || workerData.groupId || null;
 
       // 根據後端API格式準備數據
       const requestData = {

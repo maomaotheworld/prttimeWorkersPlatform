@@ -310,14 +310,26 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="hourlyWage" label="時薪" width="80">
+        <el-table-column prop="hourlyWage" label="時薪" width="70">
           <template #default="{ row }">
             <span :style="{ color: row.hourlyWage > 0 ? 'inherit' : 'red' }">
               {{ row.hourlyWage || "缺失" }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="狀態" width="80">
+        <el-table-column prop="baseHours" label="基本工時" width="70">
+          <template #default="{ row }">
+            <span>{{ row.baseHours ?? 8 }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="fireTraining" label="消防" width="60">
+          <template #default="{ row }">
+            <el-tag :type="row.fireTraining ? 'success' : 'info'" size="small">
+              {{ row.fireTraining ? "O" : "X" }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="狀態" width="70">
           <template #default="{ row }">
             <el-tag :type="row.valid ? 'success' : 'danger'">
               {{ row.valid ? "有效" : "錯誤" }}
@@ -1071,8 +1083,11 @@ const handleFileChange = (file: any) => {
       const name = String(r[1] != null ? r[1] : "").trim();
       const group = String(r[2] != null ? r[2] : "").trim();
       const floor = String(r[3] != null ? r[3] : "").trim();
-      const job = String(r[4] != null ? r[4] : "").trim(); // 新增工作欄位 (第5列)
-      const hourlyWage = r[5] != null ? Number(r[5]) : 0; // 時薪移到第6列
+      const job = String(r[4] != null ? r[4] : "").trim();
+      const hourlyWage = r[5] != null ? Number(r[5]) : 0;
+      const baseHours = r[6] != null ? Number(r[6]) : 8;
+      const fireTrainingRaw = String(r[7] != null ? r[7] : "").trim();
+      const fireTraining = fireTrainingRaw === "O" || fireTrainingRaw === "o";
 
       // 確保數據格式正確
       const workerData = {
@@ -1080,9 +1095,10 @@ const handleFileChange = (file: any) => {
         name,
         group,
         floor,
-        job, // 新增工作欄位
-        hourlyWage: hourlyWage,
-        baseHours: 8,
+        job,
+        hourlyWage,
+        baseHours,
+        fireTraining,
         valid: workerNumber && name && group && floor && hourlyWage > 0,
       };
 
@@ -1119,9 +1135,10 @@ const confirmImport = async () => {
     name: item.name,
     group: item.group,
     floor: item.floor,
-    job: item.job, // 新增工作欄位
+  job: item.job,
     hourlyWage: item.hourlyWage,
     baseHours: item.baseHours || 8,
+  fireTraining: item.fireTraining,
   }));
 
   console.log("準備匯入的數據:", cleanData);

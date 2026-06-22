@@ -74,6 +74,7 @@ const WORKER_SHEET_HEADERS = [
   "job",
   "baseHourlyWage",
   "baseWorkingHours",
+  "fireTraining",
   "phone",
   "email",
   "address",
@@ -1031,6 +1032,7 @@ function normalizeWorkerRecord(worker) {
     job: String(normalizedWorker.job || "").trim(),
     baseHourlyWage: Number(normalizedWorker.baseHourlyWage) || 0,
     baseWorkingHours: Number(normalizedWorker.baseWorkingHours) || 0,
+    fireTraining: !!normalizedWorker.fireTraining,
     phone: String(normalizedWorker.phone || "").trim(),
     email: String(normalizedWorker.email || "").trim(),
     address: String(normalizedWorker.address || "").trim(),
@@ -2342,6 +2344,7 @@ app.post(
     job, // 新增工作欄位
     baseHourlyWage,
     baseWorkingHours,
+    fireTraining,
   } = req.body;
 
   // 驗證必要欄位（只檢查編號和姓名非空，其餘允許）
@@ -2404,6 +2407,7 @@ app.post(
       baseHourlyWage !== undefined ? parseFloat(baseHourlyWage) : 0,
     baseWorkingHours:
       baseWorkingHours !== undefined ? parseFloat(baseWorkingHours) : 0,
+    fireTraining: !!fireTraining,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
@@ -2448,6 +2452,7 @@ app.put(
     job, // 新增工作欄位
     baseHourlyWage,
     baseWorkingHours,
+    fireTraining,
   } = req.body;
   const workerIndex = workers.findIndex((w) => w.id === req.params.id);
 
@@ -2511,6 +2516,7 @@ app.put(
         baseWorkingHours !== undefined
           ? parseFloat(baseWorkingHours)
           : workers[workerIndex].baseWorkingHours || 0,
+      fireTraining: fireTraining !== undefined ? !!fireTraining : workers[workerIndex].fireTraining || false,
       updatedAt: new Date().toISOString(),
     });
 

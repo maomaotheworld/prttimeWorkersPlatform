@@ -149,7 +149,7 @@ export const useWorkersStore = defineStore("workers", () => {
         fireTraining: !!workerData.fireTraining,
         // 設置預設值
         gender: "男",
-        level: "工讀生",
+        level: 1,
         phone: "",
         email: "",
         address: "",
@@ -216,7 +216,7 @@ export const useWorkersStore = defineStore("workers", () => {
         job: String(workerData.job || "").trim(), // 新增工作欄位
         // 保持其他欄位不變
         gender: workerData.gender || "男",
-        level: workerData.level || "工讀生",
+        level: Number(workerData.level) || 1,
         phone: workerData.phone || "",
         email: workerData.email || "",
         address: workerData.address || "",

@@ -718,18 +718,25 @@ const allFloors = computed(() => {
 
 // 篩選後的工讀生列表
 const filteredWorkers = computed(() => {
+  const sortByNumber = (list: Worker[]) =>
+    [...list].sort((a, b) => {
+      const na = parseInt(String(a.workerNumber || "").replace(/\D/g, "")) || 0;
+      const nb = parseInt(String(b.workerNumber || "").replace(/\D/g, "")) || 0;
+      return na - nb;
+    });
+
   if (filterType.value === "all") {
-    return workers.value;
+    return sortByNumber(workers.value);
   } else if (filterType.value === "group" && selectedGroup.value) {
-    return workers.value.filter(
+    return sortByNumber(workers.value.filter(
       (worker) => worker.group === selectedGroup.value,
-    );
+    ));
   } else if (filterType.value === "floor" && selectedFloor.value) {
-    return workers.value.filter(
+    return sortByNumber(workers.value.filter(
       (worker) => worker.floor === selectedFloor.value,
-    );
+    ));
   }
-  return workers.value;
+  return sortByNumber(workers.value);
 });
 
 // Excel

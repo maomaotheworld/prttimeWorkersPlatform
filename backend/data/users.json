@@ -18,7 +18,159 @@
         "canViewReports": true,
         "canDeleteData": true
       }
+    },
+    {
+      "id": "leader002",
+      "username": "01cc",
+      "password": "01cc",
+      "role": "leader",
+      "name": "01cc",
+      "email": "",
+      "createdAt": "2026-06-22T06:00:00.000Z",
+      "isActive": true,
+      "permissions": {
+        "canManageUsers": false,
+        "canEditWorkers": true,
+        "canImportData": true,
+        "canClockIn": true,
+        "canEditTime": true,
+        "canViewReports": true,
+        "canDeleteData": false
+      }
+    },
+    {
+      "id": "leader003",
+      "username": "08min",
+      "password": "08min",
+      "role": "leader",
+      "name": "08min",
+      "email": "",
+      "createdAt": "2026-06-22T06:00:00.000Z",
+      "isActive": true,
+      "permissions": {
+        "canManageUsers": false,
+        "canEditWorkers": true,
+        "canImportData": true,
+        "canClockIn": true,
+        "canEditTime": true,
+        "canViewReports": true,
+        "canDeleteData": false
+      }
+    },
+    {
+      "id": "leader004",
+      "username": "16zoe",
+      "password": "16zoe",
+      "role": "leader",
+      "name": "16zoe",
+      "email": "",
+      "createdAt": "2026-06-22T06:00:00.000Z",
+      "isActive": true,
+      "permissions": {
+        "canManageUsers": false,
+        "canEditWorkers": true,
+        "canImportData": true,
+        "canClockIn": true,
+        "canEditTime": true,
+        "canViewReports": true,
+        "canDeleteData": false
+      }
+    },
+    {
+      "id": "leader005",
+      "username": "47amy",
+      "password": "47amy",
+      "role": "leader",
+      "name": "47amy",
+      "email": "",
+      "createdAt": "2026-06-22T06:00:00.000Z",
+      "isActive": true,
+      "permissions": {
+        "canManageUsers": false,
+        "canEditWorkers": true,
+        "canImportData": true,
+        "canClockIn": true,
+        "canEditTime": true,
+        "canViewReports": true,
+        "canDeleteData": false
+      }
+    },
+    {
+      "id": "leader006",
+      "username": "48lo",
+      "password": "48lo",
+      "role": "leader",
+      "name": "48lo",
+      "email": "",
+      "createdAt": "2026-06-22T06:00:00.000Z",
+      "isActive": true,
+      "permissions": {
+        "canManageUsers": false,
+        "canEditWorkers": true,
+        "canImportData": true,
+        "canClockIn": true,
+        "canEditTime": true,
+        "canViewReports": true,
+        "canDeleteData": false
+      }
+    },
+    {
+      "id": "leader007",
+      "username": "49piu",
+      "password": "49piu",
+      "role": "leader",
+      "name": "49piu",
+      "email": "",
+      "createdAt": "2026-06-22T06:00:00.000Z",
+      "isActive": true,
+      "permissions": {
+        "canManageUsers": false,
+        "canEditWorkers": true,
+        "canImportData": true,
+        "canClockIn": true,
+        "canEditTime": true,
+        "canViewReports": true,
+        "canDeleteData": false
+      }
+    },
+    {
+      "id": "leader008",
+      "username": "50puff",
+      "password": "50puff",
+      "role": "leader",
+      "name": "50puff",
+      "email": "",
+      "createdAt": "2026-06-22T06:00:00.000Z",
+      "isActive": true,
+      "permissions": {
+        "canManageUsers": false,
+        "canEditWorkers": true,
+        "canImportData": true,
+        "canClockIn": true,
+        "canEditTime": true,
+        "canViewReports": true,
+        "canDeleteData": false
+      }
+    },
+    {
+      "id": "leader009",
+      "username": "51ru",
+      "password": "51ru",
+      "role": "leader",
+      "name": "51ru",
+      "email": "",
+      "createdAt": "2026-06-22T06:00:00.000Z",
+      "isActive": true,
+      "permissions": {
+        "canManageUsers": false,
+        "canEditWorkers": true,
+        "canImportData": true,
+        "canClockIn": true,
+        "canEditTime": true,
+        "canViewReports": true,
+        "canDeleteData": false
+      }
     }
   ],
-  "lastUserId": 1
+  "lastUserId": 9
 }

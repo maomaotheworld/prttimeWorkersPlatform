@@ -1154,8 +1154,12 @@ const confirmImport = async () => {
   console.log("準備匯入的數據:", cleanData);
 
   try {
-    await workersStore.importWorkers(cleanData);
-    ElMessage.success(`成功匯入 ${cleanData.length} 筆`);
+    const results = await workersStore.importWorkers(cleanData);
+    if (results.failed === 0) {
+      ElMessage.success(`成功匯入 ${results.success} 筆`);
+    } else {
+      ElMessage.warning(`匯入完成：成功 ${results.success} 筆，跳過 ${results.failed} 筆（重複或錯誤）`);
+    }
     showImportDialog.value = false;
     previewData.value = [];
     fetchWorkers();

@@ -407,19 +407,22 @@ export const useWorkersStore = defineStore("workers", () => {
   };
 
   const importWorkers = async (workersList) => {
-    try {
-      console.log("Workers store: 批量匯入工讀生", workersList);
+    console.log("Workers store: 批量匯入工讀生", workersList);
+    const results = { success: 0, failed: 0, errors: [] };
 
-      for (const worker of workersList) {
+    for (const worker of workersList) {
+      try {
         await addWorker(worker);
+        results.success++;
+      } catch (error) {
+        results.failed++;
+        results.errors.push(`${worker.name || worker.workerNumber}: ${error.message}`);
+        console.warn("Workers store: 單筆匯入失敗，繼續下一筆", error.message);
       }
-
-      console.log("Workers store: 批量匯入完成");
-      return true;
-    } catch (error) {
-      console.error("Workers store: 批量匯入失敗:", error);
-      throw error;
     }
+
+    console.log("Workers store: 批量匯入完成", results);
+    return results;
   };
 
   return {

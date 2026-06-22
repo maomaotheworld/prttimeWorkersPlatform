@@ -76,9 +76,9 @@
           >
             <el-table-column prop="number" label="編號" width="80" sortable />
 
-            <el-table-column prop="name" label="姓名" width="120" sortable />
+            <el-table-column prop="name" label="姓名" min-width="120" sortable />
 
-            <el-table-column prop="groupId" label="組別" width="150" sortable>
+            <el-table-column prop="groupId" label="組別" min-width="150" sortable>
               <template #default="scope">
                 <el-tag
                   v-if="groupMapping[scope.row.groupId]"
@@ -91,7 +91,7 @@
               </template>
             </el-table-column>
 
-            <el-table-column prop="floor" label="樓層" width="100" sortable>
+            <el-table-column prop="floor" label="樓層" min-width="100" sortable>
               <template #default="scope">
                 <el-tag type="primary" size="small">
                   {{ scope.row.floor || "未設定" }}
@@ -99,7 +99,7 @@
               </template>
             </el-table-column>
 
-            <el-table-column prop="job" label="工作" width="150" sortable>
+            <el-table-column prop="job" label="工作" min-width="150" sortable>
               <template #default="scope">
                 <el-tag type="success" size="small" v-if="scope.row.job">
                   {{ scope.row.job }}

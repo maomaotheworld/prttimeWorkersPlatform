@@ -421,16 +421,82 @@ export const useWorkersStore = defineStore("workers", () => {
 
   const importWorkers = async (workersList) => {
     console.log("Workers store: 批量匯入工讀生", workersList);
+    const token = localStorage.getItem("auth_token");
     const results = { success: 0, failed: 0, errors: [] };
 
+    // 1. 只取一次現有組別清單，建立 cache
+    const groupCache = await getGroupMapping();
+
+    // 2. 收集所有未知組別，一次性建立
+    const uniqueGroupNames = [...new Set(
+      workersList.map((w) => (w.group || "").trim()).filter(Boolean)
+    )];
+    for (const groupName of uniqueGroupNames) {
+      if (!groupCache[groupName]) {
+        try {
+          const res = await fetch(getApiUrl("/api/groups"), {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ name: groupName }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            groupCache[groupName] = data.data.id;
+            groupCache[data.data.id] = data.data.id;
+            console.log(`自動建立組別「${groupName}」→ ${data.data.id}`);
+          }
+        } catch (e) {
+          console.warn(`建立組別「${groupName}」失敗:`, e.message);
+        }
+      }
+    }
+
+    // 3. 逐一新增工讀生（直接用 cache，不再重複打 groups API）
     for (const worker of workersList) {
       try {
-        await addWorker(worker);
-        results.success++;
+        const groupName = (worker.group || "").trim();
+        const resolvedGroupId = groupCache[groupName] || worker.groupId || null;
+
+        const requestData = {
+          number: String(worker.workerNumber || "").trim(),
+          name: String(worker.name || "").trim(),
+          baseHourlyWage: Number(worker.hourlyWage) || 0,
+          baseWorkingHours: Number(worker.baseHours) || 8,
+          groupId: resolvedGroupId,
+          floor: String(worker.floor || "").trim(),
+          job: String(worker.job || "").trim(),
+          fireTraining: !!worker.fireTraining,
+          gender: "男",
+          level: 1,
+          phone: "",
+          email: "",
+          address: "",
+          emergencyContact: "",
+          bankAccount: "",
+          startDate: new Date().toISOString().split("T")[0],
+          status: "active",
+        };
+
+        const headers = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        const response = await fetch(getApiUrl("/api/workers"), {
+          method: "POST",
+          headers,
+          body: JSON.stringify(requestData),
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          results.success++;
+        } else {
+          results.failed++;
+          results.errors.push(`${worker.name}(${worker.workerNumber}): ${data.message}`);
+        }
       } catch (error) {
         results.failed++;
         results.errors.push(`${worker.name || worker.workerNumber}: ${error.message}`);
-        console.warn("Workers store: 單筆匯入失敗，繼續下一筆", error.message);
+        console.warn("單筆匯入失敗，繼續下一筆", error.message);
       }
     }
 

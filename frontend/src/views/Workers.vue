@@ -250,7 +250,7 @@
         <el-table-column
           fixed="right"
           label="操作"
-          :width="isMobile ? '60' : '280'"
+          :width="isMobile ? '60' : '340'"
         >
           <template #default="{ row }">
             <!-- 桌面版：顯示所有按鈕 -->
@@ -276,6 +276,14 @@
               >
                 加薪
               </el-button>
+              <el-button
+                size="small"
+                :type="row.notes ? 'warning' : 'info'"
+                @click="openNotesDialog(row)"
+                :title="row.notes || '新增備註'"
+              >
+                {{ row.notes ? '📝備註' : '備註' }}
+              </el-button>
               <el-button size="small" type="danger" @click="confirmDelete(row)">
                 刪除
               </el-button>
@@ -295,6 +303,9 @@
                     <el-dropdown-item command="edit">
                       <el-icon><Edit /></el-icon>編輯
                     </el-dropdown-item>
+                    <el-dropdown-item command="notes">
+                      📝 備註{{ row.notes ? ' ●' : '' }}
+                    </el-dropdown-item>
                     <el-dropdown-item command="hours">
                       <el-icon><Clock /></el-icon>調整工時
                     </el-dropdown-item>
@@ -312,6 +323,29 @@
         </el-table-column>
       </el-table>
     </el-card>
+
+    <!-- 備註 Dialog -->
+    <el-dialog
+      v-model="showNotesDialog"
+      :title="`備註 — ${notesWorker?.name || ''}`"
+      width="480px"
+      :close-on-click-modal="false"
+    >
+      <el-input
+        v-model="notesText"
+        type="textarea"
+        :rows="6"
+        placeholder="輸入備註（例如：工作態度認真、需注意出勤…）"
+        maxlength="500"
+        show-word-limit
+      />
+      <template #footer>
+        <el-button @click="showNotesDialog = false">取消</el-button>
+        <el-button type="primary" :loading="savingNotes" @click="saveNotes">
+          儲存
+        </el-button>
+      </template>
+    </el-dialog>
 
     <!-- Excel 匯入 Dialog -->
     <el-dialog v-model="showImportDialog" title="Excel 匯入" width="600px">
@@ -715,6 +749,8 @@ interface Worker {
   hourlyWage: number;
   baseHours: number;
   totalHours: number;
+  notes?: string;
+  fireTraining?: boolean;
 }
 
 const workersStore = useWorkersStore();
@@ -832,6 +868,12 @@ const hoursForm = reactive({
   reason: "",
 });
 
+// 備註
+const showNotesDialog = ref(false);
+const notesWorker = ref<Worker | null>(null);
+const notesText = ref("");
+const savingNotes = ref(false);
+
 // 編輯工讀生
 const showWorkerDialog = ref(false);
 const isEditing = ref(false);
@@ -888,6 +930,9 @@ const handleMobileAction = (command: string, row: Worker) => {
   switch (command) {
     case "edit":
       showEditWorker(row);
+      break;
+    case "notes":
+      openNotesDialog(row);
       break;
     case "hours":
       showAdjustHours(row);
@@ -1417,6 +1462,32 @@ const toggleFireTraining = async (worker: Worker) => {
     ElMessage.success(`已更新 ${worker.name} 消防狀態`);
   } catch (e) {
     ElMessage.error("更新失敗");
+  }
+};
+
+const openNotesDialog = (worker: Worker) => {
+  notesWorker.value = worker;
+  notesText.value = worker.notes || "";
+  showNotesDialog.value = true;
+};
+
+const saveNotes = async () => {
+  if (!notesWorker.value) return;
+  savingNotes.value = true;
+  try {
+    await workersStore.updateWorker(notesWorker.value.id, {
+      ...notesWorker.value,
+      notes: notesText.value,
+    });
+    // 即時更新本地列表
+    const idx = workers.value.findIndex((w) => w.id === notesWorker.value!.id);
+    if (idx !== -1) workers.value[idx].notes = notesText.value;
+    ElMessage.success("備註已儲存");
+    showNotesDialog.value = false;
+  } catch (e) {
+    ElMessage.error("儲存失敗");
+  } finally {
+    savingNotes.value = false;
   }
 };
 

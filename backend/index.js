@@ -3718,7 +3718,6 @@ app.get("/api/dashboard/stats", asyncHandler(async (req, res) => {
 // 計算工讀生薪資
 app.get("/api/workers/:id/salary-calculation", asyncHandler(async (req, res) => {
   await Promise.all([
-    refreshWorkersFromPrimaryStore(),
     refreshTimeRecordsFromPrimaryStore(),
     refreshSalaryAdjustmentsFromPrimaryStore(),
   ]);

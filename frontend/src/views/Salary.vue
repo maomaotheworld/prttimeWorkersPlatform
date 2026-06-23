@@ -783,12 +783,13 @@ const handleTotalSalaryAdjust = async () => {
     }
 
     ElMessage.success(
-      `總薪資設定成功！設定為 ${result.data.targetTotalSalary} 元`,
+      `總薪資設定成功！時薪已更新為 ${result.data.newHourlyWage} 元`,
     );
 
     totalSalaryDialogVisible.value = false;
 
-    // 重新載入薪資調整記錄
+    // 先重新載入 workers（取得新時薪），再重算薪資
+    await workersStore.fetchWorkers();
     await fetchAdjustments();
 
     // 重新計算薪資

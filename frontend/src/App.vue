@@ -22,7 +22,7 @@
             <div class="header-actions">
               <div v-if="authStore.isLoggedIn" class="user-info">
                 <el-dropdown trigger="click" @command="handleUserMenuCommand">
-                  <div class="user-avatar-wrapper">
+                  <div class="user-avatar-wrapper" tabindex="0">
                     <el-avatar :size="32" class="user-avatar">
                       {{ authStore.displayName[0] }}
                     </el-avatar>
@@ -99,7 +99,7 @@
           <div class="mobile-header-content">
             <div v-if="authStore.isLoggedIn" class="mobile-user-info">
               <el-dropdown trigger="click" @command="handleUserMenuCommand">
-                <div style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                <div style="display:flex;align-items:center;gap:6px;cursor:pointer;outline:none" tabindex="0">
                   <el-avatar :size="24">{{ authStore.displayName[0] }}</el-avatar>
                   <span class="mobile-user-name">{{ authStore.displayName }}</span>
                   <el-tag :type="userRoleTagType" size="small">{{ userRoleText }}</el-tag>
@@ -276,30 +276,34 @@ const userRoleTagType = computed(() => {
 
 // 桌面版導航配置
 const desktopNavs = [
-  { path: "/", name: "首頁", iconComponent: HomeFilled, requiresAuth: true },
+  { path: "/", name: "首頁", iconComponent: HomeFilled, requiresAuth: true, leaderVisible: true },
   {
     path: "/workers",
     name: "工讀生管理",
     iconComponent: User,
     permission: "canEditWorkers",
+    leaderVisible: true,
   },
   {
     path: "/personnel-list",
     name: "人員列表",
     iconComponent: UserFilled,
     noAuth: true,
+    leaderVisible: true,
   },
   {
     path: "/groups",
     name: "組別管理",
     iconComponent: UserFilled,
     permission: "canEditWorkers",
+    leaderVisible: true,
   },
   {
     path: "/attendance",
     name: "打卡系統",
     iconComponent: Clock,
     permission: "canClockIn",
+    leaderVisible: true,
   },
   {
     path: "/time-records",
@@ -307,7 +311,7 @@ const desktopNavs = [
     iconComponent: Calendar,
     permission: "canEditTime",
   },
-  { path: "/salary", name: "薪資管理", iconComponent: Money, permission: "canViewReports" },
+  { path: "/salary", name: "薪資管理", iconComponent: Money, permission: "canViewReports", leaderVisible: true },
   {
     path: "/activity-logs",
     name: "活動資料",
@@ -330,39 +334,14 @@ const desktopNavs = [
 
 const visibleDesktopNavs = computed(() => {
   return desktopNavs.filter((nav) => {
-    // 如果是不需要認證的項目，總是顯示
-    if (nav.noAuth) {
-      return true;
-    }
-
-    // 如果用戶沒有認證，只顯示不需要認證的項目
-    if (!authStore.isLoggedIn && !localStorage.getItem("auth_token")) {
-      return false;
-    }
-
-    // 如果需要認證但用戶未認證，不顯示
-    if (
-      nav.requiresAuth &&
-      !authStore.isLoggedIn &&
-      !localStorage.getItem("auth_token")
-    ) {
-      return false;
-    }
-
-    // 如果是 Evelyn 專用選項，只顯示給 Evelyn
-    if (nav.evelynOnly) {
-      return authStore.isEvelyn;
-    }
-
-    // 如果是管理員專用選項，檢查是否為管理員或 evelyn
-    if (nav.adminOnly) {
-      return authStore.isAdminOrEvelyn;
-    }
-    // 如果需要特定權限，檢查權限
+    if (nav.noAuth) return true;
+    if (!authStore.isLoggedIn && !localStorage.getItem("auth_token")) return false;
+    if (nav.evelynOnly) return authStore.isEvelyn;
+    if (nav.adminOnly) return authStore.isAdminOrEvelyn;
+    // leader 專屬可見項目
+    if (nav.leaderVisible && authStore.isLeader) return true;
     if (nav.permission) {
-      return (
-        authStore.hasPermission(nav.permission) || authStore.isAdminOrEvelyn
-      );
+      return authStore.hasPermission(nav.permission) || authStore.isAdminOrEvelyn;
     }
     return true;
   });
@@ -370,22 +349,24 @@ const visibleDesktopNavs = computed(() => {
 
 // 底部端點配置(需要權限過濾)
 const mobileNavs = [
-  { path: "/", name: "首頁", icon: "HomeFilled", requiresAuth: true },
+  { path: "/", name: "首頁", icon: "HomeFilled", requiresAuth: true, leaderVisible: true },
   {
     path: "/workers",
     name: "工讀生",
     icon: "User",
     permission: "canEditWorkers",
+    leaderVisible: true,
   },
-  { path: "/personnel-list", name: "人員", icon: "UserFilled", noAuth: true },
+  { path: "/personnel-list", name: "人員", icon: "UserFilled", noAuth: true, leaderVisible: true },
   {
     path: "/attendance",
     name: "打卡",
     icon: "Clock",
     permission: "canClockIn",
+    leaderVisible: true,
   },
   { path: "/time-records", name: "工時", icon: "Calendar", permission: "canEditTime" },
-  { path: "/salary", name: "薪資", icon: "Money", permission: "canViewReports" },
+  { path: "/salary", name: "薪資", icon: "Money", permission: "canViewReports", leaderVisible: true },
   {
     path: "/activity-logs",
     name: "活動",
@@ -409,44 +390,20 @@ const mobileNavs = [
     name: "組別",
     icon: "UserFilled",
     permission: "canEditWorkers",
+    leaderVisible: true,
   },
 ];
 
 const visibleMobileNavs = computed(() => {
   return mobileNavs.filter((nav) => {
-    // 如果是不需要認證的項目，總是顯示
-    if (nav.noAuth) {
-      return true;
-    }
-
-    // 如果用戶沒有認證，只顯示不需要認證的項目
-    if (!authStore.isLoggedIn && !localStorage.getItem("auth_token")) {
-      return false;
-    }
-
-    // 如果需要認證但用戶未認證，不顯示
-    if (
-      nav.requiresAuth &&
-      !authStore.isLoggedIn &&
-      !localStorage.getItem("auth_token")
-    ) {
-      return false;
-    }
-
-    // 如果是 Evelyn 專用選項，只顯示給 Evelyn
-    if (nav.evelynOnly) {
-      return authStore.isEvelyn;
-    }
-
-    // 如果是管理員專用選項，檢查是否為管理員或 evelyn
-    if (nav.adminOnly) {
-      return authStore.isAdminOrEvelyn;
-    }
-    // 如果需要特定權限，檢查權限
+    if (nav.noAuth) return true;
+    if (!authStore.isLoggedIn && !localStorage.getItem("auth_token")) return false;
+    if (nav.evelynOnly) return authStore.isEvelyn;
+    if (nav.adminOnly) return authStore.isAdminOrEvelyn;
+    // leader 專屬可見項目
+    if (nav.leaderVisible && authStore.isLeader) return true;
     if (nav.permission) {
-      return (
-        authStore.hasPermission(nav.permission) || authStore.isAdminOrEvelyn
-      );
+      return authStore.hasPermission(nav.permission) || authStore.isAdminOrEvelyn;
     }
     return true;
   });

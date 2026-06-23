@@ -67,11 +67,11 @@
           >
             <el-menu
               :default-active="$route.path"
-              router
               class="app-menu"
               background-color="#545c64"
               text-color="#fff"
               active-text-color="#ffd04b"
+              @select="(path) => $router.push(path)"
             >
               <el-menu-item
                 v-for="nav in visibleDesktopNavs"
@@ -143,7 +143,7 @@
               v-for="nav in visibleMobileNavs"
               :key="nav.path"
               :class="['nav-item', { active: $route.path === nav.path }]"
-              @click="$router.push(nav.path)"
+              @click="nav.path !== $route.path && $router.push(nav.path)"
             >
               <span>{{ nav.name }}</span>
             </div>

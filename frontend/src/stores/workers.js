@@ -227,6 +227,7 @@ export const useWorkersStore = defineStore("workers", () => {
         groupId: resolvedGroupId,
         floor: String(workerData.floor || "").trim(),
         job: String(workerData.job || "").trim(), // 新增工作欄位
+        fireTraining: workerData.fireTraining !== undefined ? !!workerData.fireTraining : true,
         notes: String(workerData.notes || "").trim(),
         // 保持其他欄位不變
         gender: workerData.gender || "男",

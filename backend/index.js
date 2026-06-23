@@ -3679,15 +3679,7 @@ app.post("/api/salary-adjustments/total", authenticateToken, asyncHandler(async 
     workers[workerIndex].baseHourlyWage = newHourlyWage;
     await saveWorkers();
 
-    // 清掉本月舊的薪資調整記錄
-    salaryAdjustments = salaryAdjustments.filter((adj) => {
-      const adjDate = moment(adj.date);
-      return !(
-        adj.workerId === workerId && adjDate.isBetween(start, end, "day", "[]")
-      );
-    });
-
-    // 新增一筆「調整總薪資」的薪資調整紀錄
+    // 新增一筆「調整總薪資」的薪資調整紀錄（保留所有歷史記錄）
     const operatorInfo = getOperatorInfo(req.user);
     const netChange = targetTotalSalary - oldEffectiveTotal;
     const adjustment = decorateSalaryAdjustmentRecord({

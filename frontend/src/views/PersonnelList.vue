@@ -108,6 +108,17 @@
               </template>
             </el-table-column>
 
+            <el-table-column label="消防" min-width="70">
+              <template #default="scope">
+                <el-tag
+                  :type="scope.row.fireTraining ? 'success' : 'danger'"
+                  size="small"
+                >
+                  {{ scope.row.fireTraining ? "O" : "X" }}
+                </el-tag>
+              </template>
+            </el-table-column>
+
             <el-table-column label="消防編組" min-width="130" sortable>
               <template #default="scope">
                 <div v-if="getFireGroup(scope.row.number)" style="display:flex;align-items:center;gap:4px">

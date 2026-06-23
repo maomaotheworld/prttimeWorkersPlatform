@@ -235,6 +235,18 @@
             </span>
           </template>
         </el-table-column>
+        <el-table-column label="消防" :width="isMobile ? '55' : '70'">
+          <template #default="{ row }">
+            <el-tag
+              :type="row.fireTraining ? 'success' : 'danger'"
+              size="small"
+              style="cursor:pointer"
+              @click="toggleFireTraining(row)"
+            >
+              {{ row.fireTraining ? "O" : "X" }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column
           fixed="right"
           label="操作"
@@ -482,6 +494,15 @@
             :min="1"
             :max="12"
             style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="消防演習">
+          <el-switch
+            v-model="workerForm.fireTraining"
+            active-text="O（有參加）"
+            inactive-text="X（未參加）"
+            active-color="#67c23a"
+            inactive-color="#f56c6c"
           />
         </el-form-item>
       </el-form>
@@ -822,9 +843,10 @@ const workerForm = reactive({
   name: "",
   group: "",
   floor: "",
-  job: "", // 新增工作欄位
+  job: "",
   hourlyWage: 200,
   baseHours: 8,
+  fireTraining: false,
 });
 
 const workerRules = {
@@ -1379,10 +1401,23 @@ const showEditWorker = (worker: Worker) => {
   workerForm.hourlyWage =
     Number(worker.hourlyWage || worker.hourly_wage) || 200;
   workerForm.baseHours = Number(worker.baseHours || worker.base_hours) || 8;
+  workerForm.fireTraining = !!worker.fireTraining;
 
   console.log("編輯工讀生 - 表單數據:", workerForm);
 
   showWorkerDialog.value = true;
+};
+
+const toggleFireTraining = async (worker: Worker) => {
+  try {
+    await workersStore.updateWorker(worker.id, {
+      ...worker,
+      fireTraining: !worker.fireTraining,
+    });
+    ElMessage.success(`已更新 ${worker.name} 消防狀態`);
+  } catch (e) {
+    ElMessage.error("更新失敗");
+  }
 };
 
 const resetWorkerForm = () => {
@@ -1392,9 +1427,10 @@ const resetWorkerForm = () => {
     name: "",
     group: "",
     floor: "",
-    job: "", // 新增工作欄位重置
+    job: "",
     hourlyWage: 200,
     baseHours: 8,
+    fireTraining: false,
   });
 };
 

@@ -98,27 +98,29 @@
         >
           <div class="mobile-header-content">
             <div v-if="authStore.isLoggedIn" class="mobile-user-info">
-              <el-avatar :size="24">{{ authStore.displayName[0] }}</el-avatar>
-              <span class="mobile-user-name">{{ authStore.displayName }}</span>
-              <el-tag :type="userRoleTagType" size="small">{{
-                userRoleText
-              }}</el-tag>
+              <el-dropdown trigger="click" @command="handleUserMenuCommand">
+                <div style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                  <el-avatar :size="24">{{ authStore.displayName[0] }}</el-avatar>
+                  <span class="mobile-user-name">{{ authStore.displayName }}</span>
+                  <el-tag :type="userRoleTagType" size="small">{{ userRoleText }}</el-tag>
+                </div>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="changeCredentials">
+                      <el-icon><Edit /></el-icon> 修改帳號／密碼
+                    </el-dropdown-item>
+                    <el-dropdown-item command="logout" divided style="color:#f56c6c">
+                      <el-icon><SwitchButton /></el-icon> 登出
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
             </div>
             <div v-else class="mobile-user-info">
               <span class="mobile-user-name">訪客模式</span>
             </div>
             <el-button
-              v-if="authStore.isLoggedIn"
-              type="danger"
-              size="small"
-              @click="handleLogout"
-              plain
-              :icon="SwitchButton"
-            >
-              登出
-            </el-button>
-            <el-button
-              v-else
+              v-if="!authStore.isLoggedIn"
               type="primary"
               size="small"
               @click="$router.push('/login')"
@@ -303,9 +305,9 @@ const desktopNavs = [
     path: "/time-records",
     name: "工時記錄",
     iconComponent: Calendar,
-    adminOnly: true,
+    permission: "canEditTime",
   },
-  { path: "/salary", name: "薪資管理", iconComponent: Money, adminOnly: true },
+  { path: "/salary", name: "薪資管理", iconComponent: Money, permission: "canViewReports" },
   {
     path: "/activity-logs",
     name: "活動資料",
@@ -316,7 +318,7 @@ const desktopNavs = [
     path: "/user-management",
     name: "用戶管理",
     iconComponent: Setting,
-    adminOnly: true,
+    permission: "canManageUsers",
   },
   {
     path: "/permissions-matrix",
@@ -382,8 +384,8 @@ const mobileNavs = [
     icon: "Clock",
     permission: "canClockIn",
   },
-  { path: "/time-records", name: "工時", icon: "Calendar", adminOnly: true },
-  { path: "/salary", name: "薪資", icon: "Money", adminOnly: true },
+  { path: "/time-records", name: "工時", icon: "Calendar", permission: "canEditTime" },
+  { path: "/salary", name: "薪資", icon: "Money", permission: "canViewReports" },
   {
     path: "/activity-logs",
     name: "活動",
@@ -394,7 +396,7 @@ const mobileNavs = [
     path: "/user-management",
     name: "用戶",
     icon: "Setting",
-    adminOnly: true,
+    permission: "canManageUsers",
   },
   {
     path: "/permissions-matrix",

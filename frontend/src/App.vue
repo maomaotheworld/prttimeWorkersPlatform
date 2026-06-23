@@ -66,12 +66,13 @@
             class="app-aside"
           >
             <el-menu
+              :key="$route.path"
               :default-active="$route.path"
               class="app-menu"
               background-color="#545c64"
               text-color="#fff"
               active-text-color="#ffd04b"
-              @select="(path) => $router.push(path)"
+              @select="(path) => { if (path !== $route.path) $router.push(path).catch(() => {}) }"
             >
               <el-menu-item
                 v-for="nav in visibleDesktopNavs"

@@ -333,13 +333,14 @@ const desktopNavs = [
 ];
 
 const visibleDesktopNavs = computed(() => {
+  const role = authStore.user?.role || '';
+  const isLeader = role === 'leader';
   return desktopNavs.filter((nav) => {
     if (nav.noAuth) return true;
     if (!authStore.isLoggedIn && !localStorage.getItem("auth_token")) return false;
     if (nav.evelynOnly) return authStore.isEvelyn;
     if (nav.adminOnly) return authStore.isAdminOrEvelyn;
-    // leader 專屬可見項目
-    if (nav.leaderVisible && authStore.isLeader) return true;
+    if (nav.leaderVisible && isLeader) return true;
     if (nav.permission) {
       return authStore.hasPermission(nav.permission) || authStore.isAdminOrEvelyn;
     }
@@ -395,13 +396,14 @@ const mobileNavs = [
 ];
 
 const visibleMobileNavs = computed(() => {
+  const role = authStore.user?.role || '';
+  const isLeader = role === 'leader';
   return mobileNavs.filter((nav) => {
     if (nav.noAuth) return true;
     if (!authStore.isLoggedIn && !localStorage.getItem("auth_token")) return false;
     if (nav.evelynOnly) return authStore.isEvelyn;
     if (nav.adminOnly) return authStore.isAdminOrEvelyn;
-    // leader 專屬可見項目
-    if (nav.leaderVisible && authStore.isLeader) return true;
+    if (nav.leaderVisible && isLeader) return true;
     if (nav.permission) {
       return authStore.hasPermission(nav.permission) || authStore.isAdminOrEvelyn;
     }

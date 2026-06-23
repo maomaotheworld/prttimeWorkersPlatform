@@ -3659,6 +3659,19 @@ app.post("/api/salary-adjustments/total", authenticateToken, asyncHandler(async 
       });
     }
 
+    const start = moment().startOf("month");
+    const end = moment().endOf("month");
+
+    // 計算調整前的實際總薪資（舊時薪×工時 + 舊調整記錄）
+    const oldBaseSalary = (worker.baseHourlyWage || 0) * baseWorkingHours;
+    const oldAdjustmentsTotal = salaryAdjustments
+      .filter((adj) => {
+        const adjDate = moment(adj.date);
+        return adj.workerId === workerId && adjDate.isBetween(start, end, "day", "[]");
+      })
+      .reduce((sum, adj) => sum + (adj.type === "increase" ? adj.amount : -adj.amount), 0);
+    const oldEffectiveTotal = oldBaseSalary + oldAdjustmentsTotal;
+
     // 新時薪 = 目標總薪資 ÷ 基本工時（四捨五入）
     const newHourlyWage = Math.round(targetTotalSalary / baseWorkingHours);
 
@@ -3666,19 +3679,33 @@ app.post("/api/salary-adjustments/total", authenticateToken, asyncHandler(async 
     workers[workerIndex].baseHourlyWage = newHourlyWage;
     await saveWorkers();
 
-    // 清掉本月舊的薪資調整記錄（時薪已變動，調整記錄不再需要）
-    const start = moment().startOf("month");
-    const end = moment().endOf("month");
+    // 清掉本月舊的薪資調整記錄
     salaryAdjustments = salaryAdjustments.filter((adj) => {
       const adjDate = moment(adj.date);
       return !(
         adj.workerId === workerId && adjDate.isBetween(start, end, "day", "[]")
       );
     });
+
+    // 新增一筆「調整總薪資」的薪資調整紀錄
+    const operatorInfo = getOperatorInfo(req.user);
+    const netChange = targetTotalSalary - oldEffectiveTotal;
+    const adjustment = decorateSalaryAdjustmentRecord({
+      id: uuidv4(),
+      workerId,
+      workerName: worker.name,
+      type: netChange >= 0 ? "increase" : "decrease",
+      amount: Math.abs(Math.round(netChange)),
+      reason: `調整總薪資：${Math.round(oldEffectiveTotal)} → ${targetTotalSalary} 元（${reason}）`,
+      operatorId: operatorInfo.operatorId,
+      operatorUsername: operatorInfo.operatorUsername,
+      operatorName: operatorInfo.operatorName,
+      date: new Date().toISOString(),
+    });
+    salaryAdjustments.push(adjustment);
     await saveSalaryAdjustments();
 
     // 記錄活動日誌
-    const operatorInfo = getOperatorInfo(req.user);
     logActivity(
       "total-salary-set",
       "worker",

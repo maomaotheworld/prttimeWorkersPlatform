@@ -923,6 +923,8 @@ h1 {
     margin-left: 0;
   }
 }
+
+.fire-search-box {
   display: flex;
   align-items: center;
   gap: 12px;

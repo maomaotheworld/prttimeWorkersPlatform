@@ -566,7 +566,7 @@ export default defineComponent({
         const members = workersData.value
           .filter((w) => {
             const n = parseInt(String(w.number || '').replace(/\D/g, ''), 10);
-            return !isNaN(n) && cfg.check(n);
+            return !isNaN(n) && cfg.check(n) && w.fireTraining === true;
           })
           .map((w) => ({
             ...w,

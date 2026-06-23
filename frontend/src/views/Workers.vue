@@ -409,7 +409,7 @@
         </el-table-column>
         <el-table-column prop="fireTraining" label="消防" width="60">
           <template #default="{ row }">
-            <el-tag :type="row.fireTraining ? 'success' : 'info'" size="small">
+            <el-tag :type="row.fireTraining ? 'success' : 'danger'" size="small">
               {{ row.fireTraining ? "O" : "X" }}
             </el-tag>
           </template>

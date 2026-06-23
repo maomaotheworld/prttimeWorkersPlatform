@@ -827,7 +827,7 @@ function mapSheetRowsToObjects(rows, headers, fieldParsers = {}) {
   return rows.map((row) =>
     headers.reduce((record, header, index) => {
       const parser = fieldParsers[header];
-      const rawValue = row[index] || "";
+      const rawValue = row[index] !== undefined && row[index] !== null ? row[index] : "";
       record[header] = parser ? parser(rawValue) : rawValue;
       return record;
     }, {}),
@@ -1041,7 +1041,7 @@ function normalizeWorkerRecord(worker) {
     job: String(normalizedWorker.job || "").trim(),
     baseHourlyWage: Number(normalizedWorker.baseHourlyWage) || 0,
     baseWorkingHours: Number(normalizedWorker.baseWorkingHours) || 0,
-    fireTraining: !!normalizedWorker.fireTraining,
+    fireTraining: parseSheetBoolean(normalizedWorker.fireTraining, false),
     notes: String(normalizedWorker.notes || "").trim(),
     phone: String(normalizedWorker.phone || "").trim(),
     email: String(normalizedWorker.email || "").trim(),

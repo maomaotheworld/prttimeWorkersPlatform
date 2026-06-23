@@ -1070,12 +1070,14 @@ const fetchWorkers = async () => {
         groupId: worker.groupId || "",
         group: groupMapping[worker.groupId] || worker.group || "",
         floor: worker.floor || "",
-        job: worker.job || "", // 新增工作欄位映射
+        job: worker.job || "",
         hourlyWage: worker.baseHourlyWage || worker.hourlyWage || 0,
         baseHours: worker.baseWorkingHours || worker.baseHours || 8,
         additionalHours: additionalHours,
         totalHours:
           (worker.baseWorkingHours || worker.baseHours || 8) + additionalHours,
+        fireTraining: worker.fireTraining === true,
+        notes: worker.notes || "",
       };
     });
 

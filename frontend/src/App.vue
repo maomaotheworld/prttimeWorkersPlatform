@@ -276,137 +276,54 @@ const userRoleTagType = computed(() => {
 
 // 桌面版導航配置
 const desktopNavs = [
-  { path: "/", name: "首頁", iconComponent: HomeFilled, requiresAuth: true, leaderVisible: true },
-  {
-    path: "/workers",
-    name: "工讀生管理",
-    iconComponent: User,
-    permission: "canEditWorkers",
-    leaderVisible: true,
-  },
-  {
-    path: "/personnel-list",
-    name: "人員列表",
-    iconComponent: UserFilled,
-    noAuth: true,
-    leaderVisible: true,
-  },
-  {
-    path: "/groups",
-    name: "組別管理",
-    iconComponent: UserFilled,
-    permission: "canEditWorkers",
-    leaderVisible: true,
-  },
-  {
-    path: "/attendance",
-    name: "打卡系統",
-    iconComponent: Clock,
-    permission: "canClockIn",
-    leaderVisible: true,
-  },
-  {
-    path: "/time-records",
-    name: "工時記錄",
-    iconComponent: Calendar,
-    permission: "canEditTime",
-  },
-  { path: "/salary", name: "薪資管理", iconComponent: Money, permission: "canViewReports", leaderVisible: true },
-  {
-    path: "/activity-logs",
-    name: "活動資料",
-    iconComponent: Document,
-    adminOnly: true,
-  },
-  {
-    path: "/user-management",
-    name: "用戶管理",
-    iconComponent: Setting,
-    permission: "canManageUsers",
-  },
-  {
-    path: "/permissions-matrix",
-    name: "權限矩陣",
-    iconComponent: Setting,
-    evelynOnly: true,
-  },
+  { path: "/", name: "首頁", iconComponent: HomeFilled, requiresAuth: true },
+  { path: "/workers", name: "工讀生管理", iconComponent: User, permission: "canEditWorkers" },
+  { path: "/personnel-list", name: "人員列表", iconComponent: UserFilled, noAuth: true },
+  { path: "/groups", name: "組別管理", iconComponent: UserFilled, permission: "canManageGroups" },
+  { path: "/attendance", name: "打卡系統", iconComponent: Clock, permission: "canClockIn" },
+  { path: "/time-records", name: "工時記錄", iconComponent: Calendar, permission: "canEditTime" },
+  { path: "/salary", name: "薪資管理", iconComponent: Money, permission: "canViewReports" },
+  { path: "/activity-logs", name: "活動資料", iconComponent: Document, adminOnly: true },
+  { path: "/user-management", name: "用戶管理", iconComponent: Setting, permission: "canManageUsers" },
+  { path: "/permissions-matrix", name: "權限矩陣", iconComponent: Setting, evelynOnly: true },
 ];
 
 const visibleDesktopNavs = computed(() => {
-  const role = authStore.user?.role || '';
-  const isLeader = role === 'leader';
   return desktopNavs.filter((nav) => {
     if (nav.noAuth) return true;
     if (!authStore.isLoggedIn && !localStorage.getItem("auth_token")) return false;
     if (nav.evelynOnly) return authStore.isEvelyn;
     if (nav.adminOnly) return authStore.isAdminOrEvelyn;
-    if (nav.leaderVisible && isLeader) return true;
-    if (nav.permission) {
-      return authStore.hasPermission(nav.permission) || authStore.isAdminOrEvelyn;
-    }
-    return true;
+    if (authStore.isAdminOrEvelyn) return true;
+    // leader / reader 完全依照 permissions matrix
+    if (nav.permission) return authStore.hasPermission(nav.permission);
+    return true; // 無特定權限的頁面（如首頁）：登入即可見
   });
 });
 
 // 底部端點配置(需要權限過濾)
 const mobileNavs = [
-  { path: "/", name: "首頁", icon: "HomeFilled", requiresAuth: true, leaderVisible: true },
-  {
-    path: "/workers",
-    name: "工讀生",
-    icon: "User",
-    permission: "canEditWorkers",
-    leaderVisible: true,
-  },
-  { path: "/personnel-list", name: "人員", icon: "UserFilled", noAuth: true, leaderVisible: true },
-  {
-    path: "/attendance",
-    name: "打卡",
-    icon: "Clock",
-    permission: "canClockIn",
-    leaderVisible: true,
-  },
+  { path: "/", name: "首頁", icon: "HomeFilled", requiresAuth: true },
+  { path: "/workers", name: "工讀生", icon: "User", permission: "canEditWorkers" },
+  { path: "/personnel-list", name: "人員", icon: "UserFilled", noAuth: true },
+  { path: "/attendance", name: "打卡", icon: "Clock", permission: "canClockIn" },
   { path: "/time-records", name: "工時", icon: "Calendar", permission: "canEditTime" },
-  { path: "/salary", name: "薪資", icon: "Money", permission: "canViewReports", leaderVisible: true },
-  {
-    path: "/activity-logs",
-    name: "活動",
-    icon: "Document",
-    adminOnly: true,
-  },
-  {
-    path: "/user-management",
-    name: "用戶",
-    icon: "Setting",
-    permission: "canManageUsers",
-  },
-  {
-    path: "/permissions-matrix",
-    name: "權限",
-    icon: "Setting",
-    evelynOnly: true,
-  },
-  {
-    path: "/groups",
-    name: "組別",
-    icon: "UserFilled",
-    permission: "canEditWorkers",
-    leaderVisible: true,
-  },
+  { path: "/salary", name: "薪資", icon: "Money", permission: "canViewReports" },
+  { path: "/activity-logs", name: "活動", icon: "Document", adminOnly: true },
+  { path: "/user-management", name: "用戶", icon: "Setting", permission: "canManageUsers" },
+  { path: "/permissions-matrix", name: "權限", icon: "Setting", evelynOnly: true },
+  { path: "/groups", name: "組別", icon: "UserFilled", permission: "canManageGroups" },
 ];
 
 const visibleMobileNavs = computed(() => {
-  const role = authStore.user?.role || '';
-  const isLeader = role === 'leader';
   return mobileNavs.filter((nav) => {
     if (nav.noAuth) return true;
     if (!authStore.isLoggedIn && !localStorage.getItem("auth_token")) return false;
     if (nav.evelynOnly) return authStore.isEvelyn;
     if (nav.adminOnly) return authStore.isAdminOrEvelyn;
-    if (nav.leaderVisible && isLeader) return true;
-    if (nav.permission) {
-      return authStore.hasPermission(nav.permission) || authStore.isAdminOrEvelyn;
-    }
+    if (authStore.isAdminOrEvelyn) return true;
+    // leader / reader 完全依照 permissions matrix
+    if (nav.permission) return authStore.hasPermission(nav.permission);
     return true;
   });
 });

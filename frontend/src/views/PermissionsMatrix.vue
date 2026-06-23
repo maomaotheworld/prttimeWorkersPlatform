@@ -269,9 +269,9 @@ const permissionsData = ref([
     path: "/groups",
     icon: UserFilled,
     admin: true,
-    leader: true,
+    leader: false,
     reader: false,
-    permissions: ["canEditWorkers"],
+    permissions: ["canManageGroups"],
     description: "管理工讀生組別，分配組別成員",
   },
   {
@@ -328,6 +328,14 @@ const permissionsData = ref([
 
 // 詳細權限配置
 const detailedPermissions = ref([
+  {
+    permission: "canManageGroups",
+    label: "管理組別",
+    admin: true,
+    leader: false,
+    reader: false,
+    description: "新增、修改、刪除工讀生組別",
+  },
   {
     permission: "canManageUsers",
     label: "用戶管理",
@@ -393,6 +401,7 @@ const changeHistory = ref([]);
 const getPermissionLabel = (permission) => {
   const labels = {
     canManageUsers: "用戶管理",
+    canManageGroups: "管理組別",
     canEditWorkers: "編輯工讀生",
     canImportData: "匯入數據",
     canClockIn: "打卡功能",

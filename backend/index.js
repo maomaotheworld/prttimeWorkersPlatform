@@ -198,9 +198,9 @@ const DEFAULT_FEATURE_PERMISSIONS = [
     feature: "組別管理",
     path: "/groups",
     admin: true,
-    leader: true,
+    leader: false,
     reader: false,
-    permissions: ["canEditWorkers"],
+    permissions: ["canManageGroups"],
     description: "管理工讀生組別，分配組別成員",
   },
   {
@@ -262,6 +262,14 @@ const DEFAULT_DETAILED_PERMISSIONS = [
     leader: false,
     reader: false,
     description: "創建、編輯、刪除系統用戶帳號",
+  },
+  {
+    permission: "canManageGroups",
+    label: "管理組別",
+    admin: true,
+    leader: false,
+    reader: false,
+    description: "新增、修改、刪除工讀生組別",
   },
   {
     permission: "canEditWorkers",

@@ -107,7 +107,72 @@
                 <el-tag type="info" size="small" v-else> 未設定 </el-tag>
               </template>
             </el-table-column>
+
+            <el-table-column label="消防編組" min-width="130" sortable>
+              <template #default="scope">
+                <div v-if="getFireGroup(scope.row.number)" style="display:flex;align-items:center;gap:4px">
+                  <el-tag
+                    size="small"
+                    :style="getFireGroupStyle(getFireGroup(scope.row.number))"
+                  >
+                    {{ getFireGroup(scope.row.number) }}
+                  </el-tag>
+                  <el-tag
+                    v-if="isFireLeader(scope.row.number)"
+                    size="small"
+                    type="danger"
+                    effect="dark"
+                    style="font-size:10px;padding:0 4px"
+                  >班長</el-tag>
+                </div>
+                <el-tag v-else size="small" type="info">—</el-tag>
+              </template>
+            </el-table-column>
           </el-table>
+        </div>
+
+        <!-- 消防編組資訊 -->
+        <div class="fire-drill-section">
+          <div class="fire-drill-header">
+            <span class="fire-icon">🔥</span>
+            <h2>消防演習編組</h2>
+            <div class="fire-drill-meta">
+              <el-tag type="danger" size="large">7月3日</el-tag>
+              <span class="meeting-time-main">一般集合時間：<b>16:55</b></span>
+              <span class="meeting-time-leader">班長集合時間：<b style="color:#e74c3c">16:25</b></span>
+            </div>
+          </div>
+
+          <div class="fire-groups-grid">
+            <div
+              v-for="group in fireGroupsList"
+              :key="group.name"
+              class="fire-group-card"
+              :style="{ borderColor: group.color }"
+            >
+              <div class="fire-group-title" :style="{ backgroundColor: group.color, color: group.textColor }">
+                <span>{{ group.name }}</span>
+                <el-tag size="small" type="danger" effect="dark" style="margin-left:8px">
+                  班長：{{ group.leaderName || group.leader }}號
+                </el-tag>
+              </div>
+              <div class="fire-group-members">
+                <div
+                  v-for="member in group.members"
+                  :key="member.number"
+                  class="fire-member-chip"
+                  :class="{ 'is-leader': member.isLeader }"
+                >
+                  <span class="member-number">{{ member.number }}</span>
+                  <span class="member-name">{{ member.name || '—' }}</span>
+                  <span v-if="member.isLeader" class="leader-badge">⭐ 16:25</span>
+                </div>
+              </div>
+              <div class="fire-group-footer">
+                共 {{ group.members.length }} 人
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -404,6 +469,96 @@ export default defineComponent({
       };
     };
 
+    // 消防編組設定
+    const FIRE_GROUP_CONFIG = [
+      {
+        name: '通報班',
+        leader: '01',
+        color: '#dbeafe',
+        textColor: '#1e40af',
+        check: (n) => (n >= 1 && n <= 36 && n !== 17),
+      },
+      {
+        name: '滅火班',
+        leader: '37',
+        color: '#fef9c3',
+        textColor: '#854d0e',
+        check: (n) => (n >= 37 && n <= 55) || n === 109,
+      },
+      {
+        name: '引導避難班',
+        leader: '65',
+        color: '#dcfce7',
+        textColor: '#14532d',
+        check: (n) => n >= 65 && n <= 93,
+      },
+      {
+        name: '緊急救護班',
+        leader: '94',
+        color: '#fce7f3',
+        textColor: '#831843',
+        check: (n) => n >= 94 && n <= 108,
+      },
+      {
+        name: '安全防護班',
+        leader: '115',
+        color: '#ede9fe',
+        textColor: '#4c1d95',
+        check: (n) => n === 17 || n === 115 || (n >= 56 && n <= 64) || (n >= 110 && n <= 113),
+      },
+    ];
+
+    const FIRE_LEADERS = new Set(['01', '37', '65', '94', '115']);
+
+    const getFireGroup = (workerNumber) => {
+      if (!workerNumber) return null;
+      const n = parseInt(String(workerNumber).replace(/\D/g, ''), 10);
+      if (isNaN(n)) return null;
+      const found = FIRE_GROUP_CONFIG.find((g) => g.check(n));
+      return found ? found.name : null;
+    };
+
+    const isFireLeader = (workerNumber) => {
+      if (!workerNumber) return false;
+      const padded = String(workerNumber).padStart(2, '0');
+      return FIRE_LEADERS.has(padded) || FIRE_LEADERS.has(String(workerNumber));
+    };
+
+    const getFireGroupStyle = (groupName) => {
+      const cfg = FIRE_GROUP_CONFIG.find((g) => g.name === groupName);
+      if (!cfg) return {};
+      return { backgroundColor: cfg.color, color: cfg.textColor, border: `1px solid ${cfg.textColor}30` };
+    };
+
+    // 消防編組列表（含人員）
+    const fireGroupsList = computed(() => {
+      return FIRE_GROUP_CONFIG.map((cfg) => {
+        const members = workersData.value
+          .filter((w) => {
+            const n = parseInt(String(w.number || '').replace(/\D/g, ''), 10);
+            return !isNaN(n) && cfg.check(n);
+          })
+          .map((w) => ({
+            ...w,
+            isLeader: isFireLeader(w.number),
+          }))
+          .sort((a, b) => {
+            const na = parseInt(String(a.number || '').replace(/\D/g, ''), 10) || 0;
+            const nb = parseInt(String(b.number || '').replace(/\D/g, ''), 10) || 0;
+            return na - nb;
+          });
+
+        // 找班長姓名
+        const leaderWorker = workersData.value.find((w) => isFireLeader(w.number) && members.some((m) => m.id === w.id));
+
+        return {
+          ...cfg,
+          members,
+          leaderName: leaderWorker?.name || null,
+        };
+      });
+    });
+
     // 生命周期
     onMounted(() => {
       loadData();
@@ -429,6 +584,10 @@ export default defineComponent({
       handleSearch,
       applyFilters,
       getGroupTagStyle,
+      getFireGroup,
+      isFireLeader,
+      getFireGroupStyle,
+      fireGroupsList,
     };
   },
 });
@@ -595,6 +754,132 @@ h1 {
 
   .logo span {
     display: none;
+  }
+}
+
+/* 消防編組區塊 */
+.fire-drill-section {
+  margin-top: 32px;
+  background: white;
+  border-radius: 10px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-top: 4px solid #ef4444;
+}
+
+.fire-drill-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.fire-drill-header h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: #c0392b;
+}
+
+.fire-icon {
+  font-size: 1.6rem;
+}
+
+.fire-drill-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.meeting-time-main,
+.meeting-time-leader {
+  font-size: 14px;
+  color: #444;
+  background: #f8f8f8;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.fire-groups-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.fire-group-card {
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.fire-group-title {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  font-weight: bold;
+  font-size: 15px;
+}
+
+.fire-group-members {
+  padding: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.fire-member-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 13px;
+  transition: background 0.2s;
+}
+
+.fire-member-chip.is-leader {
+  background: #fff3cd;
+  border-color: #f0ad4e;
+  font-weight: bold;
+}
+
+.member-number {
+  color: #888;
+  font-size: 11px;
+}
+
+.member-name {
+  color: #333;
+}
+
+.leader-badge {
+  font-size: 11px;
+  color: #e74c3c;
+  margin-left: 2px;
+}
+
+.fire-group-footer {
+  padding: 6px 14px;
+  font-size: 12px;
+  color: #888;
+  background: #fafafa;
+  border-top: 1px solid #eee;
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .fire-groups-grid {
+    grid-template-columns: 1fr;
+  }
+  .fire-drill-meta {
+    margin-left: 0;
   }
 }
 </style>

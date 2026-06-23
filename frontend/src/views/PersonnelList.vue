@@ -153,7 +153,7 @@
               <div class="fire-group-title" :style="{ backgroundColor: group.color, color: group.textColor }">
                 <span>{{ group.name }}</span>
                 <el-tag size="small" type="danger" effect="dark" style="margin-left:8px">
-                  班長：{{ group.leaderName || group.leader }}號
+                  班長：{{ group.leaderName ? group.leaderName : group.leader + '號' }}
                 </el-tag>
               </div>
               <div class="fire-group-members">

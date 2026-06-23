@@ -3620,76 +3620,41 @@ app.post("/api/salary-adjustments/total", authenticateToken, asyncHandler(async 
   const worker = workers[workerIndex];
 
   try {
-    // 計算當前薪資結構
-    const currentDate = new Date();
+    const baseWorkingHours = worker.baseWorkingHours || 0;
+
+    if (baseWorkingHours <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "該工讀生的基本工時為 0，無法計算時薪",
+      });
+    }
+
+    // 新時薪 = 目標總薪資 ÷ 基本工時（四捨五入）
+    const newHourlyWage = Math.round(targetTotalSalary / baseWorkingHours);
+
+    // 更新工讀生時薪
+    workers[workerIndex].baseHourlyWage = newHourlyWage;
+    await saveWorkers();
+
+    // 清掉本月舊的薪資調整記錄（時薪已變動，調整記錄不再需要）
     const start = moment().startOf("month");
     const end = moment().endOf("month");
-
-    // 獲取本月工時記錄
-    const periodRecords = timeRecords.filter((r) => {
-      const recordDate = moment(r.date);
-      return (
-        r.workerId === workerId && recordDate.isBetween(start, end, "day", "[]")
-      );
-    });
-
-    // 計算工時
-    let totalRegularHours = 0;
-    let totalAdditionalHours = 0;
-    let workingDays = 0;
-
-    periodRecords.forEach((record) => {
-      totalRegularHours += record.totalHours;
-      totalAdditionalHours += record.additionalHours;
-      if (record.clockIn || record.additionalHours > 0) {
-        workingDays++;
-      }
-    });
-
-    // 計算基本薪資：基本工時 + 加班工時
-    const baseWorkingHours = workingDays * (worker.baseWorkingHours || 0);
-    const totalSalaryHours = baseWorkingHours + totalAdditionalHours;
-    const currentBaseSalary = totalSalaryHours * (worker.baseHourlyWage || 0);
-
-    // 計算需要的額外薪資調整
-    const requiredExtraSalary = targetTotalSalary - currentBaseSalary;
-
-    // 移除該工讀生本月的所有薪資調整記錄
     salaryAdjustments = salaryAdjustments.filter((adj) => {
       const adjDate = moment(adj.date);
       return !(
         adj.workerId === workerId && adjDate.isBetween(start, end, "day", "[]")
       );
     });
-
-    // 如果需要額外薪資調整，新增一筆記錄
-    const operatorInfo = getOperatorInfo(req.user);
-    if (Math.abs(requiredExtraSalary) >= 1) {
-      const adjustment = decorateSalaryAdjustmentRecord({
-        id: Date.now().toString(),
-        workerId,
-        workerName: worker.name,
-        type: requiredExtraSalary >= 0 ? "increase" : "decrease",
-        amount: Math.abs(requiredExtraSalary),
-        reason: `總薪資設定：${reason}`,
-        operatorId: operatorInfo.operatorId,
-        operatorUsername: operatorInfo.operatorUsername,
-        operatorName: operatorInfo.operatorName,
-        date: new Date().toISOString(),
-      });
-
-      salaryAdjustments.push(adjustment);
-    }
-
     await saveSalaryAdjustments();
 
     // 記錄活動日誌
+    const operatorInfo = getOperatorInfo(req.user);
     logActivity(
       "total-salary-set",
       "worker",
       workerId,
       worker.name,
-      `總薪資設定為 ${targetTotalSalary} 元，原因：${reason}`,
+      `總薪資設定為 ${targetTotalSalary} 元（時薪更新為 ${newHourlyWage} 元），原因：${reason}`,
       operatorInfo.operatorId,
     );
 
@@ -3698,11 +3663,10 @@ app.post("/api/salary-adjustments/total", authenticateToken, asyncHandler(async 
       data: {
         workerId,
         targetTotalSalary,
-        currentBaseSalary: Math.round(currentBaseSalary),
-        extraSalaryAdjustment: Math.round(requiredExtraSalary),
-        totalSalaryHours: Math.round(totalSalaryHours * 100) / 100,
+        baseWorkingHours,
+        newHourlyWage,
       },
-      message: "總薪資設定成功",
+      message: `總薪資設定成功，時薪已更新為 ${newHourlyWage} 元`,
     });
   } catch (error) {
     console.error("總薪資設定失敗:", error);

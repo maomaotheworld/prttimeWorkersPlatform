@@ -3663,8 +3663,8 @@ app.post("/api/salary-adjustments/total", authenticateToken, asyncHandler(async 
     });
 
     // 如果需要額外薪資調整，新增一筆記錄
+    const operatorInfo = getOperatorInfo(req.user);
     if (Math.abs(requiredExtraSalary) >= 1) {
-      const operatorInfo = getOperatorInfo(req.user);
       const adjustment = decorateSalaryAdjustmentRecord({
         id: Date.now().toString(),
         workerId,

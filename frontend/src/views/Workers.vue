@@ -1457,10 +1457,14 @@ const showEditWorker = (worker: Worker) => {
 
 const toggleFireTraining = async (worker: Worker) => {
   try {
+    const newState = !worker.fireTraining;
     await workersStore.updateWorker(worker.id, {
       ...worker,
-      fireTraining: !worker.fireTraining,
+      fireTraining: newState,
     });
+    // 即時更新本地列表，讓畫面立即反映
+    const idx = workers.value.findIndex((w) => w.id === worker.id);
+    if (idx !== -1) workers.value[idx].fireTraining = newState;
     ElMessage.success(`已更新 ${worker.name} 消防狀態`);
   } catch (e) {
     ElMessage.error("更新失敗");

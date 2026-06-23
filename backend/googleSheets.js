@@ -96,6 +96,7 @@ async function readSheetValues(sheetName, range = "A:Z") {
     spreadsheetId,
     range: `${sheetName}!${range}`,
     majorDimension: "ROWS",
+    valueRenderOption: "UNFORMATTED_VALUE",
   });
 
   return response.data.values || [];

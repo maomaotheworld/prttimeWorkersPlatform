@@ -21,26 +21,31 @@
             </div>
             <div class="header-actions">
               <div v-if="authStore.isLoggedIn" class="user-info">
-                <el-avatar :size="32" class="user-avatar">
-                  {{ authStore.displayName[0] }}
-                </el-avatar>
-                <span class="user-name">{{ authStore.displayName }}</span>
-                <el-tag :type="userRoleTagType" size="small" class="role-tag">
-                  {{ userRoleText }}
-                </el-tag>
+                <el-dropdown trigger="click" @command="handleUserMenuCommand">
+                  <div class="user-avatar-wrapper">
+                    <el-avatar :size="32" class="user-avatar">
+                      {{ authStore.displayName[0] }}
+                    </el-avatar>
+                    <span class="user-name">{{ authStore.displayName }}</span>
+                    <el-tag :type="userRoleTagType" size="small" class="role-tag">
+                      {{ userRoleText }}
+                    </el-tag>
+                  </div>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="changeCredentials">
+                        <el-icon><Edit /></el-icon> 修改帳號／密碼
+                      </el-dropdown-item>
+                      <el-dropdown-item command="logout" divided style="color:#f56c6c">
+                        <el-icon><SwitchButton /></el-icon> 登出
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
               </div>
               <div class="action-buttons">
                 <el-button
-                  v-if="authStore.isLoggedIn"
-                  type="danger"
-                  @click="handleLogout"
-                  plain
-                >
-                  <el-icon><SwitchButton /></el-icon>
-                  登出
-                </el-button>
-                <el-button
-                  v-else
+                  v-if="!authStore.isLoggedIn"
                   type="primary"
                   @click="$router.push('/login')"
                   plain
@@ -144,6 +149,59 @@
         </el-footer>
       </el-container>
     </template>
+
+    <!-- 修改帳號/密碼 Dialog -->
+    <el-dialog
+      v-model="showCredentialsDialog"
+      title="修改帳號／密碼"
+      width="420px"
+      :close-on-click-modal="false"
+    >
+      <el-form
+        ref="credentialsFormRef"
+        :model="credentialsForm"
+        :rules="credentialsRules"
+        label-width="110px"
+      >
+        <el-form-item label="目前密碼" prop="currentPassword">
+          <el-input
+            v-model="credentialsForm.currentPassword"
+            type="password"
+            show-password
+            placeholder="請輸入目前密碼"
+          />
+        </el-form-item>
+        <el-divider>以下欄位選填，至少填一項</el-divider>
+        <el-form-item label="新帳號" prop="newUsername">
+          <el-input
+            v-model="credentialsForm.newUsername"
+            placeholder="不修改請留空"
+          />
+        </el-form-item>
+        <el-form-item label="新密碼" prop="newPassword">
+          <el-input
+            v-model="credentialsForm.newPassword"
+            type="password"
+            show-password
+            placeholder="不修改請留空"
+          />
+        </el-form-item>
+        <el-form-item label="確認新密碼" prop="confirmPassword">
+          <el-input
+            v-model="credentialsForm.confirmPassword"
+            type="password"
+            show-password
+            placeholder="再次輸入新密碼"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showCredentialsDialog = false">取消</el-button>
+        <el-button type="primary" :loading="changingCredentials" @click="submitChangeCredentials">
+          確認變更並重新登入
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -163,6 +221,7 @@ import {
   Document,
   Setting,
   SwitchButton,
+  Edit,
 } from "@element-plus/icons-vue";
 import { useAuthStore } from "./stores/auth";
 
@@ -434,6 +493,84 @@ const handleLogout = async () => {
   }
 };
 
+// 頭像 dropdown
+const handleUserMenuCommand = (command) => {
+  if (command === 'logout') handleLogout();
+  if (command === 'changeCredentials') openCredentialsDialog();
+};
+
+// 修改帳號/密碼
+const showCredentialsDialog = ref(false);
+const changingCredentials = ref(false);
+const credentialsFormRef = ref();
+const credentialsForm = ref({
+  currentPassword: '',
+  newUsername: '',
+  newPassword: '',
+  confirmPassword: '',
+});
+
+const credentialsRules = {
+  currentPassword: [{ required: true, message: '請輸入目前密碼', trigger: 'blur' }],
+  confirmPassword: [
+    {
+      validator: (rule, value, callback) => {
+        if (credentialsForm.value.newPassword && value !== credentialsForm.value.newPassword) {
+          callback(new Error('兩次輸入的新密碼不一致'));
+        } else {
+          callback();
+        }
+      },
+      trigger: 'blur',
+    },
+  ],
+};
+
+const openCredentialsDialog = () => {
+  credentialsForm.value = { currentPassword: '', newUsername: '', newPassword: '', confirmPassword: '' };
+  showCredentialsDialog.value = true;
+};
+
+const submitChangeCredentials = async () => {
+  await credentialsFormRef.value?.validate(async (valid) => {
+    if (!valid) return;
+    const { newUsername, newPassword } = credentialsForm.value;
+    if (!newUsername.trim() && !newPassword.trim()) {
+      ElMessage.warning('請填寫新帳號或新密碼（至少一項）');
+      return;
+    }
+    changingCredentials.value = true;
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3005';
+      const token = authStore.token || localStorage.getItem('token');
+      const res = await fetch(`${API_BASE_URL}/api/auth/change-credentials`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          currentPassword: credentialsForm.value.currentPassword,
+          newUsername: newUsername.trim() || undefined,
+          newPassword: newPassword.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        ElMessage.success('已更新！即將登出，請以新帳密重新登入');
+        showCredentialsDialog.value = false;
+        setTimeout(async () => {
+          try { await authStore.logout(); } catch {}
+          await router.push('/login');
+        }, 1500);
+      } else {
+        ElMessage.error(data.message || '變更失敗');
+      }
+    } catch (e) {
+      ElMessage.error('網路錯誤，請稍後再試');
+    } finally {
+      changingCredentials.value = false;
+    }
+  });
+};
+
 onMounted(() => {
   window.addEventListener("resize", handleResize);
 
@@ -493,6 +630,20 @@ onUnmounted(() => {
   background-color: #409eff;
   color: white;
   font-weight: 600;
+}
+
+.user-avatar-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.user-avatar-wrapper:hover {
+  background: #f0f7ff;
 }
 
 .user-name {

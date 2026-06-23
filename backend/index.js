@@ -1854,6 +1854,67 @@ app.post("/api/auth/logout", authenticateToken, (req, res) => {
   });
 });
 
+// 變更帳號/密碼（本人操作，需驗舊密碼）
+app.post("/api/auth/change-credentials", authenticateToken, asyncHandler(async (req, res) => {
+  try {
+    await refreshUsersDataFromPrimaryStore();
+    const { currentPassword, newUsername, newPassword } = req.body;
+
+    if (!currentPassword) {
+      return res.status(400).json({ success: false, message: "請輸入目前密碼" });
+    }
+
+    const userIndex = usersData.users.findIndex((u) => u.id === req.user.id);
+    if (userIndex === -1) {
+      return res.status(404).json({ success: false, message: "用戶不存在" });
+    }
+
+    const user = usersData.users[userIndex];
+
+    // 驗證舊密碼
+    if (user.password !== currentPassword) {
+      return res.status(401).json({ success: false, message: "目前密碼錯誤" });
+    }
+
+    // 檢查新帳號是否已被使用
+    if (newUsername && newUsername !== user.username) {
+      const exists = usersData.users.some(
+        (u) => u.username === newUsername && u.id !== user.id,
+      );
+      if (exists) {
+        return res.status(400).json({ success: false, message: "此帳號名稱已被使用" });
+      }
+    }
+
+    if (!newUsername && !newPassword) {
+      return res.status(400).json({ success: false, message: "請填寫新帳號或新密碼" });
+    }
+
+    // 套用變更
+    if (newUsername && newUsername.trim()) {
+      usersData.users[userIndex].username = newUsername.trim();
+    }
+    if (newPassword && newPassword.trim()) {
+      usersData.users[userIndex].password = newPassword.trim();
+    }
+
+    await saveUsers();
+
+    logActivity(
+      "change-credentials",
+      "user",
+      user.id,
+      user.username,
+      `用戶修改帳號/密碼`,
+      user.id,
+    );
+
+    res.json({ success: true, message: "帳號資訊已更新，請重新登入" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "變更失敗", error: error.message });
+  }
+}));
+
 app.get(
   "/api/permissions/config",
   authenticateToken,

@@ -788,8 +788,17 @@ const handleTotalSalaryAdjust = async () => {
 
     totalSalaryDialogVisible.value = false;
 
-    // 先重新載入 workers（取得新時薪），再重算薪資
-    await workersStore.fetchWorkers();
+    // 直接更新 store 內的時薪，不重新 fetch（避免 Sheets 同步延遲導致拿到舊資料）
+    const idx = workersStore.workers.findIndex(
+      (w) => w.id === totalSalaryForm.value.workerId,
+    );
+    if (idx !== -1) {
+      workersStore.workers[idx] = {
+        ...workersStore.workers[idx],
+        baseHourlyWage: result.data.newHourlyWage,
+      };
+    }
+
     await fetchAdjustments();
 
     // 重新計算薪資

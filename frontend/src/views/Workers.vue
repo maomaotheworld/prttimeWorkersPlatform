@@ -136,8 +136,35 @@
 
     <!-- Table -->
     <el-card>
+      <!-- Pagination Info Bar -->
+      <div class="pagination-bar">
+        <span class="pagination-total">共 <b>{{ filteredWorkers.length }}</b> 位工讀生</span>
+        <div class="pagination-controls">
+          <span class="pagination-label">每頁顯示</span>
+          <el-select
+            v-model="pageSize"
+            size="small"
+            style="width: 90px"
+            @change="currentPage = 1"
+          >
+            <el-option label="10 筆" :value="10" />
+            <el-option label="20 筆" :value="20" />
+            <el-option label="50 筆" :value="50" />
+            <el-option label="100 筆" :value="100" />
+          </el-select>
+          <el-pagination
+            v-model:current-page="currentPage"
+            :page-size="pageSize"
+            :total="filteredWorkers.length"
+            layout="prev, pager, next"
+            :pager-count="5"
+            small
+          />
+        </div>
+      </div>
+
       <el-table
-        :data="filteredWorkers"
+        :data="paginatedWorkers"
         stripe
         v-loading="loading"
         @selection-change="handleSelectionChange"
@@ -716,6 +743,10 @@ const allFloors = computed(() => {
   return floors.filter((floor) => floor).sort();
 });
 
+// Pagination
+const currentPage = ref(1);
+const pageSize = ref(20);
+
 // 篩選後的工讀生列表
 const filteredWorkers = computed(() => {
   const sortByNumber = (list: Worker[]) =>
@@ -737,6 +768,12 @@ const filteredWorkers = computed(() => {
     ));
   }
   return sortByNumber(workers.value);
+});
+
+// 分頁後的工讀生列表
+const paginatedWorkers = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  return filteredWorkers.value.slice(start, start + pageSize.value);
 });
 
 // Excel
@@ -852,7 +889,7 @@ const closeHoursDialog = () => {
 
 // 篩選方法
 const applyFilter = () => {
-  // 當篩選條件改變時，這個計算屬性會自動重新計算
+  currentPage.value = 1;
   console.log(
     "應用篩選:",
     filterType.value,
@@ -865,6 +902,7 @@ const resetFilter = () => {
   filterType.value = "all";
   selectedGroup.value = "";
   selectedFloor.value = "";
+  currentPage.value = 1;
   persistWorkersFilters();
 };
 
@@ -1595,6 +1633,34 @@ watch([filterType, selectedGroup, selectedFloor], () => {
 .filter-container .el-col {
   display: flex;
   align-items: center;
+}
+
+/* Pagination bar */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pagination-total {
+  color: #606266;
+  font-size: 14px;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pagination-label {
+  color: #606266;
+  font-size: 14px;
+  white-space: nowrap;
 }
 
 /* 手機版當前編輯工讀生樣式 */

@@ -143,6 +143,21 @@
             </div>
           </div>
 
+          <!-- 搜尋框 -->
+          <div class="fire-search-box">
+            <el-input
+              v-model="fireSearch"
+              placeholder="搜尋姓名或編號…"
+              clearable
+              style="max-width:300px"
+            >
+              <template #prefix><el-icon><Search /></el-icon></template>
+            </el-input>
+            <span v-if="fireSearch" class="fire-search-hint">
+              {{ fireSearchCount }} 位符合
+            </span>
+          </div>
+
           <div class="fire-groups-grid">
             <div
               v-for="group in fireGroupsList"
@@ -161,7 +176,11 @@
                   v-for="member in group.members"
                   :key="member.number"
                   class="fire-member-chip"
-                  :class="{ 'is-leader': member.isLeader }"
+                  :class="{
+                    'is-leader': member.isLeader,
+                    'is-highlighted': fireSearch && isFireMatch(member),
+                    'is-dimmed': fireSearch && !isFireMatch(member),
+                  }"
                 >
                   <span class="member-number">{{ member.number }}</span>
                   <span class="member-name">{{ member.name || '—' }}</span>
@@ -559,6 +578,25 @@ export default defineComponent({
       });
     });
 
+    // 消防編組搜尋
+    const fireSearch = ref('');
+
+    const isFireMatch = (member) => {
+      const q = fireSearch.value.trim().toLowerCase();
+      if (!q) return false;
+      const name = (member.name || '').toLowerCase();
+      const num = String(member.number || '').toLowerCase();
+      return name.includes(q) || num.includes(q);
+    };
+
+    const fireSearchCount = computed(() => {
+      if (!fireSearch.value.trim()) return 0;
+      return fireGroupsList.value.reduce(
+        (acc, g) => acc + g.members.filter((m) => isFireMatch(m)).length,
+        0,
+      );
+    });
+
     // 生命周期
     onMounted(() => {
       loadData();
@@ -588,6 +626,9 @@ export default defineComponent({
       isFireLeader,
       getFireGroupStyle,
       fireGroupsList,
+      fireSearch,
+      isFireMatch,
+      fireSearchCount,
     };
   },
 });
@@ -881,5 +922,31 @@ h1 {
   .fire-drill-meta {
     margin-left: 0;
   }
+}
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.fire-search-hint {
+  font-size: 13px;
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.fire-member-chip.is-highlighted {
+  background: #fff3cd;
+  border: 2px solid #f39c12;
+  color: #b7610a;
+  font-weight: bold;
+  box-shadow: 0 0 0 3px rgba(243,156,18,0.25);
+  transform: scale(1.06);
+  z-index: 1;
+  position: relative;
+}
+
+.fire-member-chip.is-dimmed {
+  opacity: 0.3;
 }
 </style>

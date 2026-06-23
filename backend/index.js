@@ -2613,6 +2613,36 @@ app.put(
     });
 
     await saveWorkers();
+
+    // 若時薪或工時有變動，自動新增薪資調整紀錄
+    const oldWage = previousWorkers[workerIndex]?.baseHourlyWage || 0;
+    const newWage = workers[workerIndex].baseHourlyWage || 0;
+    const oldHours = previousWorkers[workerIndex]?.baseWorkingHours || 0;
+    const newHours = workers[workerIndex].baseWorkingHours || 0;
+    const salaryDiff = Math.round(newWage * newHours - oldWage * oldHours);
+
+    if (Math.abs(salaryDiff) >= 1 && (oldWage !== newWage || oldHours !== newHours)) {
+      await refreshSalaryAdjustmentsFromPrimaryStore();
+      const operatorInfo = getOperatorInfo(req.user);
+      const changeDesc = [];
+      if (oldWage !== newWage) changeDesc.push(`時薪 ${oldWage}→${newWage} 元`);
+      if (oldHours !== newHours) changeDesc.push(`工時 ${oldHours}→${newHours} 小時`);
+
+      const adjustment = decorateSalaryAdjustmentRecord({
+        id: uuidv4(),
+        workerId: workers[workerIndex].id,
+        workerName: workers[workerIndex].name,
+        type: salaryDiff >= 0 ? "increase" : "decrease",
+        amount: Math.abs(salaryDiff),
+        reason: `工讀生管理調整：${changeDesc.join("、")}`,
+        operatorId: operatorInfo.operatorId,
+        operatorUsername: operatorInfo.operatorUsername,
+        operatorName: operatorInfo.operatorName,
+        date: new Date().toISOString(),
+      });
+      salaryAdjustments.push(adjustment);
+      await saveSalaryAdjustments();
+    }
   } catch (error) {
     workers = previousWorkers;
     throw error;

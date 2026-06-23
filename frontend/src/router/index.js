@@ -36,7 +36,7 @@ const routes = [
     name: "PersonnelList",
     component: () => import("../views/PersonnelList.vue"),
     meta: {
-      title: "人員列表",
+      title: "人員列表(閱覽模式)",
       requiresAuth: false,
     },
   },

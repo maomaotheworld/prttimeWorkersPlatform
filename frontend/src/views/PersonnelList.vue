@@ -5,7 +5,7 @@
     <!-- 主要內容 -->
     <div class="page-content">
       <div class="personnel-list">
-        <h1>人員列表</h1>
+        <h1>人員列表(閱覽模式)</h1>
 
         <!-- 搜尋和篩選區域 -->
         <div class="filter-section">

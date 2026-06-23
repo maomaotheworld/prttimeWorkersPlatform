@@ -278,7 +278,7 @@ const userRoleTagType = computed(() => {
 const desktopNavs = [
   { path: "/", name: "首頁", iconComponent: HomeFilled, requiresAuth: true },
   { path: "/workers", name: "工讀生管理", iconComponent: User, permission: "canEditWorkers" },
-  { path: "/personnel-list", name: "人員列表", iconComponent: UserFilled, noAuth: true },
+  { path: "/personnel-list", name: "人員列表(閱覽模式)", iconComponent: UserFilled, noAuth: true },
   { path: "/groups", name: "組別管理", iconComponent: UserFilled, permission: "canManageGroups" },
   { path: "/attendance", name: "打卡系統", iconComponent: Clock, permission: "canClockIn" },
   { path: "/time-records", name: "工時記錄", iconComponent: Calendar, permission: "canEditTime" },

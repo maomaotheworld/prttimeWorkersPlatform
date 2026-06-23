@@ -49,11 +49,10 @@ api.interceptors.request.use(
 // ?��??�截??
 api.interceptors.response.use(
   (response) => {
-    // ?�接返�??��?response，�??�個�?件自行�???
     return response;
   },
   (error) => {
-    let message = "網路?�誤，�?稍�??�試";
+    let message = "網路錯誤，請稍後再試";
 
     if (error.response) {
       const { status, data } = error.response;
@@ -63,7 +62,14 @@ api.interceptors.response.use(
           message = data.message || "請求參數錯誤";
           break;
         case 401:
-          message = data.message || "認證失敗";
+          message = data.message || "認證失敗，請重新登入";
+          // 自動清除過期 token，並跳到登入頁
+          localStorage.removeItem("auth_token");
+          localStorage.removeItem("auth_user");
+          if (window.location.pathname !== "/login") {
+            ElMessage.warning("登入已過期，請重新登入");
+            window.location.href = "/login";
+          }
           break;
         case 403:
           message = data.message || "權限不足";
@@ -72,16 +78,16 @@ api.interceptors.response.use(
           message = data.message || "請求資源不存在";
           break;
         case 500:
-          message = "伺服器錯誤,請稍後再試";
+          message = "伺服器錯誤，請稍後再試";
           break;
         default:
           message = data.message || `請求失敗 (${status})`;
       }
     } else if (error.request) {
-      message = "無法連接到伺服器,請檢查網路連線";
+      message = "無法連接到伺服器，請檢查網路連線";
     }
 
-    console.error("API?�誤:", error);
+    console.error("API錯誤:", error);
     return Promise.reject(error);
   },
 );

@@ -120,6 +120,20 @@ const router = createRouter({
   routes,
 });
 
+// 全局處理 NavigationDuplicated（點相同路由不報錯）
+const originalPush = router.push.bind(router);
+router.push = (location) => originalPush(location).catch((err) => {
+  if (err?.name !== 'NavigationDuplicated' && !err?.message?.includes('Avoided redundant navigation')) {
+    return Promise.reject(err);
+  }
+});
+const originalReplace = router.replace.bind(router);
+router.replace = (location) => originalReplace(location).catch((err) => {
+  if (err?.name !== 'NavigationDuplicated' && !err?.message?.includes('Avoided redundant navigation')) {
+    return Promise.reject(err);
+  }
+});
+
 // 認證守衛 - 訪客權限控制
 router.beforeEach((to, from, next) => {
   // 設定頁面標題

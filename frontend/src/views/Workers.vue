@@ -86,6 +86,16 @@
       <div class="filter-container">
         <el-row :gutter="16" align="middle">
           <el-col :span="6">
+            <el-input
+              v-model="searchName"
+              placeholder="搜尋姓名或編號"
+              clearable
+              @input="applyFilter"
+            >
+              <template #prefix><el-icon><Search /></el-icon></template>
+            </el-input>
+          </el-col>
+          <el-col :span="5">
             <el-select
               v-model="filterType"
               placeholder="篩選方式"
@@ -97,7 +107,7 @@
               <el-option label="依樓層篩選" value="floor" />
             </el-select>
           </el-col>
-          <el-col :span="6" v-if="filterType === 'group'">
+          <el-col :span="5" v-if="filterType === 'group'">
             <el-select
               v-model="selectedGroup"
               placeholder="選擇組別"
@@ -112,7 +122,7 @@
               />
             </el-select>
           </el-col>
-          <el-col :span="6" v-if="filterType === 'floor'">
+          <el-col :span="5" v-if="filterType === 'floor'">
             <el-select
               v-model="selectedFloor"
               placeholder="選擇樓層"
@@ -127,7 +137,7 @@
               />
             </el-select>
           </el-col>
-          <el-col :span="6">
+          <el-col :span="3">
             <el-button @click="resetFilter">重置篩選</el-button>
           </el-col>
         </el-row>
@@ -668,7 +678,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Edit, Delete, Clock, ArrowDown } from "@element-plus/icons-vue";
+import { Edit, Delete, Clock, ArrowDown, Search } from "@element-plus/icons-vue";
 import * as XLSX from "xlsx";
 import { useWorkersStore } from "@/stores/workers";
 import { getApiUrl } from "@/config/api";
@@ -747,6 +757,9 @@ const allFloors = computed(() => {
 const currentPage = ref(1);
 const pageSize = ref(20);
 
+// 姓名/編號搜尋
+const searchName = ref("");
+
 // 篩選後的工讀生列表
 const filteredWorkers = computed(() => {
   const sortByNumber = (list: Worker[]) =>
@@ -756,18 +769,26 @@ const filteredWorkers = computed(() => {
       return na - nb;
     });
 
-  if (filterType.value === "all") {
-    return sortByNumber(workers.value);
-  } else if (filterType.value === "group" && selectedGroup.value) {
-    return sortByNumber(workers.value.filter(
-      (worker) => worker.group === selectedGroup.value,
-    ));
+  let list = workers.value;
+
+  // 組別/樓層篩選
+  if (filterType.value === "group" && selectedGroup.value) {
+    list = list.filter((w) => w.group === selectedGroup.value);
   } else if (filterType.value === "floor" && selectedFloor.value) {
-    return sortByNumber(workers.value.filter(
-      (worker) => worker.floor === selectedFloor.value,
-    ));
+    list = list.filter((w) => w.floor === selectedFloor.value);
   }
-  return sortByNumber(workers.value);
+
+  // 姓名/編號搜尋
+  const q = searchName.value.trim().toLowerCase();
+  if (q) {
+    list = list.filter(
+      (w) =>
+        (w.name || "").toLowerCase().includes(q) ||
+        String(w.workerNumber || "").toLowerCase().includes(q),
+    );
+  }
+
+  return sortByNumber(list);
 });
 
 // 分頁後的工讀生列表
@@ -902,6 +923,7 @@ const resetFilter = () => {
   filterType.value = "all";
   selectedGroup.value = "";
   selectedFloor.value = "";
+  searchName.value = "";
   currentPage.value = 1;
   persistWorkersFilters();
 };

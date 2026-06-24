@@ -291,7 +291,12 @@ export default defineComponent({
       }
 
       console.log("PersonnelList: 最終篩選結果:", result);
-      return result;
+      // 依編號從小到大排序
+      return [...result].sort((a, b) => {
+        const na = parseInt(String(a.number || "").replace(/\D/g, "")) || 0;
+        const nb = parseInt(String(b.number || "").replace(/\D/g, "")) || 0;
+        return na - nb;
+      });
     });
 
     // 專門為訪客模式設計的載入函數

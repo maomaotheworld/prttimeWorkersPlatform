@@ -812,7 +812,7 @@ const allFloors = computed(() => {
 
 // Pagination
 const currentPage = ref(1);
-const pageSize = ref(20);
+const pageSize = ref(100);
 
 // 姓名/編號搜尋
 const searchName = ref("");

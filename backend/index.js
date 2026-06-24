@@ -3783,39 +3783,29 @@ app.post("/api/salary-adjustments/total", authenticateToken, asyncHandler(async 
       });
     }
 
+    const oldHourlyWage = worker.baseHourlyWage || 0;
     // 新時薪 = 目標總薪資 ÷ 實際工時（四捨五入）
     const newHourlyWage = Math.round(targetTotalSalary / totalHoursWorked);
-
-    // 更新工讀生時薪
-    // 計算調整前的實際總薪資（舊時薪×實際工時 + 舊調整記錄）
-    const oldBaseSalary = (worker.baseHourlyWage || 0) * totalHoursWorked;
-    const oldAdjustmentsTotal = salaryAdjustments
-      .filter((adj) => {
-        const adjDate = moment(adj.date);
-        return adj.workerId === workerId && adjDate.isBetween(start, end, "day", "[]");
-      })
-      .reduce((sum, adj) => sum + (adj.type === "increase" ? adj.amount : -adj.amount), 0);
-    const oldEffectiveTotal = oldBaseSalary + oldAdjustmentsTotal;
 
     workers[workerIndex].baseHourlyWage = newHourlyWage;
     await saveWorkers();
 
-    // 新增一筆「調整總薪資」的薪資調整紀錄（保留所有歷史記錄）
+    // 僅新增稽核記錄（amount=0），不新增金額調整以避免雙重計算
+    // 時薪已更新，baseSalary 自動反映目標薪資，不需額外加減
     const operatorInfo = getOperatorInfo(req.user);
-    const netChange = targetTotalSalary - oldEffectiveTotal;
-    const adjustment = decorateSalaryAdjustmentRecord({
+    const auditRecord = decorateSalaryAdjustmentRecord({
       id: uuidv4(),
       workerId,
       workerName: worker.name,
-      type: netChange >= 0 ? "increase" : "decrease",
-      amount: Math.abs(Math.round(netChange)),
-      reason: `調整總薪資：${Math.round(oldEffectiveTotal)} → ${targetTotalSalary} 元（${reason}）`,
+      type: "increase",
+      amount: 0,
+      reason: `調整總薪資：目標 ${targetTotalSalary} 元，時薪 ${oldHourlyWage}→${newHourlyWage} 元（${reason}）`,
       operatorId: operatorInfo.operatorId,
       operatorUsername: operatorInfo.operatorUsername,
       operatorName: operatorInfo.operatorName,
       date: new Date().toISOString(),
     });
-    salaryAdjustments.push(adjustment);
+    salaryAdjustments.push(auditRecord);
     await saveSalaryAdjustments();
 
     // 記錄活動日誌

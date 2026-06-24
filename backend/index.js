@@ -3519,8 +3519,9 @@ app.post("/api/time-records/edit-time", asyncHandler(async (req, res) => {
     ? sessions
         .filter((session) => session?.clockIn || session?.clockOut)
         .map((session) => {
-          const startTime = session.clockIn ? moment(session.clockIn) : null;
-          const endTime = session.clockOut ? moment(session.clockOut) : null;
+          // 手動編輯時截掉秒/毫秒，避免 UI 只顯示 HH:mm 卻保留原始秒數導致計算偏差
+          const startTime = session.clockIn ? moment(session.clockIn).startOf("minute") : null;
+          const endTime = session.clockOut ? moment(session.clockOut).startOf("minute") : null;
           const totalHours =
             startTime && endTime
               ? parseFloat(endTime.diff(startTime, "hours", true).toFixed(2))
@@ -3530,10 +3531,10 @@ app.post("/api/time-records/edit-time", asyncHandler(async (req, res) => {
             id: session.id || uuidv4(),
             workerId,
             date: session.clockIn
-              ? new Date(session.clockIn).toISOString()
+              ? startTime.toISOString()
               : new Date(date).toISOString(),
-            clockIn: session.clockIn || null,
-            clockOut: session.clockOut || null,
+            clockIn: startTime ? startTime.toISOString() : null,
+            clockOut: endTime ? endTime.toISOString() : null,
             totalHours,
             additionalHours: 0,
             adjustments: [],

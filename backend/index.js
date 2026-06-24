@@ -818,13 +818,13 @@ let activityLogSyncChain = Promise.resolve();
 // 寫入時更新 timestamp → 下次 refresh 直接用記憶體，不重讀 Sheets
 // 超過 TTL 才真正重讀，大幅減少 Google Sheets API 呼叫次數
 const CACHE_TTL = {
-  workers: 30_000,
-  groups: 30_000,
-  timeRecords: 15_000,
-  salaryAdjustments: 15_000,
-  users: 30_000,
-  permissions: 60_000,
-  activityLogs: 30_000,
+  workers: 5_000,
+  groups: 5_000,
+  timeRecords: 5_000,
+  salaryAdjustments: 5_000,
+  users: 5_000,
+  permissions: 10_000,
+  activityLogs: 5_000,
 };
 const _cacheTs = {
   workers: 0, groups: 0, timeRecords: 0,
@@ -2235,6 +2235,17 @@ app.delete(
       });
     }
   }),
+);
+
+// 強制清除記憶體快取（直接改 Google Sheets 後需要用此刷新）
+app.post(
+  "/api/admin/cache/clear",
+  authenticateToken,
+  requireEvelyn,
+  (req, res) => {
+    Object.keys(_cacheTs).forEach((key) => { _cacheTs[key] = 0; });
+    res.json({ success: true, message: "快取已清除，下次請求將重新從 Google Sheets 讀取" });
+  },
 );
 
 app.post(

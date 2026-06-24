@@ -19,6 +19,13 @@
         </el-button>
         <el-button
           v-if="authStore.isEvelyn"
+          type="warning"
+          @click="clearServerCache"
+        >
+          刷新快取
+        </el-button>
+        <el-button
+          v-if="authStore.isEvelyn"
           type="danger"
           @click="handleClearAllWorkers"
         >

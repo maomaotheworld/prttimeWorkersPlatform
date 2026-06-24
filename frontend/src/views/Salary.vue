@@ -136,16 +136,15 @@
         <el-col :xs="24" :sm="12">
           <h3>工時明細</h3>
           <el-descriptions :column="1" border>
-            <el-descriptions-item label="基本工時">
+            <el-descriptions-item label="打卡工時">
               <strong style="color: #67c23a"
-                >{{ salaryData.workTime.baseWorkingHours }} 小時</strong
+                >{{ salaryData.workTime.totalRegularHours }} 小時</strong
               >
               <el-text type="success" size="small">
-                ({{ salaryData.workTime.workingDays }} 天 ×
-                {{ salaryData.worker.baseWorkingHours }} 小時/天)
+                ({{ salaryData.workTime.workingDays }} 天打卡記錄)
               </el-text>
             </el-descriptions-item>
-            <el-descriptions-item label="加班工時">
+            <el-descriptions-item label="手動增減工時">
               <strong style="color: #e6a23c"
                 >{{ salaryData.workTime.totalAdditionalHours }} 小時</strong
               >
@@ -155,7 +154,7 @@
                 >{{ salaryData.workTime.totalSalaryHours }} 小時</strong
               >
               <el-text type="primary" size="small">
-                ({{ salaryData.workTime.baseWorkingHours }} +
+                ({{ salaryData.workTime.totalRegularHours }} +
                 {{ salaryData.workTime.totalAdditionalHours }})
               </el-text>
             </el-descriptions-item>

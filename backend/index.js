@@ -2714,27 +2714,21 @@ app.put(
 
     await saveWorkers();
 
-    // 若時薪或工時有變動，自動新增薪資調整紀錄
+    // 若時薪有變動，自動新增薪資調整紀錄（工時現由打卡決定，不使用 baseWorkingHours）
     const oldWage = previousWorkers[workerIndex]?.baseHourlyWage || 0;
     const newWage = workers[workerIndex].baseHourlyWage || 0;
-    const oldHours = previousWorkers[workerIndex]?.baseWorkingHours || 0;
-    const newHours = workers[workerIndex].baseWorkingHours || 0;
-    const salaryDiff = Math.round(newWage * newHours - oldWage * oldHours);
 
-    if (Math.abs(salaryDiff) >= 1 && (oldWage !== newWage || oldHours !== newHours)) {
+    if (oldWage !== newWage) {
       await refreshSalaryAdjustmentsFromPrimaryStore();
       const operatorInfo = getOperatorInfo(req.user);
-      const changeDesc = [];
-      if (oldWage !== newWage) changeDesc.push(`時薪 ${oldWage}→${newWage} 元`);
-      if (oldHours !== newHours) changeDesc.push(`工時 ${oldHours}→${newHours} 小時`);
 
       const adjustment = decorateSalaryAdjustmentRecord({
         id: uuidv4(),
         workerId: workers[workerIndex].id,
         workerName: workers[workerIndex].name,
-        type: salaryDiff >= 0 ? "increase" : "decrease",
-        amount: Math.abs(salaryDiff),
-        reason: `工讀生管理調整：${changeDesc.join("、")}`,
+        type: newWage >= oldWage ? "increase" : "decrease",
+        amount: 0, // 金額影響已反映在時薪×工時的基本薪資中，此為稽核記錄
+        reason: `工讀生管理調整：時薪 ${oldWage}→${newWage} 元`,
         operatorId: operatorInfo.operatorId,
         operatorUsername: operatorInfo.operatorUsername,
         operatorName: operatorInfo.operatorName,
@@ -3289,22 +3283,27 @@ app.post("/api/time-records/clock-out", asyncHandler(async (req, res) => {
 app.get("/api/time-records/additional-hours", authenticateToken, asyncHandler(async (req, res) => {
   await refreshTimeRecordsFromPrimaryStore();
   try {
-    // 計算每個工讀生的總額外工時
-    const additionalHoursMap = {};
+    // 計算每個工讀生的打卡工時（totalHours）和額外工時（additionalHours）
+    const hoursMap = {};
 
     timeRecords.forEach((record) => {
+      if (!hoursMap[record.workerId]) {
+        hoursMap[record.workerId] = { regularHours: 0, additionalHours: 0 };
+      }
+      if (record.totalHours) {
+        hoursMap[record.workerId].regularHours += record.totalHours;
+      }
       if (record.additionalHours && record.additionalHours !== 0) {
-        if (!additionalHoursMap[record.workerId]) {
-          additionalHoursMap[record.workerId] = 0;
-        }
-        additionalHoursMap[record.workerId] += record.additionalHours;
+        hoursMap[record.workerId].additionalHours += record.additionalHours;
       }
     });
 
     // 轉換為陣列格式
-    const result = Object.keys(additionalHoursMap).map((workerId) => ({
-      workerId: workerId,
-      totalHours: additionalHoursMap[workerId],
+    const result = Object.keys(hoursMap).map((workerId) => ({
+      workerId,
+      regularHours: parseFloat(hoursMap[workerId].regularHours.toFixed(2)),
+      additionalHours: parseFloat(hoursMap[workerId].additionalHours.toFixed(2)),
+      totalHours: parseFloat((hoursMap[workerId].regularHours + hoursMap[workerId].additionalHours).toFixed(2)),
     }));
 
     res.json({
@@ -3750,20 +3749,35 @@ app.post("/api/salary-adjustments/total", authenticateToken, asyncHandler(async 
   const worker = workers[workerIndex];
 
   try {
-    const baseWorkingHours = worker.baseWorkingHours || 0;
-
-    if (baseWorkingHours <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "該工讀生的基本工時為 0，無法計算時薪",
-      });
-    }
-
     const start = moment().startOf("month");
     const end = moment().endOf("month");
 
-    // 計算調整前的實際總薪資（舊時薪×工時 + 舊調整記錄）
-    const oldBaseSalary = (worker.baseHourlyWage || 0) * baseWorkingHours;
+    // 計算實際工時（打卡 + 手動增減）
+    const periodRecords = timeRecords.filter((r) => {
+      const recordDate = moment(r.date);
+      return r.workerId === workerId && recordDate.isBetween(start, end, "day", "[]");
+    });
+    let totalRegularHours = 0;
+    let totalAdditionalHours = 0;
+    periodRecords.forEach((r) => {
+      totalRegularHours += r.totalHours || 0;
+      totalAdditionalHours += r.additionalHours || 0;
+    });
+    const totalHoursWorked = totalRegularHours + totalAdditionalHours;
+
+    if (totalHoursWorked <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "尚無工時記錄，請先打卡或手動增加工時後再設定總薪資",
+      });
+    }
+
+    // 新時薪 = 目標總薪資 ÷ 實際工時（四捨五入）
+    const newHourlyWage = Math.round(targetTotalSalary / totalHoursWorked);
+
+    // 更新工讀生時薪
+    // 計算調整前的實際總薪資（舊時薪×實際工時 + 舊調整記錄）
+    const oldBaseSalary = (worker.baseHourlyWage || 0) * totalHoursWorked;
     const oldAdjustmentsTotal = salaryAdjustments
       .filter((adj) => {
         const adjDate = moment(adj.date);
@@ -3772,10 +3786,6 @@ app.post("/api/salary-adjustments/total", authenticateToken, asyncHandler(async 
       .reduce((sum, adj) => sum + (adj.type === "increase" ? adj.amount : -adj.amount), 0);
     const oldEffectiveTotal = oldBaseSalary + oldAdjustmentsTotal;
 
-    // 新時薪 = 目標總薪資 ÷ 基本工時（四捨五入）
-    const newHourlyWage = Math.round(targetTotalSalary / baseWorkingHours);
-
-    // 更新工讀生時薪
     workers[workerIndex].baseHourlyWage = newHourlyWage;
     await saveWorkers();
 
@@ -3812,7 +3822,7 @@ app.post("/api/salary-adjustments/total", authenticateToken, asyncHandler(async 
       data: {
         workerId,
         targetTotalSalary,
-        baseWorkingHours,
+        totalHoursWorked,
         newHourlyWage,
       },
       message: `總薪資設定成功，時薪已更新為 ${newHourlyWage} 元`,
@@ -3907,12 +3917,9 @@ app.get("/api/workers/:id/salary-calculation", asyncHandler(async (req, res) => 
     }
   });
 
-  // 簡化薪資計算邏輯：
-  // 只要有設定基本時數，就直接計算基本工時，不考慮月份和天數
-  // 總工時 = 基本工時 + 加班工時
-  const baseWorkingHours = worker.baseWorkingHours || 0; // 直接使用設定的基本工時
-  const totalSalaryHours = baseWorkingHours + totalAdditionalHours; // 總工時 = 基本工時 + 加班工時
-  const baseSalary = totalSalaryHours * (worker.baseHourlyWage || 0); // 薪資 = 總工時 × 時薪
+  // 打卡時數 + 手動增減時數 = 實際工時
+  const totalSalaryHours = totalRegularHours + totalAdditionalHours;
+  const baseSalary = totalSalaryHours * (worker.baseHourlyWage || 0);
 
   // 獲取薪資調整記錄（額外薪資）
   const salaryAdjustmentsInPeriod = salaryAdjustments.filter((adj) => {
@@ -3937,7 +3944,6 @@ app.get("/api/workers/:id/salary-calculation", asyncHandler(async (req, res) => 
         number: worker.number,
         name: worker.name,
         baseHourlyWage: worker.baseHourlyWage || 0,
-        baseWorkingHours: worker.baseWorkingHours || 0,
       },
       period: {
         startDate: start.format("YYYY-MM-DD"),
@@ -3946,7 +3952,6 @@ app.get("/api/workers/:id/salary-calculation", asyncHandler(async (req, res) => 
       workTime: {
         totalRegularHours: parseFloat(totalRegularHours.toFixed(2)),
         totalAdditionalHours: parseFloat(totalAdditionalHours.toFixed(2)),
-        baseWorkingHours: parseFloat(baseWorkingHours.toFixed(2)),
         totalSalaryHours: parseFloat(totalSalaryHours.toFixed(2)),
         workingDays,
       },

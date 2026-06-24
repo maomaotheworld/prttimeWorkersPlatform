@@ -158,7 +158,7 @@ export const useWorkersStore = defineStore("workers", () => {
         number: String(workerData.workerNumber || "").trim(),
         name: String(workerData.name || "").trim(),
         baseHourlyWage: Number(workerData.hourlyWage) || 0,
-        baseWorkingHours: Number(workerData.baseHours) || 8,
+        baseWorkingHours: Number(workerData.baseHours) || 0,
         groupId: resolvedGroupId,
         floor: String(workerData.floor || "").trim(),
         job: String(workerData.job || "").trim(), // 新增工作欄位
@@ -223,7 +223,7 @@ export const useWorkersStore = defineStore("workers", () => {
         number: String(workerData.workerNumber || "").trim(),
         name: String(workerData.name || "").trim(),
         baseHourlyWage: Number(workerData.hourlyWage) || 0,
-        baseWorkingHours: Number(workerData.baseHours) || 8,
+        baseWorkingHours: Number(workerData.baseHours) || 0,
         groupId: resolvedGroupId,
         floor: String(workerData.floor || "").trim(),
         job: String(workerData.job || "").trim(), // 新增工作欄位
@@ -456,7 +456,7 @@ export const useWorkersStore = defineStore("workers", () => {
       number: String(w.workerNumber || "").trim(),
       name: String(w.name || "").trim(),
       baseHourlyWage: Number(w.hourlyWage) || 0,
-      baseWorkingHours: Number(w.baseHours) || 8,
+      baseWorkingHours: Number(w.baseHours) || 0,
       groupId: groupCache[(w.group || "").trim()] || w.groupId || null,
       floor: String(w.floor || "").trim(),
       job: String(w.job || "").trim(),
@@ -496,3 +496,4 @@ export const useWorkersStore = defineStore("workers", () => {
     importWorkers,
   };
 });
+

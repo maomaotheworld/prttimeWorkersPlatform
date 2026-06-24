@@ -218,14 +218,9 @@
           label="時薪"
           :width="isMobile ? '60' : '80'"
         />
-        <el-table-column
-          prop="baseHours"
-          label="基本時數"
-          :width="isMobile ? '60' : '90'"
-        />
         <el-table-column label="累積工時" :width="isMobile ? '60' : '90'">
           <template #default="{ row }">
-            {{ row.baseHours + (row.additionalHours || 0) }}
+            {{ row.totalHours || 0 }}
           </template>
         </el-table-column>
         <el-table-column label="薪資總額" :width="isMobile ? '80' : '100'">
@@ -887,7 +882,7 @@ const workerForm = reactive({
   floor: "",
   job: "",
   hourlyWage: 200,
-  baseHours: 8,
+  baseHours: 0,
   fireTraining: false,
 });
 
@@ -906,7 +901,7 @@ const showBatchHoursDialog = ref(false);
 const showBatchWageDialog = ref(false);
 const showBatchAccumulatedHoursDialog = ref(false);
 const batchHoursForm = reactive({
-  baseHours: 8,
+  baseHours: 0,
 });
 const batchWageForm = reactive({
   hourlyWage: 200,
@@ -951,11 +946,11 @@ const clearCurrentEditingWorker = () => {
   currentEditingWorker.value = null;
 };
 
-// 計算薪資總額
+// 計算薪資總額（打卡工時 + 手動增減工時）× 時薪
 const calculateTotalSalary = (worker) => {
-  const totalHours = worker.baseHours + (worker.additionalHours || 0);
+  const totalHours = worker.totalHours || 0;
   const totalSalary = totalHours * (worker.hourlyWage || 0);
-  return totalSalary.toLocaleString(); // 格式化數字，加上千分位符號
+  return totalSalary.toLocaleString();
 };
 
 // 關閉工讀生對話框
@@ -1061,7 +1056,7 @@ const fetchWorkers = async () => {
 
     // 映射後端數據到前端顯示格式
     workers.value = workersStore.workers.map((worker) => {
-      const additionalHours = additionalHoursMap[worker.id] || 0;
+      const hoursData = additionalHoursMap[worker.id] || { regularHours: 0, additionalHours: 0, totalHours: 0 };
 
       return {
         id: worker.id,
@@ -1072,10 +1067,10 @@ const fetchWorkers = async () => {
         floor: worker.floor || "",
         job: worker.job || "",
         hourlyWage: worker.baseHourlyWage || worker.hourlyWage || 0,
-        baseHours: worker.baseWorkingHours || worker.baseHours || 8,
-        additionalHours: additionalHours,
-        totalHours:
-          (worker.baseWorkingHours || worker.baseHours || 8) + additionalHours,
+        baseHours: worker.baseWorkingHours || worker.baseHours || 0,
+        additionalHours: hoursData.additionalHours,
+        regularHours: hoursData.regularHours,
+        totalHours: hoursData.totalHours,
         fireTraining: worker.fireTraining === true,
         notes: worker.notes || "",
       };
@@ -1139,10 +1134,14 @@ const getAllWorkersAdditionalHours = async () => {
 
     const result = await response.json();
     if (result.success && result.data) {
-      // 轉換為 workerId -> additionalHours 的映射
+      // 轉換為 workerId -> { regularHours, additionalHours, totalHours } 的映射
       const hoursMap = {};
       result.data.forEach((item) => {
-        hoursMap[item.workerId] = item.totalHours || 0;
+        hoursMap[item.workerId] = {
+          regularHours: item.regularHours || 0,
+          additionalHours: item.additionalHours || 0,
+          totalHours: item.totalHours || 0,
+        };
       });
       return hoursMap;
     }
@@ -1243,7 +1242,7 @@ const handleFileChange = (file: any) => {
         floor,
         job,
         hourlyWage,
-        baseHours: 8,
+        baseHours: 0,
         fireTraining,
         valid: workerNumber && name && group && floor && hourlyWage > 0,
       };
@@ -1283,7 +1282,7 @@ const confirmImport = async () => {
     floor: item.floor,
   job: item.job,
     hourlyWage: item.hourlyWage,
-    baseHours: item.baseHours || 8,
+    baseHours: item.baseHours || 0,
   fireTraining: item.fireTraining,
   }));
 
@@ -1450,7 +1449,7 @@ const showEditWorker = (worker: Worker) => {
   workerForm.job = worker.job || ""; // 新增工作欄位映射
   workerForm.hourlyWage =
     Number(worker.hourlyWage || worker.hourly_wage) || 200;
-  workerForm.baseHours = Number(worker.baseHours || worker.base_hours) || 8;
+  workerForm.baseHours = Number(worker.baseHours || worker.base_hours) || 0;
   workerForm.fireTraining = !!worker.fireTraining;
 
   console.log("編輯工讀生 - 表單數據:", workerForm);
@@ -1509,7 +1508,7 @@ const resetWorkerForm = () => {
     floor: "",
     job: "",
     hourlyWage: 200,
-    baseHours: 8,
+    baseHours: 0,
     fireTraining: false,
   });
 };

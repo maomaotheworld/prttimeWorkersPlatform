@@ -1,10 +1,22 @@
 import { createRouter, createWebHistory } from "vue-router";
 
+// 捕捉 chunk 載入失敗（Vercel 重新部署後舊 hash 消失），自動強制重整
+function lazyLoad(importFn) {
+  return importFn().catch((err) => {
+    if (err?.message?.includes("Failed to fetch dynamically imported module") ||
+        err?.message?.includes("error loading dynamically imported module") ||
+        err?.name === "ChunkLoadError") {
+      window.location.reload();
+    }
+    return Promise.reject(err);
+  });
+}
+
 const routes = [
   {
     path: "/login",
     name: "Login",
-    component: () => import("../views/Login.vue"),
+    component: () => lazyLoad(() => import("../views/Login.vue")),
     meta: {
       title: "登入",
       requiresAuth: false,
@@ -14,7 +26,7 @@ const routes = [
   {
     path: "/",
     name: "Home",
-    component: () => import("../views/Home.vue"),
+    component: () => lazyLoad(() => import("../views/Home.vue")),
     meta: {
       title: "首頁",
       requiresAuth: true,
@@ -24,7 +36,7 @@ const routes = [
   {
     path: "/workers",
     name: "Workers",
-    component: () => import("../views/Workers.vue"),
+    component: () => lazyLoad(() => import("../views/Workers.vue")),
     meta: {
       title: "工讀生管理",
       requiresAuth: true,
@@ -34,7 +46,7 @@ const routes = [
   {
     path: "/personnel-list",
     name: "PersonnelList",
-    component: () => import("../views/PersonnelList.vue"),
+    component: () => lazyLoad(() => import("../views/PersonnelList.vue")),
     meta: {
       title: "人員列表(閱覽模式)",
       requiresAuth: false,
@@ -43,7 +55,7 @@ const routes = [
   {
     path: "/groups",
     name: "Groups",
-    component: () => import("../views/Groups.vue"),
+    component: () => lazyLoad(() => import("../views/Groups.vue")),
     meta: {
       title: "組別管理",
       requiresAuth: true,
@@ -53,7 +65,7 @@ const routes = [
   {
     path: "/attendance",
     name: "Attendance",
-    component: () => import("../views/Attendance.vue"),
+    component: () => lazyLoad(() => import("../views/Attendance.vue")),
     meta: {
       title: "打卡系統",
       requiresAuth: true,
@@ -64,7 +76,7 @@ const routes = [
   {
     path: "/time-records",
     name: "TimeRecords",
-    component: () => import("../views/TimeRecords.vue"),
+    component: () => lazyLoad(() => import("../views/TimeRecords.vue")),
     meta: {
       title: "工時記錄",
       requiresAuth: true,
@@ -74,7 +86,7 @@ const routes = [
   {
     path: "/salary",
     name: "Salary",
-    component: () => import("../views/Salary.vue"),
+    component: () => lazyLoad(() => import("../views/Salary.vue")),
     meta: {
       title: "薪資管理",
       requiresAuth: true,
@@ -84,7 +96,7 @@ const routes = [
   {
     path: "/activity-logs",
     name: "ActivityLogs",
-    component: () => import("../views/ActivityLogs.vue"),
+    component: () => lazyLoad(() => import("../views/ActivityLogs.vue")),
     meta: {
       title: "活動日誌",
       requiresAuth: true,
@@ -94,7 +106,7 @@ const routes = [
   {
     path: "/user-management",
     name: "UserManagement",
-    component: () => import("../views/UserManagement.vue"),
+    component: () => lazyLoad(() => import("../views/UserManagement.vue")),
     meta: {
       title: "用戶管理",
       requiresAuth: true,
@@ -105,7 +117,7 @@ const routes = [
   {
     path: "/permissions-matrix",
     name: "PermissionsMatrix",
-    component: () => import("../views/PermissionsMatrix.vue"),
+    component: () => lazyLoad(() => import("../views/PermissionsMatrix.vue")),
     meta: {
       title: "權限矩陣",
       requiresAuth: true,

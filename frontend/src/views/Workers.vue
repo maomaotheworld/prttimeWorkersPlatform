@@ -399,7 +399,7 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="hourlyWage" label="時薪" width="70">
+        <el-table-column label="時薪" width="70">
           <template #default="{ row }">
             <span :style="{ color: row.hourlyWage > 0 ? 'inherit' : 'red' }">
               {{ row.hourlyWage ? Math.round(row.hourlyWage) : "缺失" }}

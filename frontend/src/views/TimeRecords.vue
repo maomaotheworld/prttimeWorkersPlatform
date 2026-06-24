@@ -251,6 +251,7 @@ import moment from "moment";
 import { Plus, DocumentRemove } from "@element-plus/icons-vue";
 import { useWorkersStore } from "../stores/workers";
 import { useAuthStore } from "../stores/auth";
+import { getApiUrl } from "@/config/api";
 
 const workersStore = useWorkersStore();
 const authStore = useAuthStore();
@@ -309,7 +310,7 @@ const getWorkerNumber = (workerId) => {
 const fetchRecords = async () => {
   try {
     loading.value = true;
-    let url = "/api/time-records";
+    let url = getApiUrl("/api/time-records");
     const params = [];
 
     if (filterWorker.value) {
@@ -391,11 +392,12 @@ const showAddAdditionalDialog = () => {
 
 const handleAddAdditional = async () => {
   try {
+    if (!additionalFormRef.value) return;
     await additionalFormRef.value.validate();
     submitting.value = true;
 
     const token = authStore.token;
-    const response = await fetch("/api/time-records/additional-hours", {
+    const response = await fetch(getApiUrl("/api/time-records/additional-hours"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -1291,13 +1291,16 @@ const confirmImport = async () => {
 
   try {
     const results = await workersStore.importWorkers(cleanData);
-    if (results.failed === 0) {
+    const skipped = results.skipped || 0;
+    if (results.failed === 0 && skipped === 0) {
       ElMessage.success(`成功匯入 ${results.success} 筆`);
+    } else if (results.failed === 0) {
+      ElMessage.success(`新增 ${results.success} 筆，略過重複 ${skipped} 筆`);
     } else {
       const errorList = results.errors.slice(0, 5).join("、");
       const more = results.errors.length > 5 ? `...等 ${results.errors.length} 筆` : "";
       ElMessageBox.alert(
-        `成功：${results.success} 筆　失敗：${results.failed} 筆\n\n失敗名單：${errorList}${more}`,
+        `新增：${results.success} 筆　略過重複：${skipped} 筆　失敗：${results.failed} 筆\n\n失敗名單：${errorList}${more}`,
         "匯入結果",
         { type: "warning", confirmButtonText: "確定" }
       );

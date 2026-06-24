@@ -2426,17 +2426,18 @@ app.post("/api/workers/batch", authenticateToken, asyncHandler(async (req, res) 
     return res.status(400).json({ success: false, message: "請提供工讀生列表" });
   }
 
-  const results = { success: 0, failed: 0, errors: [] };
+  const results = { success: 0, skipped: 0, failed: 0, errors: [] };
   const newWorkers = [];
 
   for (const w of workersList) {
     try {
       if (!w.name) throw new Error("姓名不能為空");
 
-      // 跳過重複編號
+      // 編號已存在 → 直接跳過，不算失敗
       const numStr = String(w.number || "").trim();
       if (numStr && workers.find((x) => x.number === numStr)) {
-        throw new Error(`編號 ${numStr} 已存在`);
+        results.skipped++;
+        continue;
       }
 
       newWorkers.push(normalizeWorkerRecord({
@@ -2471,14 +2472,14 @@ app.post("/api/workers/batch", authenticateToken, asyncHandler(async (req, res) 
   }
 
   logActivity("batch-import", "workers", "batch", "批量匯入",
-    `批量匯入 ${results.success} 筆工讀生${results.failed > 0 ? `，失敗 ${results.failed} 筆` : ""}`,
+    `批量匯入 ${results.success} 筆工讀生${results.skipped > 0 ? `，略過重複 ${results.skipped} 筆` : ""}${results.failed > 0 ? `，失敗 ${results.failed} 筆` : ""}`,
     req.user?.id,
   );
 
   res.json({
     success: true,
     data: results,
-    message: `批量匯入完成：成功 ${results.success} 筆${results.failed > 0 ? `，失敗 ${results.failed} 筆` : ""}`,
+    message: `批量匯入完成：新增 ${results.success} 筆${results.skipped > 0 ? `，略過重複 ${results.skipped} 筆` : ""}${results.failed > 0 ? `，失敗 ${results.failed} 筆` : ""}`,
   });
 }));
 

@@ -753,26 +753,26 @@ async function saveUsers() {
 }
 
 async function saveWorkers() {
+  _touch("workers");
   if (isGoogleSheetsConfigured()) {
     await syncWorkersToGoogleSheets(workers);
   }
-
   await persistCollection("workers", workersFilePath, normalizeWorkers(workers));
 }
 
 async function saveGroups() {
+  _touch("groups");
   if (isGoogleSheetsConfigured()) {
     await syncGroupsToGoogleSheets(groups);
   }
-
   await persistCollection("groups", groupsFilePath, groups);
 }
 
 async function saveTimeRecords() {
+  _touch("timeRecords");
   if (isGoogleSheetsConfigured()) {
     await syncTimeRecordsToGoogleSheets(timeRecords);
   }
-
   await persistCollection(
     "timeRecords",
     timeRecordsFilePath,
@@ -781,10 +781,10 @@ async function saveTimeRecords() {
 }
 
 async function saveSalaryAdjustments() {
+  _touch("salaryAdjustments");
   if (isGoogleSheetsConfigured()) {
     await syncSalaryAdjustmentsToGoogleSheets(salaryAdjustments);
   }
-
   await persistCollection(
     "salaryAdjustments",
     salaryAdjustmentsFilePath,
@@ -793,10 +793,10 @@ async function saveSalaryAdjustments() {
 }
 
 async function saveActivityLogs() {
+  _touch("activityLogs");
   if (isGoogleSheetsConfigured()) {
     await syncActivityLogsToGoogleSheets(activityLogs);
   }
-
   await persistCollection(
     "activityLogs",
     activityLogsFilePath,
@@ -813,6 +813,30 @@ let permissionsConfig = normalizePermissionsConfig();
 const asyncHandler = (handler) => (req, res, next) =>
   Promise.resolve(handler(req, res, next)).catch(next);
 let activityLogSyncChain = Promise.resolve();
+
+// ── 記憶體快取 ──────────────────────────────────────────
+// 寫入時更新 timestamp → 下次 refresh 直接用記憶體，不重讀 Sheets
+// 超過 TTL 才真正重讀，大幅減少 Google Sheets API 呼叫次數
+const CACHE_TTL = {
+  workers: 30_000,
+  groups: 30_000,
+  timeRecords: 15_000,
+  salaryAdjustments: 15_000,
+  users: 30_000,
+  permissions: 60_000,
+  activityLogs: 30_000,
+};
+const _cacheTs = {
+  workers: 0, groups: 0, timeRecords: 0,
+  salaryAdjustments: 0, users: 0, permissions: 0, activityLogs: 0,
+};
+function _isFresh(key) {
+  return Date.now() - _cacheTs[key] < CACHE_TTL[key];
+}
+function _touch(key) {
+  _cacheTs[key] = Date.now();
+}
+// ─────────────────────────────────────────────────────────
 
 function normalizeGroupRecord(group) {
   return {
@@ -1011,7 +1035,9 @@ async function loadGroupsFromPrimaryStore(fallbackGroups) {
 }
 
 async function refreshGroupsFromPrimaryStore() {
+  if (_isFresh("groups")) return groups;
   groups = await loadGroupsFromPrimaryStore(groups);
+  _touch("groups");
   return groups;
 }
 
@@ -1107,7 +1133,9 @@ async function loadWorkersFromPrimaryStore(fallbackWorkers) {
 }
 
 async function refreshWorkersFromPrimaryStore() {
+  if (_isFresh("workers")) return workers;
   workers = await loadWorkersFromPrimaryStore(workers);
+  _touch("workers");
   return workers;
 }
 
@@ -1151,7 +1179,9 @@ async function loadTimeRecordsFromPrimaryStore(fallbackRecords) {
 }
 
 async function refreshTimeRecordsFromPrimaryStore() {
+  if (_isFresh("timeRecords")) return timeRecords;
   timeRecords = await loadTimeRecordsFromPrimaryStore(timeRecords);
+  _touch("timeRecords");
   return timeRecords;
 }
 
@@ -1223,9 +1253,9 @@ async function loadSalaryAdjustmentsFromPrimaryStore(fallbackAdjustments) {
 }
 
 async function refreshSalaryAdjustmentsFromPrimaryStore() {
-  salaryAdjustments = await loadSalaryAdjustmentsFromPrimaryStore(
-    salaryAdjustments,
-  );
+  if (_isFresh("salaryAdjustments")) return salaryAdjustments;
+  salaryAdjustments = await loadSalaryAdjustmentsFromPrimaryStore(salaryAdjustments);
+  _touch("salaryAdjustments");
   return salaryAdjustments;
 }
 
@@ -1267,7 +1297,9 @@ async function loadUsersDataFromPrimaryStore(fallbackUsersData) {
 }
 
 async function refreshUsersDataFromPrimaryStore() {
+  if (_isFresh("users")) return usersData;
   usersData = await loadUsersDataFromPrimaryStore(usersData);
+  _touch("users");
   return usersData;
 }
 
@@ -1384,9 +1416,9 @@ async function loadPermissionsConfigFromPrimaryStore(fallbackConfig) {
 }
 
 async function refreshPermissionsConfigFromPrimaryStore() {
-  permissionsConfig = await loadPermissionsConfigFromPrimaryStore(
-    permissionsConfig,
-  );
+  if (_isFresh("permissions")) return permissionsConfig;
+  permissionsConfig = await loadPermissionsConfigFromPrimaryStore(permissionsConfig);
+  _touch("permissions");
   return permissionsConfig;
 }
 
@@ -1433,7 +1465,9 @@ async function syncPermissionsConfigToGoogleSheets(config) {
 }
 
 async function refreshActivityLogsFromPrimaryStore() {
+  if (_isFresh("activityLogs")) return activityLogs;
   activityLogs = await loadActivityLogsFromPrimaryStore(activityLogs);
+  _touch("activityLogs");
   return activityLogs;
 }
 

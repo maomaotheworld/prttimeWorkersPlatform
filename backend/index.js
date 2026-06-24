@@ -2417,6 +2417,71 @@ app.get("/api/workers/:id", asyncHandler(async (req, res) => {
   });
 }));
 
+// 批次新增工讀生（一次送出全部，只寫一次 Google Sheets）
+app.post("/api/workers/batch", authenticateToken, asyncHandler(async (req, res) => {
+  await refreshWorkersFromPrimaryStore();
+
+  const { workers: workersList } = req.body;
+  if (!Array.isArray(workersList) || workersList.length === 0) {
+    return res.status(400).json({ success: false, message: "請提供工讀生列表" });
+  }
+
+  const results = { success: 0, failed: 0, errors: [] };
+  const newWorkers = [];
+
+  for (const w of workersList) {
+    try {
+      if (!w.name) throw new Error("姓名不能為空");
+
+      // 跳過重複編號
+      const numStr = String(w.number || "").trim();
+      if (numStr && workers.find((x) => x.number === numStr)) {
+        throw new Error(`編號 ${numStr} 已存在`);
+      }
+
+      newWorkers.push(normalizeWorkerRecord({
+        id: uuidv4(),
+        number: numStr,
+        name: String(w.name || "").trim(),
+        gender: "男",
+        level: 1,
+        groupId: w.groupId || null,
+        floor: String(w.floor || "").trim(),
+        job: String(w.job || "").trim(),
+        baseHourlyWage: Number(w.baseHourlyWage) || 0,
+        baseWorkingHours: Number(w.baseWorkingHours) || 0,
+        fireTraining: !!w.fireTraining,
+        notes: String(w.notes || "").trim(),
+        phone: "", email: "", address: "", emergencyContact: "", bankAccount: "",
+        startDate: new Date().toISOString().split("T")[0],
+        status: "active",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }));
+      results.success++;
+    } catch (err) {
+      results.failed++;
+      results.errors.push(`${w.name || w.number}: ${err.message}`);
+    }
+  }
+
+  if (newWorkers.length > 0) {
+    workers.push(...newWorkers);
+    await saveWorkers(); // 只寫一次 Sheets
+  }
+
+  logActivity("batch-import", "workers", "batch", "批量匯入",
+    `批量匯入 ${results.success} 筆工讀生${results.failed > 0 ? `，失敗 ${results.failed} 筆` : ""}`,
+    req.user?.id,
+  );
+
+  res.json({
+    success: true,
+    data: results,
+    message: `批量匯入完成：成功 ${results.success} 筆${results.failed > 0 ? `，失敗 ${results.failed} 筆` : ""}`,
+  });
+}));
+
 // 新增工讀生
 app.post(
   "/api/workers",

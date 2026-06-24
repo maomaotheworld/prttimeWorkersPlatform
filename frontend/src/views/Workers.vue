@@ -38,9 +38,6 @@
     <el-card v-if="selectedWorkers.length > 0" style="margin-bottom: 10px">
       <div style="display: flex; align-items: center; gap: 10px">
         <span>已選擇 {{ selectedWorkers.length }} 位工讀生</span>
-        <el-button size="small" type="warning" @click="showBatchEditHours">
-          批次編輯基本時數
-        </el-button>
         <el-button
           size="small"
           type="info"
@@ -524,14 +521,6 @@
             style="width: 100%"
           />
         </el-form-item>
-        <el-form-item label="基本時數" prop="baseHours">
-          <el-input-number
-            v-model="workerForm.baseHours"
-            :min="1"
-            :max="12"
-            style="width: 100%"
-          />
-        </el-form-item>
         <el-form-item label="消防演習">
           <el-switch
             v-model="workerForm.fireTraining"
@@ -551,37 +540,6 @@
           :loading="submittingWorker"
         >
           {{ isEditing ? "更新" : "新增" }}
-        </el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 批次編輯基本時數對話框 -->
-    <el-dialog
-      v-model="showBatchHoursDialog"
-      title="批次編輯基本時數"
-      width="400px"
-    >
-      <div style="margin-bottom: 15px">
-        <span
-          >即將為 {{ selectedWorkers.length }} 位工讀生設定統一的基本時數</span
-        >
-      </div>
-
-      <el-form label-width="80px">
-        <el-form-item label="基本時數">
-          <el-input-number
-            v-model="batchHoursForm.baseHours"
-            :min="1"
-            :max="12"
-            style="width: 100%"
-          />
-        </el-form-item>
-      </el-form>
-
-      <template #footer>
-        <el-button @click="showBatchHoursDialog = false">取消</el-button>
-        <el-button type="primary" @click="submitBatchHours">
-          確定更新
         </el-button>
       </template>
     </el-dialog>
@@ -749,7 +707,6 @@ interface Worker {
   group: string;
   floor: string;
   hourlyWage: number;
-  baseHours: number;
   totalHours: number;
   notes?: string;
   fireTraining?: boolean;
@@ -889,7 +846,6 @@ const workerForm = reactive({
   floor: "",
   job: "",
   hourlyWage: 200,
-  baseHours: 0,
   fireTraining: false,
 });
 
@@ -899,7 +855,6 @@ const workerRules = {
   group: [{ required: true, message: "請選擇組別", trigger: "change" }],
   floor: [{ required: true, message: "請輸入樓層", trigger: "blur" }],
   hourlyWage: [{ required: true, message: "請輸入時薪", trigger: "blur" }],
-  baseHours: [{ required: true, message: "請輸入基本時數", trigger: "blur" }],
 };
 
 // 批次編輯相關變數
@@ -907,9 +862,6 @@ const selectedWorkers = ref<Worker[]>([]);
 const showBatchHoursDialog = ref(false);
 const showBatchWageDialog = ref(false);
 const showBatchAccumulatedHoursDialog = ref(false);
-const batchHoursForm = reactive({
-  baseHours: 0,
-});
 const batchWageForm = reactive({
   hourlyWage: 200,
 });
@@ -1074,7 +1026,6 @@ const fetchWorkers = async () => {
         floor: worker.floor || "",
         job: worker.job || "",
         hourlyWage: worker.baseHourlyWage || worker.hourlyWage || 0,
-        baseHours: worker.baseWorkingHours || worker.baseHours || 0,
         additionalHours: hoursData.additionalHours,
         regularHours: hoursData.regularHours,
         totalHours: hoursData.totalHours,
@@ -1249,7 +1200,6 @@ const handleFileChange = (file: any) => {
         floor,
         job,
         hourlyWage,
-        baseHours: 0,
         fireTraining,
         valid: workerNumber && name && group && floor && hourlyWage > 0,
       };
@@ -1287,10 +1237,9 @@ const confirmImport = async () => {
     name: item.name,
     group: item.group,
     floor: item.floor,
-  job: item.job,
+    job: item.job,
     hourlyWage: item.hourlyWage,
-    baseHours: item.baseHours || 0,
-  fireTraining: item.fireTraining,
+    fireTraining: item.fireTraining,
   }));
 
   console.log("準備匯入的數據:", cleanData);
@@ -1456,7 +1405,6 @@ const showEditWorker = (worker: Worker) => {
   workerForm.job = worker.job || ""; // 新增工作欄位映射
   workerForm.hourlyWage =
     Number(worker.hourlyWage || worker.hourly_wage) || 200;
-  workerForm.baseHours = Number(worker.baseHours || worker.base_hours) || 0;
   workerForm.fireTraining = !!worker.fireTraining;
 
   console.log("編輯工讀生 - 表單數據:", workerForm);
@@ -1515,7 +1463,6 @@ const resetWorkerForm = () => {
     floor: "",
     job: "",
     hourlyWage: 200,
-    baseHours: 0,
     fireTraining: false,
   });
 };
@@ -1645,26 +1592,6 @@ const confirmBatchDelete = async () => {
     if (error !== "cancel") {
       ElMessage.error("批次刪除失敗: " + (error.message || error));
     }
-  }
-};
-
-const submitBatchHours = async () => {
-  try {
-    for (const worker of selectedWorkers.value) {
-      await workersStore.updateWorker(worker.id, {
-        ...worker,
-        baseHours: batchHoursForm.baseHours,
-      });
-    }
-
-    ElMessage.success(
-      `成功更新 ${selectedWorkers.value.length} 位工讀生的基本時數`,
-    );
-    showBatchHoursDialog.value = false;
-    selectedWorkers.value = [];
-    fetchWorkers();
-  } catch (error: any) {
-    ElMessage.error("批次更新時數失敗: " + (error.message || error));
   }
 };
 

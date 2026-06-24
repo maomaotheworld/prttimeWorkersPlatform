@@ -72,7 +72,7 @@
           <span class="detail-item">{{ currentEditingWorker.group }}</span>
           <span class="detail-item">{{ currentEditingWorker.floor }}樓</span>
           <span class="detail-item"
-            >{{ currentEditingWorker.hourlyWage }}元/時</span
+            >{{ Math.round(currentEditingWorker.hourlyWage) }}元/時</span
           >
         </div>
         <el-button
@@ -402,7 +402,7 @@
         <el-table-column prop="hourlyWage" label="時薪" width="70">
           <template #default="{ row }">
             <span :style="{ color: row.hourlyWage > 0 ? 'inherit' : 'red' }">
-              {{ row.hourlyWage || "缺失" }}
+              {{ row.hourlyWage ? Math.round(row.hourlyWage) : "缺失" }}
             </span>
           </template>
         </el-table-column>

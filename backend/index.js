@@ -3784,8 +3784,8 @@ app.post("/api/salary-adjustments/total", authenticateToken, asyncHandler(async 
     }
 
     const oldHourlyWage = worker.baseHourlyWage || 0;
-    // 新時薪 = 目標總薪資 ÷ 實際工時（四捨五入）
-    const newHourlyWage = Math.round(targetTotalSalary / totalHoursWorked);
+    // 新時薪 = 目標總薪資 ÷ 實際工時（保留完整小數，讓 baseSalary 精確等於目標）
+    const newHourlyWage = targetTotalSalary / totalHoursWorked;
 
     workers[workerIndex].baseHourlyWage = newHourlyWage;
     await saveWorkers();
@@ -3945,6 +3945,7 @@ app.get("/api/workers/:id/salary-calculation", asyncHandler(async (req, res) => 
         number: worker.number,
         name: worker.name,
         baseHourlyWage: worker.baseHourlyWage || 0,
+        baseHourlyWageDisplay: Math.round(worker.baseHourlyWage || 0),
       },
       period: {
         startDate: start.format("YYYY-MM-DD"),
@@ -3957,9 +3958,9 @@ app.get("/api/workers/:id/salary-calculation", asyncHandler(async (req, res) => 
         workingDays,
       },
       salary: {
-        baseSalary: parseFloat(baseSalary.toFixed(2)),
-        extraSalary: parseFloat(totalAdjustments.toFixed(2)),
-        totalSalary: parseFloat(totalSalary.toFixed(2)),
+        baseSalary: Math.round(baseSalary),
+        extraSalary: Math.round(totalAdjustments),
+        totalSalary: Math.round(totalSalary),
       },
       records: periodRecords,
       adjustments: salaryAdjustmentsInPeriod,

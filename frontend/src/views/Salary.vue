@@ -99,7 +99,7 @@
           <div class="salary-item">
             <div class="salary-label">基本時薪</div>
             <div class="salary-value">
-              {{ salaryData.worker.baseHourlyWage }} 元
+              {{ salaryData.worker.baseHourlyWageDisplay ?? Math.round(salaryData.worker.baseHourlyWage) }} 元
             </div>
           </div>
         </el-col>
@@ -171,7 +171,7 @@
                 >
               </div>
               <div style="font-size: 14px; color: #409eff; margin-top: 4px">
-                {{ salaryData.worker.baseHourlyWage }} 元/時 ×
+                {{ salaryData.worker.baseHourlyWageDisplay ?? Math.round(salaryData.worker.baseHourlyWage) }} 元/時 ×
                 {{ salaryData.workTime.totalSalaryHours }} 小時 =
                 {{ salaryData.salary.baseSalary }} 元
               </div>
@@ -782,7 +782,7 @@ const handleTotalSalaryAdjust = async () => {
     }
 
     ElMessage.success(
-      `總薪資設定成功！時薪已更新為 ${result.data.newHourlyWage} 元`,
+      `總薪資設定成功！時薪已更新為 ${Math.round(result.data.newHourlyWage)} 元`,
     );
 
     totalSalaryDialogVisible.value = false;

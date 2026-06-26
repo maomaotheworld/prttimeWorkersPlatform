@@ -83,6 +83,7 @@ const WORKER_SHEET_HEADERS = [
   "bankAccount",
   "startDate",
   "status",
+  "totalSalary",
   "createdAt",
   "updatedAt",
 ];
@@ -360,6 +361,7 @@ function normalizeWorkers(workerList = []) {
     bankAccount: worker.bankAccount || "",
     startDate: worker.startDate || "",
     status: worker.status || "",
+    totalSalary: Number(worker.totalSalary) || 0,
   }));
 }
 
@@ -2442,6 +2444,48 @@ app.get("/api/workers", asyncHandler(async (req, res) => {
       ? getWorkersWithTodayAttendance(targetDate)
       : workers,
     message: "工讀生列表獲取成功",
+  });
+}));
+
+// 獲取所有工讀生的總薪資（工時 × 時薪 + 薪資調整）
+app.get("/api/workers/total-salaries", asyncHandler(async (req, res) => {
+  await Promise.all([
+    refreshWorkersFromPrimaryStore(),
+    refreshTimeRecordsFromPrimaryStore(),
+    refreshSalaryAdjustmentsFromPrimaryStore(),
+  ]);
+
+  // 計算每位工讀生的總工時
+  const hoursMap = {};
+  timeRecords.forEach((record) => {
+    if (!hoursMap[record.workerId]) {
+      hoursMap[record.workerId] = 0;
+    }
+    hoursMap[record.workerId] += (record.totalHours || 0) + (record.additionalHours || 0);
+  });
+
+  // 計算每位工讀生的薪資調整總額
+  const adjustmentsMap = {};
+  salaryAdjustments.forEach((adj) => {
+    if (!adjustmentsMap[adj.workerId]) {
+      adjustmentsMap[adj.workerId] = 0;
+    }
+    adjustmentsMap[adj.workerId] += adj.type === "increase" ? (adj.amount || 0) : -(adj.amount || 0);
+  });
+
+  // 合併計算總薪資
+  const result = workers.map((worker) => {
+    const totalHours = hoursMap[worker.id] || 0;
+    const baseSalary = totalHours * (worker.baseHourlyWage || 0);
+    const adjustments = adjustmentsMap[worker.id] || 0;
+    const totalSalary = Math.round(baseSalary + adjustments);
+    return { workerId: worker.id, totalSalary };
+  });
+
+  res.json({
+    success: true,
+    data: result,
+    message: "工讀生總薪資獲取成功",
   });
 }));
 

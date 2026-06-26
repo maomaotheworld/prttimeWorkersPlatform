@@ -46,9 +46,15 @@ async function initDatabase() {
         base_hourly_wage DECIMAL(10,2) DEFAULT 0,
         base_working_hours INTEGER DEFAULT 0,
         additional_hours DECIMAL(10,2) DEFAULT 0,
+        total_salary DECIMAL(10,2) DEFAULT 0,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    // 若 workers 表已存在但缺少 total_salary 欄位，補充新增
+    await pool.query(`
+      ALTER TABLE workers ADD COLUMN IF NOT EXISTS total_salary DECIMAL(10,2) DEFAULT 0
     `);
 
     // 創建 groups 表

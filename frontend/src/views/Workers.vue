@@ -905,8 +905,13 @@ const clearCurrentEditingWorker = () => {
   currentEditingWorker.value = null;
 };
 
-// 計算薪資總額（打卡工時 + 手動增減工時）× 時薪
+// 計算薪資總額（打卡工時 + 手動增減工時）× 時薪 + 薪資調整
 const calculateTotalSalary = (worker) => {
+  // 優先使用從後端批量取得的總薪資（含薪資調整）
+  if (worker.totalSalary !== null && worker.totalSalary !== undefined) {
+    return worker.totalSalary.toLocaleString();
+  }
+  // 後備：僅以工時 × 時薪計算
   const totalHours = worker.totalHours || 0;
   const totalSalary = totalHours * (worker.hourlyWage || 0);
   return totalSalary.toLocaleString();
@@ -1013,6 +1018,9 @@ const fetchWorkers = async () => {
     // 嘗試批量獲取所有工讀生的額外工時
     const additionalHoursMap = await getAllWorkersAdditionalHours();
 
+    // 批量獲取所有工讀生的總薪資（工時×時薪 + 薪資調整）
+    const totalSalaryMap = await getAllWorkersTotalSalaries();
+
     // 映射後端數據到前端顯示格式
     workers.value = workersStore.workers.map((worker) => {
       const hoursData = additionalHoursMap[worker.id] || { regularHours: 0, additionalHours: 0, totalHours: 0 };
@@ -1029,6 +1037,7 @@ const fetchWorkers = async () => {
         additionalHours: hoursData.additionalHours,
         regularHours: hoursData.regularHours,
         totalHours: hoursData.totalHours,
+        totalSalary: totalSalaryMap[worker.id] ?? null,
         fireTraining: worker.fireTraining === true,
         notes: worker.notes || "",
       };
@@ -1107,6 +1116,39 @@ const getAllWorkersAdditionalHours = async () => {
     return {};
   } catch (error) {
     console.warn("批量獲取額外工時失敗，使用預設值:", error);
+    return {};
+  }
+};
+
+// 批量獲取所有工讀生的總薪資
+const getAllWorkersTotalSalaries = async () => {
+  try {
+    const response = await fetch(
+      getApiUrl("/api/workers/total-salaries"),
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      console.warn("批量獲取總薪資API不可用，使用預設值0");
+      return {};
+    }
+
+    const result = await response.json();
+    if (result.success && result.data) {
+      const salaryMap: Record<string, number> = {};
+      result.data.forEach((item: { workerId: string; totalSalary: number }) => {
+        salaryMap[item.workerId] = item.totalSalary;
+      });
+      return salaryMap;
+    }
+
+    return {};
+  } catch (error) {
+    console.warn("批量獲取總薪資失敗，使用預設值:", error);
     return {};
   }
 };

@@ -1069,6 +1069,7 @@ const submitSalaryAdjust = async () => {
       `${salaryWorker.value.name}${salaryForm.type === "increase" ? "加薪" : "減薪"}紀錄已建立`,
     );
     showSalaryAdjustDialog.value = false;
+    clearSelection();
   } catch (error: any) {
     ElMessage.error("薪資調整失敗: " + (error.message || error));
   } finally {
@@ -1115,6 +1116,7 @@ const submitBatchSalaryAdjust = async () => {
     const actionText = batchSalaryForm.type === "increase" ? "加薪" : "減薪";
     ElMessage.success(`批次${actionText}完成，共 ${result.data.created.length} 位工讀生`);
     showBatchSalaryDialog.value = false;
+    clearSelection();
     await fetchWorkers();
   } catch (error: any) {
     ElMessage.error("批次薪資調整失敗: " + (error.message || error));
@@ -1528,7 +1530,7 @@ const submitHoursAdjust = async () => {
     if (isMobile.value) {
       currentEditingWorker.value = null;
     }
-
+    clearSelection();
     // 重新獲取所有工讀生數據以確保更新正確
     await fetchWorkers();
   } catch (error) {
@@ -1646,6 +1648,7 @@ const submitWorker = async () => {
     if (isMobile.value) {
       currentEditingWorker.value = null;
     }
+    clearSelection();
     fetchWorkers();
   } catch (error) {
     ElMessage.error(
@@ -1670,6 +1673,7 @@ const confirmDelete = async (worker: Worker) => {
 
     await workersStore.deleteWorker(worker.id);
     ElMessage.success("工讀生刪除成功");
+    clearSelection();
     fetchWorkers();
   } catch (error) {
     if (error !== "cancel") {

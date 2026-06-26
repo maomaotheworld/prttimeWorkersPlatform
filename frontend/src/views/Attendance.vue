@@ -407,12 +407,21 @@ const getAttendanceSummary = (attendance) => {
   return `共 ${sessionCount} 段 / ${displayHours} 小時`;
 };
 
-const createSessionRow = (session = {}) => ({
-  localId: session.id || `${Date.now()}-${Math.random()}`,
-  id: session.id || "",
-  clockIn: session.clockIn || "",
-  clockOut: session.clockOut || "",
-});
+const createSessionRow = (session = {}, targetDate = null) => {
+  // 若 session 有 clockIn/clockOut，把日期部分換成 targetDate（今天），只保留時間
+  const normalizeToDate = (datetime, date) => {
+    if (!datetime || !date) return datetime || "";
+    const t = moment(datetime);
+    const d = moment(date);
+    return t.isValid() ? d.clone().hour(t.hour()).minute(t.minute()).second(0).millisecond(0).toISOString() : datetime;
+  };
+  return {
+    localId: session.id || `${Date.now()}-${Math.random()}`,
+    id: session.id || "",
+    clockIn: targetDate ? normalizeToDate(session.clockIn, targetDate) : (session.clockIn || ""),
+    clockOut: targetDate ? normalizeToDate(session.clockOut, targetDate) : (session.clockOut || ""),
+  };
+};
 
 const updateWorkerClockingState = (workerId, value) => {
   const targetWorker = filteredWorkers.value.find((item) => item.id === workerId);
@@ -584,13 +593,14 @@ const handleQuickClock = async (worker, type) => {
 
 // 顯示編輯時間對話框
 const showEditTimeDialog = (worker) => {
+  const today = moment().format("YYYY-MM-DD");
   timeEditForm.value = {
     workerId: worker.id,
     workerNumber: worker.number,
     workerName: worker.name,
     sessions: getTodaySessions(worker.todayAttendance).length
       ? getTodaySessions(worker.todayAttendance).map((session) =>
-          createSessionRow(session),
+          createSessionRow(session, today),
         )
       : [createSessionRow()],
     note: getTodaySessions(worker.todayAttendance).find((session) => session.note)?.note || "",

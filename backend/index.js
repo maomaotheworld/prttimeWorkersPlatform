@@ -3530,9 +3530,7 @@ app.post("/api/time-records/edit-time", asyncHandler(async (req, res) => {
           return {
             id: session.id || uuidv4(),
             workerId,
-            date: session.clockIn
-              ? startTime.toISOString()
-              : new Date(date).toISOString(),
+            date: new Date(date).toISOString(), // 永遠用 request 傳入的 date，不跟著 clockIn 日期跑
             clockIn: startTime ? startTime.toISOString() : null,
             clockOut: endTime ? endTime.toISOString() : null,
             totalHours,

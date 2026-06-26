@@ -2476,9 +2476,9 @@ app.get("/api/workers/total-salaries", asyncHandler(async (req, res) => {
   // 合併計算總薪資
   const result = workers.map((worker) => {
     const totalHours = hoursMap[worker.id] || 0;
-    const baseSalary = totalHours * (worker.baseHourlyWage || 0);
+    const hourlyWageSalary = totalHours * (worker.baseHourlyWage || 0);
     const adjustments = adjustmentsMap[worker.id] || 0;
-    const totalSalary = Math.round(baseSalary + adjustments);
+    const totalSalary = Math.round(hourlyWageSalary + adjustments);
     return { workerId: worker.id, totalSalary };
   });
 

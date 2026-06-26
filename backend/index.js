@@ -79,6 +79,7 @@ const WORKER_SHEET_HEADERS = [
   "phone",
   "startDate",
   "status",
+  "totalSalary",
   "createdAt",
   "updatedAt",
 ];
@@ -784,6 +785,35 @@ async function saveSalaryAdjustments() {
   );
 }
 
+// 重新計算指定工讀生的總薪資並存回 workers
+async function recalcWorkerSalary(workerId) {
+  const idx = workers.findIndex((w) => w.id === workerId);
+  if (idx === -1) return;
+  const worker = workers[idx];
+
+  // 累計打卡工時 + 手動工時
+  let regularHours = 0;
+  let additionalHours = 0;
+  timeRecords.forEach((r) => {
+    if (r.workerId !== workerId) return;
+    regularHours += r.totalHours || 0;
+    additionalHours += r.additionalHours || 0;
+  });
+  const totalHours = regularHours + additionalHours;
+  const baseSalary = totalHours * (worker.baseHourlyWage || 0);
+
+  // 累計薪資調整淨額
+  let adjustment = 0;
+  salaryAdjustments.forEach((a) => {
+    if (a.workerId !== workerId) return;
+    if (a.type === "increase") adjustment += a.amount || 0;
+    else if (a.type === "decrease") adjustment -= a.amount || 0;
+  });
+
+  workers[idx].totalSalary = Math.round(baseSalary + adjustment);
+  await saveWorkers();
+}
+
 async function saveActivityLogs() {
   _touch("activityLogs");
   if (isGoogleSheetsConfigured()) {
@@ -1064,6 +1094,7 @@ function normalizeWorkerRecord(worker) {
     phone: String(normalizedWorker.phone || "").trim(),
     startDate: String(normalizedWorker.startDate || "").trim(),
     status: String(normalizedWorker.status || "").trim(),
+    totalSalary: Number(normalizedWorker.totalSalary) || 0,
     createdAt: normalizedWorker.createdAt || new Date().toISOString(),
     updatedAt: normalizedWorker.updatedAt || new Date().toISOString(),
   };
@@ -3270,6 +3301,7 @@ app.post("/api/time-records/clock-out", asyncHandler(async (req, res) => {
   timeRecords[recordIndex].totalHours = parseFloat(totalHours.toFixed(2));
 
   await saveTimeRecords(); // 持久化數據
+  await recalcWorkerSalary(timeRecords[recordIndex].workerId);
 
   res.json({
     success: true,
@@ -3436,6 +3468,7 @@ app.post(
     }
 
     await saveTimeRecords(); // 持久化數據
+    await recalcWorkerSalary(workerId);
 
     // 記錄活動日誌（包含操作者資訊）
     const actionType = actualHours >= 0 ? "新增" : "扣除";
@@ -3622,6 +3655,7 @@ app.post("/api/time-records/edit-time", asyncHandler(async (req, res) => {
     worker.name,
     `打卡時間編輯 - ${details.join("，")}`,
   );
+  await recalcWorkerSalary(workerId);
 
   res.json({
     success: true,
@@ -3720,6 +3754,7 @@ app.post("/api/salary-adjustments", authenticateToken, asyncHandler(async (req, 
 
   salaryAdjustments.push(newAdjustment);
   await saveSalaryAdjustments(); // 持久化數據
+  await recalcWorkerSalary(workerId);
 
   // 記錄活動日誌
   const actionText = type === "increase" ? "加薪" : "減薪";
@@ -3793,6 +3828,7 @@ app.post("/api/salary-adjustments/batch", authenticateToken, asyncHandler(async 
   }
 
   await saveSalaryAdjustments();
+  await Promise.all(created.map((a) => recalcWorkerSalary(a.workerId)));
 
   res.status(201).json({
     success: true,

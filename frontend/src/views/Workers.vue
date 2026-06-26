@@ -36,8 +36,8 @@
 
     <!-- 批次操作 -->
     <el-card v-if="selectedWorkers.length > 0" style="margin-bottom: 10px">
-      <div style="display: flex; align-items: center; gap: 10px">
-        <span>已選擇 {{ selectedWorkers.length }} 位工讀生</span>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+        <span style="font-weight: bold; white-space: nowrap">已選擇 {{ selectedWorkers.length }} 位工讀生</span>
         <el-button
           size="small"
           type="info"
@@ -47,6 +47,9 @@
         </el-button>
         <el-button size="small" type="primary" @click="showBatchEditWage">
           批次編輯時薪
+        </el-button>
+        <el-button size="small" type="success" @click="showBatchSalaryAdjust">
+          批次加薪
         </el-button>
         <el-button size="small" type="danger" @click="confirmBatchDelete">
           批次刪除
@@ -88,63 +91,56 @@
     <!-- 篩選器 -->
     <el-card style="margin-bottom: 10px">
       <div class="filter-container">
-        <el-row :gutter="16" align="middle">
-          <el-col :span="6">
-            <el-input
-              v-model="searchName"
-              placeholder="搜尋姓名或編號"
-              clearable
-              @input="applyFilter"
-            >
-              <template #prefix><el-icon><Search /></el-icon></template>
-            </el-input>
-          </el-col>
-          <el-col :span="5">
-            <el-select
-              v-model="filterType"
-              placeholder="篩選方式"
-              @change="applyFilter"
-              style="width: 100%"
-            >
-              <el-option label="全選" value="all" />
-              <el-option label="依組別篩選" value="group" />
-              <el-option label="依樓層篩選" value="floor" />
-            </el-select>
-          </el-col>
-          <el-col :span="5" v-if="filterType === 'group'">
-            <el-select
-              v-model="selectedGroup"
-              placeholder="選擇組別"
-              @change="applyFilter"
-              style="width: 100%"
-            >
-              <el-option
-                v-for="group in allGroups"
-                :key="group.id"
-                :label="group.name"
-                :value="group.name"
-              />
-            </el-select>
-          </el-col>
-          <el-col :span="5" v-if="filterType === 'floor'">
-            <el-select
-              v-model="selectedFloor"
-              placeholder="選擇樓層"
-              @change="applyFilter"
-              style="width: 100%"
-            >
-              <el-option
-                v-for="floor in allFloors"
-                :key="floor"
-                :label="floor"
-                :value="floor"
-              />
-            </el-select>
-          </el-col>
-          <el-col :span="3">
-            <el-button @click="resetFilter">重置篩選</el-button>
-          </el-col>
-        </el-row>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+          <el-input
+            v-model="searchName"
+            placeholder="搜尋姓名或編號"
+            clearable
+            @input="applyFilter"
+            style="flex: 1; min-width: 140px"
+          >
+            <template #prefix><el-icon><Search /></el-icon></template>
+          </el-input>
+          <el-select
+            v-model="filterType"
+            placeholder="篩選方式"
+            @change="applyFilter"
+            style="min-width: 130px; flex: 1"
+          >
+            <el-option label="全選" value="all" />
+            <el-option label="依組別篩選" value="group" />
+            <el-option label="依樓層篩選" value="floor" />
+          </el-select>
+          <el-select
+            v-if="filterType === 'group'"
+            v-model="selectedGroup"
+            placeholder="選擇組別"
+            @change="applyFilter"
+            style="min-width: 130px; flex: 1"
+          >
+            <el-option
+              v-for="group in allGroups"
+              :key="group.id"
+              :label="group.name"
+              :value="group.name"
+            />
+          </el-select>
+          <el-select
+            v-if="filterType === 'floor'"
+            v-model="selectedFloor"
+            placeholder="選擇樓層"
+            @change="applyFilter"
+            style="min-width: 130px; flex: 1"
+          >
+            <el-option
+              v-for="floor in allFloors"
+              :key="floor"
+              :label="floor"
+              :value="floor"
+            />
+          </el-select>
+          <el-button @click="resetFilter" style="white-space: nowrap">重置篩選</el-button>
+        </div>
       </div>
     </el-card>
 
@@ -181,9 +177,27 @@
         :data="paginatedWorkers"
         stripe
         v-loading="loading"
-        @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" :width="isMobile ? '35' : '55'" />
+        <!-- 原生 checkbox 欄 -->
+        <el-table-column :width="isMobile ? '38' : '55'">
+          <template #header>
+            <input
+              type="checkbox"
+              :checked="isAllSelected"
+              :indeterminate="isSomeSelected"
+              @change="toggleSelectAll"
+              style="width:16px;height:16px;cursor:pointer;accent-color:#409eff"
+            />
+          </template>
+          <template #default="{ row }">
+            <input
+              type="checkbox"
+              :checked="isSelected(row.id)"
+              @change="toggleSelect(row)"
+              style="width:16px;height:16px;cursor:pointer;accent-color:#409eff"
+            />
+          </template>
+        </el-table-column>
         <el-table-column
           prop="workerNumber"
           label="編號"
@@ -687,6 +701,55 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 批次加薪 Dialog -->
+    <el-dialog
+      v-model="showBatchSalaryDialog"
+      title="批次薪資調整"
+      width="420px"
+    >
+      <div style="margin-bottom: 16px; color: #606266">
+        已選擇 <strong>{{ selectedWorkers.length }}</strong> 位工讀生
+      </div>
+
+      <el-form label-width="90px">
+        <el-form-item label="調整類型">
+          <el-radio-group v-model="batchSalaryForm.type">
+            <el-radio label="increase">加薪</el-radio>
+            <el-radio label="decrease">減薪</el-radio>
+          </el-radio-group>
+        </el-form-item>
+
+        <el-form-item label="調整金額">
+          <el-input-number
+            v-model="batchSalaryForm.amount"
+            :min="1"
+            :step="100"
+            style="width: 100%"
+          />
+        </el-form-item>
+
+        <el-form-item label="調整原因">
+          <el-input
+            v-model="batchSalaryForm.reason"
+            type="textarea"
+            :rows="3"
+            placeholder="請輸入調整原因"
+          />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="showBatchSalaryDialog = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="batchSalaryAdjusting"
+          @click="submitBatchSalaryAdjust"
+        >
+          確認套用至全部選取
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -708,6 +771,7 @@ interface Worker {
   floor: string;
   hourlyWage: number;
   totalHours: number;
+  adjustmentAmount?: number;
   notes?: string;
   fireTraining?: boolean;
 }
@@ -879,6 +943,15 @@ const salaryForm = reactive({
   reason: "",
 });
 
+// 批次加薪
+const showBatchSalaryDialog = ref(false);
+const batchSalaryAdjusting = ref(false);
+const batchSalaryForm = reactive({
+  type: "increase",
+  amount: 100,
+  reason: "",
+});
+
 // 手機版操作處理
 const handleMobileAction = (command: string, row: Worker) => {
   switch (command) {
@@ -905,11 +978,12 @@ const clearCurrentEditingWorker = () => {
   currentEditingWorker.value = null;
 };
 
-// 計算薪資總額（打卡工時 + 手動增減工時）× 時薪
+// 計算薪資總額（打卡工時 + 手動增減工時）× 時薪 + 薪資調整金額
 const calculateTotalSalary = (worker) => {
   const totalHours = worker.totalHours || 0;
-  const totalSalary = totalHours * (worker.hourlyWage || 0);
-  return totalSalary.toLocaleString();
+  const baseSalary = totalHours * (worker.hourlyWage || 0);
+  const adjustment = worker.adjustmentAmount || 0;
+  return (baseSalary + adjustment).toLocaleString();
 };
 
 // 關閉工讀生對話框
@@ -1002,6 +1076,53 @@ const submitSalaryAdjust = async () => {
   }
 };
 
+const showBatchSalaryAdjust = () => {
+  batchSalaryForm.type = "increase";
+  batchSalaryForm.amount = 100;
+  batchSalaryForm.reason = "";
+  showBatchSalaryDialog.value = true;
+};
+
+const submitBatchSalaryAdjust = async () => {
+  if (!batchSalaryForm.reason.trim()) {
+    ElMessage.warning("請填寫調整原因");
+    return;
+  }
+  if (!batchSalaryForm.amount || batchSalaryForm.amount <= 0) {
+    ElMessage.warning("調整金額必須大於 0");
+    return;
+  }
+  try {
+    batchSalaryAdjusting.value = true;
+    const token = localStorage.getItem("auth_token");
+    const response = await fetch(getApiUrl("/api/salary-adjustments/batch"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        workerIds: selectedWorkers.value.map((w) => w.id),
+        type: batchSalaryForm.type,
+        amount: batchSalaryForm.amount,
+        reason: batchSalaryForm.reason,
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || "批次薪資調整失敗");
+    }
+    const actionText = batchSalaryForm.type === "increase" ? "加薪" : "減薪";
+    ElMessage.success(`批次${actionText}完成，共 ${result.data.created.length} 位工讀生`);
+    showBatchSalaryDialog.value = false;
+    await fetchWorkers();
+  } catch (error: any) {
+    ElMessage.error("批次薪資調整失敗: " + (error.message || error));
+  } finally {
+    batchSalaryAdjusting.value = false;
+  }
+};
+
 const fetchWorkers = async () => {
   loading.value = true;
   try {
@@ -1012,6 +1133,9 @@ const fetchWorkers = async () => {
 
     // 嘗試批量獲取所有工讀生的額外工時
     const additionalHoursMap = await getAllWorkersAdditionalHours();
+
+    // 獲取所有薪資調整記錄（加薪/減薪）
+    const salaryAdjMap = await getAllWorkersSalaryAdjustments();
 
     // 映射後端數據到前端顯示格式
     workers.value = workersStore.workers.map((worker) => {
@@ -1029,6 +1153,7 @@ const fetchWorkers = async () => {
         additionalHours: hoursData.additionalHours,
         regularHours: hoursData.regularHours,
         totalHours: hoursData.totalHours,
+        adjustmentAmount: salaryAdjMap[worker.id] || 0,
         fireTraining: worker.fireTraining === true,
         notes: worker.notes || "",
       };
@@ -1107,6 +1232,41 @@ const getAllWorkersAdditionalHours = async () => {
     return {};
   } catch (error) {
     console.warn("批量獲取額外工時失敗，使用預設值:", error);
+    return {};
+  }
+};
+
+// 獲取所有工讀生的薪資調整淨額（加薪 - 減薪）
+const getAllWorkersSalaryAdjustments = async (): Promise<Record<string, number>> => {
+  try {
+    const response = await fetch(getApiUrl("/api/salary-adjustments"), {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      },
+    });
+
+    if (!response.ok) {
+      console.warn("獲取薪資調整記錄失敗，使用預設值0");
+      return {};
+    }
+
+    const result = await response.json();
+    if (result.success && result.data) {
+      const adjMap: Record<string, number> = {};
+      result.data.forEach((adj: { workerId: string; type: string; amount: number }) => {
+        if (!adjMap[adj.workerId]) adjMap[adj.workerId] = 0;
+        if (adj.type === "increase") {
+          adjMap[adj.workerId] += adj.amount || 0;
+        } else if (adj.type === "decrease") {
+          adjMap[adj.workerId] -= adj.amount || 0;
+        }
+      });
+      return adjMap;
+    }
+
+    return {};
+  } catch (error) {
+    console.warn("獲取薪資調整記錄失敗，使用預設值:", error);
     return {};
   }
 };
@@ -1525,6 +1685,35 @@ const handleSelectionChange = (selection: Worker[]) => {
 
 const clearSelection = () => {
   selectedWorkers.value = [];
+};
+
+// 原生 checkbox 輔助
+const isSelected = (id: string) => selectedWorkers.value.some((w) => w.id === id);
+const isAllSelected = computed(
+  () => paginatedWorkers.value.length > 0 && paginatedWorkers.value.every((w) => isSelected(w.id))
+);
+const isSomeSelected = computed(
+  () => paginatedWorkers.value.some((w) => isSelected(w.id)) && !isAllSelected.value
+);
+const toggleSelect = (row: Worker) => {
+  const idx = selectedWorkers.value.findIndex((w) => w.id === row.id);
+  if (idx === -1) {
+    selectedWorkers.value = [...selectedWorkers.value, row];
+  } else {
+    selectedWorkers.value = selectedWorkers.value.filter((w) => w.id !== row.id);
+  }
+};
+const toggleSelectAll = () => {
+  if (isAllSelected.value) {
+    // 取消本頁所有勾選
+    const pageIds = new Set(paginatedWorkers.value.map((w) => w.id));
+    selectedWorkers.value = selectedWorkers.value.filter((w) => !pageIds.has(w.id));
+  } else {
+    // 加入本頁未勾選的
+    const existingIds = new Set(selectedWorkers.value.map((w) => w.id));
+    const toAdd = paginatedWorkers.value.filter((w) => !existingIds.has(w.id));
+    selectedWorkers.value = [...selectedWorkers.value, ...toAdd];
+  }
 };
 
 const showBatchEditHours = () => {

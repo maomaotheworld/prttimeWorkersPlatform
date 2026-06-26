@@ -167,10 +167,6 @@ export const useWorkersStore = defineStore("workers", () => {
         gender: "男",
         level: 1,
         phone: "",
-        email: "",
-        address: "",
-        emergencyContact: "",
-        bankAccount: "",
         startDate: new Date().toISOString().split("T")[0],
         status: "active",
       };
@@ -233,10 +229,6 @@ export const useWorkersStore = defineStore("workers", () => {
         gender: workerData.gender || "男",
         level: Number(workerData.level) || 1,
         phone: workerData.phone || "",
-        email: workerData.email || "",
-        address: workerData.address || "",
-        emergencyContact: workerData.emergencyContact || "",
-        bankAccount: workerData.bankAccount || "",
         startDate:
           workerData.startDate || new Date().toISOString().split("T")[0],
         status: workerData.status || "active",

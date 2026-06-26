@@ -77,10 +77,6 @@ const WORKER_SHEET_HEADERS = [
   "fireTraining",
   "notes",
   "phone",
-  "email",
-  "address",
-  "emergencyContact",
-  "bankAccount",
   "startDate",
   "status",
   "createdAt",
@@ -354,10 +350,6 @@ function normalizeWorkers(workerList = []) {
     baseHourlyWage: Number(worker.baseHourlyWage || worker.hourlyWage) || 0,
     baseWorkingHours: Number(worker.baseWorkingHours || worker.baseHours) || 0,
     phone: worker.phone || "",
-    email: worker.email || "",
-    address: worker.address || "",
-    emergencyContact: worker.emergencyContact || "",
-    bankAccount: worker.bankAccount || "",
     startDate: worker.startDate || "",
     status: worker.status || "",
   }));
@@ -1070,10 +1062,6 @@ function normalizeWorkerRecord(worker) {
     fireTraining: parseSheetBoolean(normalizedWorker.fireTraining, false),
     notes: String(normalizedWorker.notes || "").trim(),
     phone: String(normalizedWorker.phone || "").trim(),
-    email: String(normalizedWorker.email || "").trim(),
-    address: String(normalizedWorker.address || "").trim(),
-    emergencyContact: String(normalizedWorker.emergencyContact || "").trim(),
-    bankAccount: String(normalizedWorker.bankAccount || "").trim(),
     startDate: String(normalizedWorker.startDate || "").trim(),
     status: String(normalizedWorker.status || "").trim(),
     createdAt: normalizedWorker.createdAt || new Date().toISOString(),
@@ -2498,7 +2486,7 @@ app.post("/api/workers/batch", authenticateToken, asyncHandler(async (req, res) 
         baseWorkingHours: Number(w.baseWorkingHours) || 0,
         fireTraining: !!w.fireTraining,
         notes: String(w.notes || "").trim(),
-        phone: "", email: "", address: "", emergencyContact: "", bankAccount: "",
+        phone: "",
         startDate: new Date().toISOString().split("T")[0],
         status: "active",
         createdAt: new Date().toISOString(),
@@ -3748,6 +3736,68 @@ app.post("/api/salary-adjustments", authenticateToken, asyncHandler(async (req, 
     success: true,
     data: newAdjustment,
     message: "薪資調整記錄新增成功",
+  });
+}));
+
+// 批次薪資調整
+app.post("/api/salary-adjustments/batch", authenticateToken, asyncHandler(async (req, res) => {
+  await refreshUsersDataFromPrimaryStore();
+  await refreshWorkersFromPrimaryStore();
+  await refreshSalaryAdjustmentsFromPrimaryStore();
+  const { workerIds, type, amount, reason } = req.body;
+
+  if (!workerIds || !Array.isArray(workerIds) || workerIds.length === 0) {
+    return res.status(400).json({ success: false, message: "請提供工讀生清單" });
+  }
+  if (!type || !amount || !reason) {
+    return res.status(400).json({ success: false, message: "類型、金額、原因均不能為空" });
+  }
+  if (!["increase", "decrease"].includes(type)) {
+    return res.status(400).json({ success: false, message: "調整類型必須是 increase 或 decrease" });
+  }
+
+  const operatorInfo = getOperatorInfo(req.user);
+  const actionText = type === "increase" ? "加薪" : "減薪";
+  const created = [];
+  const failed = [];
+
+  for (const workerId of workerIds) {
+    const worker = workers.find((w) => w.id === workerId);
+    if (!worker) {
+      failed.push({ workerId, reason: "工讀生不存在" });
+      continue;
+    }
+    const newAdjustment = decorateSalaryAdjustmentRecord({
+      id: uuidv4(),
+      workerId,
+      workerName: worker.name,
+      type,
+      amount: parseFloat(amount),
+      reason,
+      operatorId: operatorInfo.operatorId,
+      operatorUsername: operatorInfo.operatorUsername,
+      operatorName: operatorInfo.operatorName,
+      date: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+    });
+    salaryAdjustments.push(newAdjustment);
+    created.push(newAdjustment);
+    logActivity(
+      "salary-adjust",
+      "salary-adjustment",
+      newAdjustment.id,
+      worker.name,
+      `批次薪資調整：${actionText} ${amount} 元，理由：${reason}`,
+      operatorInfo.operatorId,
+    );
+  }
+
+  await saveSalaryAdjustments();
+
+  res.status(201).json({
+    success: true,
+    data: { created, failed },
+    message: `批次${actionText}完成，成功 ${created.length} 筆，失敗 ${failed.length} 筆`,
   });
 }));
 

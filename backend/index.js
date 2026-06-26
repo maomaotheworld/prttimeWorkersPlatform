@@ -3642,6 +3642,27 @@ app.post("/api/time-records/edit-time", asyncHandler(async (req, res) => {
   });
 }));
 
+// 刪除單筆工時記錄（evelyn only）
+app.delete("/api/time-records/:id", authenticateToken, requireEvelyn, asyncHandler(async (req, res) => {
+  await refreshTimeRecordsFromPrimaryStore();
+  const { id } = req.params;
+  const index = timeRecords.findIndex((r) => r.id === id);
+  if (index === -1) {
+    return res.status(404).json({ success: false, message: "記錄不存在" });
+  }
+  timeRecords.splice(index, 1);
+  await saveTimeRecords();
+  res.json({ success: true, message: "記錄已刪除" });
+}));
+
+// 清除所有工時記錄（evelyn only）
+app.delete("/api/time-records/all/clear", authenticateToken, requireEvelyn, asyncHandler(async (req, res) => {
+  const count = timeRecords.length;
+  timeRecords = [];
+  await saveTimeRecords();
+  res.json({ success: true, message: `已清除 ${count} 筆工時記錄` });
+}));
+
 // === 薪資調整 ===
 // 獲取薪資調整記錄
 app.get("/api/salary-adjustments", asyncHandler(async (req, res) => {

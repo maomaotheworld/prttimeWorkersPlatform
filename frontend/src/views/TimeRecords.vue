@@ -2,9 +2,19 @@
   <div class="time-records-container">
     <div class="page-header">
       <h1 class="page-title">工作記錄</h1>
-      <el-button type="primary" @click="showAddAdditionalDialog" :icon="Plus">
-        新增額外工時
-      </el-button>
+      <div style="display:flex; gap:8px;">
+        <el-button type="primary" @click="showAddAdditionalDialog" :icon="Plus">
+          新增額外工時
+        </el-button>
+        <el-button
+          v-if="authStore.isEvelyn"
+          type="danger"
+          :icon="DeleteIcon"
+          @click="handleClearAll"
+        >
+          一鍵清除全部
+        </el-button>
+      </div>
     </div>
 
     <!-- 篩選條件 -->
@@ -150,6 +160,18 @@
             <span v-else class="info-text">-</span>
           </template>
         </el-table-column>
+
+        <el-table-column v-if="authStore.isEvelyn" label="操作" width="80" fixed="right">
+          <template #default="{ row }">
+            <el-button
+              type="danger"
+              size="small"
+              :icon="DeleteIcon"
+              circle
+              @click="handleDeleteRecord(row)"
+            />
+          </template>
+        </el-table-column>
       </el-table>
 
       <div v-if="records.length === 0 && !loading" class="empty-state">
@@ -246,9 +268,9 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import moment from "moment";
-import { Plus, DocumentRemove } from "@element-plus/icons-vue";
+import { Plus, DocumentRemove, Delete as DeleteIcon } from "@element-plus/icons-vue";
 import { useWorkersStore } from "../stores/workers";
 import { useAuthStore } from "../stores/auth";
 import { getApiUrl } from "@/config/api";
@@ -428,6 +450,53 @@ const handleAddAdditional = async () => {
     ElMessage.error(error.message || "額外工時新增失敗");
   } finally {
     submitting.value = false;
+  }
+};
+
+const handleDeleteRecord = async (row) => {
+  try {
+    await ElMessageBox.confirm(
+      `確定要刪除 ${getWorkerName(row.workerId)} 在 ${formatDate(row.date)} 的這筆記錄嗎？`,
+      "確認刪除",
+      { confirmButtonText: "刪除", cancelButtonText: "取消", type: "warning" }
+    );
+    const token = authStore.token;
+    const res = await fetch(getApiUrl(`/api/time-records/${row.id}`), {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.message || "刪除失敗");
+    ElMessage.success("已刪除");
+    await fetchRecords();
+  } catch (e) {
+    if (e !== "cancel") ElMessage.error(e.message || "刪除失敗");
+  }
+};
+
+const handleClearAll = async () => {
+  try {
+    await ElMessageBox.confirm(
+      "確定要清除「所有」工時記錄嗎？此操作無法復原！",
+      "⚠️ 第一次確認",
+      { confirmButtonText: "繼續", cancelButtonText: "取消", type: "warning" }
+    );
+    await ElMessageBox.confirm(
+      "再次確認：將永久刪除全部工時記錄，確定嗎？",
+      "⚠️ 第二次確認",
+      { confirmButtonText: "確定清除", cancelButtonText: "取消", type: "error" }
+    );
+    const token = authStore.token;
+    const res = await fetch(getApiUrl("/api/time-records/all/clear"), {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.message || "清除失敗");
+    ElMessage.success(result.message);
+    await fetchRecords();
+  } catch (e) {
+    if (e !== "cancel") ElMessage.error(e.message || "清除失敗");
   }
 };
 

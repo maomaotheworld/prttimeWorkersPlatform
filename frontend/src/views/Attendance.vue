@@ -2,9 +2,20 @@
   <div class="attendance-container">
     <div class="page-header">
       <h1 class="page-title">打卡系統</h1>
-      <div class="current-time">
-        <el-icon><Clock /></el-icon>
-        {{ currentTime }}
+      <div style="display:flex; align-items:center; gap:8px;">
+        <el-button
+          v-if="authStore.isEvelyn"
+          type="danger"
+          size="small"
+          :icon="DeleteIcon"
+          @click="handleClearAllAttendance"
+        >
+          一鍵清除所有打卡
+        </el-button>
+        <div class="current-time">
+          <el-icon><Clock /></el-icon>
+          {{ currentTime }}
+        </div>
       </div>
     </div>
 
@@ -291,9 +302,9 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import moment from "moment";
-import { Clock, Refresh } from "@element-plus/icons-vue";
+import { Clock, Refresh, Delete as DeleteIcon } from "@element-plus/icons-vue";
 import { useWorkersStore } from "../stores/workers";
 import { useGroupsStore } from "../stores/groups";
 import { useAuthStore } from "../stores/auth";
@@ -661,6 +672,32 @@ const handleTimeEdit = async () => {
     ElMessage.error(error.message || "時間編輯失敗");
   } finally {
     submitting.value = false;
+  }
+};
+
+const handleClearAllAttendance = async () => {
+  try {
+    await ElMessageBox.confirm(
+      "確定要清除「所有」打卡記錄嗎？此操作無法復原！",
+      "⚠️ 第一次確認",
+      { confirmButtonText: "繼續", cancelButtonText: "取消", type: "warning" }
+    );
+    await ElMessageBox.confirm(
+      "再次確認：將永久刪除全部打卡工時記錄，確定嗎？",
+      "⚠️ 第二次確認",
+      { confirmButtonText: "確定清除", cancelButtonText: "取消", type: "error" }
+    );
+    const token = authStore.token;
+    const res = await fetch(getApiUrl("/api/time-records/all/clear"), {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.message || "清除失敗");
+    ElMessage.success(result.message);
+    await refreshData();
+  } catch (e) {
+    if (e !== "cancel") ElMessage.error(e.message || "清除失敗");
   }
 };
 

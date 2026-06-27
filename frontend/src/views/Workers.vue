@@ -982,10 +982,7 @@ const clearCurrentEditingWorker = () => {
 
 // 計算薪資總額（打卡工時 + 手動增減工時）× 時薪 + 薪資調整金額
 const calculateTotalSalary = (worker) => {
-  const totalHours = worker.totalHours || 0;
-  const baseSalary = totalHours * (worker.hourlyWage || 0);
-  const adjustment = worker.adjustmentAmount || 0;
-  return (baseSalary + adjustment).toLocaleString();
+  return (worker.totalSalary || 0).toLocaleString();
 };
 
 // 關閉工讀生對話框
@@ -1157,6 +1154,7 @@ const fetchWorkers = async () => {
         additionalHours: hoursData.additionalHours,
         regularHours: hoursData.regularHours,
         totalHours: hoursData.totalHours,
+        totalSalary: worker.totalSalary || 0,
         adjustmentAmount: salaryAdjMap[worker.id] || 0,
         fireTraining: worker.fireTraining === true,
         notes: worker.notes || "",

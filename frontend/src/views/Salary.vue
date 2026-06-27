@@ -96,6 +96,14 @@
 
       <el-row :gutter="16" class="salary-overview">
         <el-col :xs="24" :sm="6">
+          <div class="salary-item total">
+            <div class="salary-label">累計應付薪資</div>
+            <div class="salary-value" style="color: #f56c6c">
+              {{ salaryData.worker.totalSalary?.toLocaleString() ?? 0 }} 元
+            </div>
+          </div>
+        </el-col>
+        <el-col :xs="24" :sm="6">
           <div class="salary-item">
             <div class="salary-label">基本時薪</div>
             <div class="salary-value">
@@ -113,18 +121,9 @@
         </el-col>
         <el-col :xs="24" :sm="6">
           <div class="salary-item">
-            <div class="salary-label">總工時</div>
+            <div class="salary-label">本期計薪工時</div>
             <div class="salary-value">
-              {{ salaryData.workTime.totalSalaryHours }}
-              小時
-            </div>
-          </div>
-        </el-col>
-        <el-col :xs="24" :sm="6">
-          <div class="salary-item total">
-            <div class="salary-label">總薪資</div>
-            <div class="salary-value">
-              {{ salaryData.salary.totalSalary }} 元
+              {{ salaryData.workTime.totalSalaryHours }} 小時
             </div>
           </div>
         </el-col>

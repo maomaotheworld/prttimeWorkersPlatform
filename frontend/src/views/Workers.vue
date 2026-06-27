@@ -238,9 +238,9 @@
           label="時薪"
           :width="isMobile ? '60' : '80'"
         />
-        <el-table-column label="累積工時" :width="isMobile ? '60' : '90'">
+        <el-table-column label="計薪工時" :width="isMobile ? '60' : '90'">
           <template #default="{ row }">
-            {{ row.totalHours || 0 }}
+            {{ row.additionalHours || 0 }}
           </template>
         </el-table-column>
         <el-table-column label="薪資總額" :width="isMobile ? '80' : '100'">
@@ -982,7 +982,10 @@ const clearCurrentEditingWorker = () => {
 
 // 計算薪資總額（打卡工時 + 手動增減工時）× 時薪 + 薪資調整金額
 const calculateTotalSalary = (worker) => {
-  return (worker.totalSalary || 0).toLocaleString();
+  const salaryHours = worker.additionalHours || 0;
+  const base = salaryHours * (worker.hourlyWage || 0);
+  const adjustment = worker.adjustmentAmount || 0;
+  return Math.round(base + adjustment).toLocaleString();
 };
 
 // 關閉工讀生對話框

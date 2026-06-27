@@ -4053,6 +4053,7 @@ app.get("/api/workers/:id/salary-calculation", asyncHandler(async (req, res) => 
         name: worker.name,
         baseHourlyWage: worker.baseHourlyWage || 0,
         baseHourlyWageDisplay: Math.round(worker.baseHourlyWage || 0),
+        totalSalary: worker.totalSalary || 0,
       },
       period: {
         startDate: start.format("YYYY-MM-DD"),

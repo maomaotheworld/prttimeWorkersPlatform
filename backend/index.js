@@ -791,15 +791,16 @@ async function recalcWorkerSalary(workerId) {
   if (idx === -1) return;
   const worker = workers[idx];
 
-  // 累計打卡工時 + 手動工時
+  // 累計打卡工時（純記錄）+ 手動計薪工時
   let regularHours = 0;
   let additionalHours = 0;
   timeRecords.forEach((r) => {
     if (r.workerId !== workerId) return;
-    regularHours += r.totalHours || 0;
-    additionalHours += r.additionalHours || 0;
+    regularHours += r.totalHours || 0;       // 打卡時數，僅供參考
+    additionalHours += r.additionalHours || 0; // 計薪工時
   });
-  const totalHours = regularHours + additionalHours;
+  // 薪資只依手動輸入的計薪工時計算（打卡時數不計入薪資）
+  const totalHours = additionalHours;
   const baseSalary = totalHours * (worker.baseHourlyWage || 0);
 
   // 累計薪資調整淨額
@@ -4012,20 +4013,20 @@ app.get("/api/workers/:id/salary-calculation", asyncHandler(async (req, res) => 
   });
 
   // 計算總工時
-  let totalRegularHours = 0;
-  let totalAdditionalHours = 0;
+  let totalRegularHours = 0;   // 打卡計算時數（純記錄，不影響薪資）
+  let totalAdditionalHours = 0; // 手動輸入計薪工時
   let workingDays = 0;
 
   periodRecords.forEach((record) => {
-    totalRegularHours += record.totalHours;
-    totalAdditionalHours += record.additionalHours;
+    totalRegularHours += record.totalHours;       // 僅供參考
+    totalAdditionalHours += record.additionalHours; // 用於薪資計算
     if (record.clockIn || record.additionalHours > 0) {
       workingDays++;
     }
   });
 
-  // 打卡時數 + 手動增減時數 = 實際工時
-  const totalSalaryHours = totalRegularHours + totalAdditionalHours;
+  // 薪資計算只使用手動輸入的計薪工時（打卡時數僅作記錄，不計入薪資）
+  const totalSalaryHours = totalAdditionalHours;
   const baseSalary = totalSalaryHours * (worker.baseHourlyWage || 0);
 
   // 獲取薪資調整記錄（額外薪資）

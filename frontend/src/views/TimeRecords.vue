@@ -4,7 +4,7 @@
       <h1 class="page-title">工作記錄</h1>
       <div style="display:flex; gap:8px;">
         <el-button type="primary" @click="showAddAdditionalDialog" :icon="Plus">
-          新增額外工時
+          輸入計薪工時
         </el-button>
         <el-button
           v-if="authStore.isEvelyn"
@@ -94,13 +94,15 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="實際工時" width="100">
+        <el-table-column label="打卡工時（參考）" width="120">
           <template #default="{ row }">
-            {{ row.totalHours || 0 }} 小時
+            <span style="color: #909399">
+              {{ row.totalHours || 0 }} 小時
+            </span>
           </template>
         </el-table-column>
 
-        <el-table-column label="額外工時" width="120">
+        <el-table-column label="計薪工時" width="120">
           <template #default="{ row }">
             <span v-if="row.additionalHours > 0" class="success-text">
               +{{ row.additionalHours }} 小時
@@ -112,12 +114,10 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="總工時" width="100">
+        <el-table-column label="薪資計算工時" width="120">
           <template #default="{ row }">
             <strong>
-              {{
-                ((row.totalHours || 0) + (row.additionalHours || 0)).toFixed(1)
-              }}
+              {{ (row.additionalHours || 0).toFixed(1) }}
               小時
             </strong>
           </template>
@@ -180,10 +180,10 @@
       </div>
     </el-card>
 
-    <!-- 新增額外工時對話框 -->
+    <!-- 新增計薪工時對話框 -->
     <el-dialog
       v-model="additionalDialogVisible"
-      title="工時調整"
+      title="輸入計薪工時"
       :width="isMobile ? '95%' : '500px'"
     >
       <el-form
@@ -218,8 +218,8 @@
 
         <el-form-item label="調整類型" prop="adjustmentType">
           <el-radio-group v-model="additionalForm.adjustmentType">
-            <el-radio-button label="add">增加工時</el-radio-button>
-            <el-radio-button label="subtract">減少工時</el-radio-button>
+            <el-radio-button label="add">輸入計薪工時</el-radio-button>
+            <el-radio-button label="subtract">扣除計薪工時</el-radio-button>
           </el-radio-group>
         </el-form-item>
 
@@ -233,20 +233,20 @@
             style="width: 100%"
           />
           <span style="font-size: 12px; color: #909399; margin-left: 8px">
-            {{ additionalForm.adjustmentType === "add" ? "將新增" : "將扣除" }}
+            {{ additionalForm.adjustmentType === "add" ? "計入計薪工時" : "扣除計薪工時" }}
             {{ additionalForm.hours }} 小時
           </span>
         </el-form-item>
 
-        <el-form-item label="原因" prop="reason">
+        <el-form-item label="備註" prop="reason">
           <el-input
             v-model="additionalForm.reason"
             type="textarea"
             :rows="3"
             :placeholder="
               additionalForm.adjustmentType === 'add'
-                ? '請說明新增額外工時的原因'
-                : '請說明扣除工時的原因'
+                ? '請輸入工時說明（如：上午 9:00-12:00，共 3 小時）'
+                : '請說明扣除計薪工時的原因'
             "
           />
         </el-form-item>
@@ -441,8 +441,8 @@ const handleAddAdditional = async () => {
     }
 
     const actionText =
-      additionalForm.value.adjustmentType === "add" ? "新增" : "減少";
-    ElMessage.success(`工時${actionText}成功`);
+      additionalForm.value.adjustmentType === "add" ? "輸入" : "扣除";
+    ElMessage.success(`計薪工時${actionText}成功`);
     additionalDialogVisible.value = false;
     await fetchRecords();
   } catch (error) {

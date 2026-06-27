@@ -179,14 +179,14 @@
         v-loading="loading"
       >
         <!-- 原生 checkbox 欄 -->
-        <el-table-column :width="isMobile ? '38' : '55'">
+        <el-table-column :fixed="isMobile ? 'left' : false" :width="isMobile ? '30' : '55'">
           <template #header>
             <input
               type="checkbox"
               :checked="isAllSelected"
               :indeterminate="isSomeSelected"
               @change="toggleSelectAll"
-              style="width:16px;height:16px;cursor:pointer;accent-color:#409eff"
+              style="width:14px;height:14px;cursor:pointer;accent-color:#409eff"
             />
           </template>
           <template #default="{ row }">
@@ -194,19 +194,21 @@
               type="checkbox"
               :checked="isSelected(row.id)"
               @change="toggleSelect(row)"
-              style="width:16px;height:16px;cursor:pointer;accent-color:#409eff"
+              style="width:14px;height:14px;cursor:pointer;accent-color:#409eff"
             />
           </template>
         </el-table-column>
         <el-table-column
           prop="workerNumber"
           label="編號"
-          :width="isMobile ? '60' : '80'"
+          :fixed="isMobile ? 'left' : false"
+          :width="isMobile ? '48' : '80'"
         />
         <el-table-column
           prop="name"
           label="姓名"
-          :width="isMobile ? '80' : '120'"
+          :fixed="isMobile ? 'left' : false"
+          :width="isMobile ? '62' : '120'"
         />
         <el-table-column label="組別" :width="isMobile ? '60' : '100'">
           <template #default="{ row }">
@@ -261,7 +263,7 @@
           </template>
         </el-table-column>
         <el-table-column
-          fixed="right"
+          :fixed="isMobile ? false : 'right'"
           label="操作"
           :width="isMobile ? '60' : '340'"
         >
@@ -1987,10 +1989,6 @@ watch([filterType, selectedGroup, selectedFloor], () => {
 
   /* 確保表格可以橫向滾動 */
   .el-table {
-    overflow-x: auto;
-  }
-
-  .el-table .el-table__body-wrapper {
     overflow-x: auto;
   }
 

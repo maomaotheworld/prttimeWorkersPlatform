@@ -136,16 +136,16 @@
         <el-col :xs="24" :sm="12">
           <h3>工時明細</h3>
           <el-descriptions :column="1" border>
-            <el-descriptions-item label="打卡工時">
-              <strong style="color: #67c23a"
+            <el-descriptions-item label="打卡記錄工時（純參考）">
+              <strong style="color: #909399"
                 >{{ salaryData.workTime.totalRegularHours }} 小時</strong
               >
-              <el-text type="success" size="small">
-                ({{ salaryData.workTime.workingDays }} 天打卡記錄)
+              <el-text type="info" size="small">
+                ({{ salaryData.workTime.workingDays }} 天打卡記錄，不計入薪資)
               </el-text>
             </el-descriptions-item>
-            <el-descriptions-item label="手動增減工時">
-              <strong style="color: #e6a23c"
+            <el-descriptions-item label="計薪工時（手動輸入）">
+              <strong style="color: #409eff"
                 >{{ salaryData.workTime.totalAdditionalHours }} 小時</strong
               >
             </el-descriptions-item>
@@ -154,8 +154,7 @@
                 >{{ salaryData.workTime.totalSalaryHours }} 小時</strong
               >
               <el-text type="primary" size="small">
-                ({{ salaryData.workTime.totalRegularHours }} +
-                {{ salaryData.workTime.totalAdditionalHours }})
+                (依手動輸入計薪工時計算)
               </el-text>
             </el-descriptions-item>
           </el-descriptions>
@@ -172,7 +171,7 @@
               </div>
               <div style="font-size: 14px; color: #409eff; margin-top: 4px">
                 {{ salaryData.worker.baseHourlyWageDisplay ?? Math.round(salaryData.worker.baseHourlyWage) }} 元/時 ×
-                {{ salaryData.workTime.totalSalaryHours }} 小時 =
+                {{ salaryData.workTime.totalSalaryHours }} 小時（計薪工時）=
                 {{ salaryData.salary.baseSalary }} 元
               </div>
             </el-descriptions-item>

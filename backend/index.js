@@ -3365,6 +3365,7 @@ app.post(
   "/api/time-records/additional-hours",
   authenticateToken,
   asyncHandler(async (req, res) => {
+    await refreshWorkersFromPrimaryStore();
     await refreshTimeRecordsFromPrimaryStore();
     const { workerId, date, hours, reason, adjustmentType, adjustedBy } =
       req.body;
@@ -3885,72 +3886,84 @@ app.post("/api/salary-adjustments/total", authenticateToken, asyncHandler(async 
     const start = moment().startOf("month");
     const end = moment().endOf("month");
 
-    // 計算實際工時（打卡 + 手動增減）
+    // 計算實際工時（僅手動計薪工時）
     const periodRecords = timeRecords.filter((r) => {
       const recordDate = moment(r.date);
       return r.workerId === workerId && recordDate.isBetween(start, end, "day", "[]");
     });
-    let totalRegularHours = 0;
     let totalAdditionalHours = 0;
     periodRecords.forEach((r) => {
-      totalRegularHours += r.totalHours || 0;
       totalAdditionalHours += r.additionalHours || 0;
     });
-    const totalHoursWorked = totalRegularHours + totalAdditionalHours;
-
-    if (totalHoursWorked <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "尚無工時記錄，請先打卡或手動增加工時後再設定總薪資",
-      });
-    }
 
     const oldHourlyWage = worker.baseHourlyWage || 0;
-    // 新時薪 = 目標總薪資 ÷ 實際工時（保留完整小數，讓 baseSalary 精確等於目標）
-    const newHourlyWage = targetTotalSalary / totalHoursWorked;
-
-    workers[workerIndex].baseHourlyWage = newHourlyWage;
-    workers[workerIndex].totalSalary = Math.round(targetTotalSalary);
-    await saveWorkers();
-
-    // 僅新增稽核記錄（amount=0），不新增金額調整以避免雙重計算
-    // 時薪已更新，baseSalary 自動反映目標薪資，不需額外加減
     const operatorInfo = getOperatorInfo(req.user);
-    const auditRecord = decorateSalaryAdjustmentRecord({
-      id: uuidv4(),
-      workerId,
-      workerName: worker.name,
-      type: "increase",
-      amount: 0,
-      reason: `調整總薪資：目標 ${targetTotalSalary} 元，時薪 ${oldHourlyWage}→${newHourlyWage} 元（${reason}）`,
-      operatorId: operatorInfo.operatorId,
-      operatorUsername: operatorInfo.operatorUsername,
-      operatorName: operatorInfo.operatorName,
-      date: new Date().toISOString(),
-    });
-    salaryAdjustments.push(auditRecord);
-    await saveSalaryAdjustments();
 
-    // 記錄活動日誌
-    logActivity(
-      "total-salary-set",
-      "worker",
-      workerId,
-      worker.name,
-      `總薪資設定為 ${targetTotalSalary} 元（時薪更新為 ${newHourlyWage} 元），原因：${reason}`,
-      operatorInfo.operatorId,
-    );
+    if (totalAdditionalHours > 0) {
+      // 有工時：反推新時薪讓 baseSalary = 目標總薪資
+      const newHourlyWage = targetTotalSalary / totalAdditionalHours;
+      workers[workerIndex].baseHourlyWage = newHourlyWage;
+      workers[workerIndex].totalSalary = Math.round(targetTotalSalary);
+      await saveWorkers();
 
-    res.json({
-      success: true,
-      data: {
+      const auditRecord = decorateSalaryAdjustmentRecord({
+        id: uuidv4(),
         workerId,
-        targetTotalSalary,
-        totalHoursWorked,
-        newHourlyWage,
-      },
-      message: `總薪資設定成功，時薪已更新為 ${newHourlyWage} 元`,
-    });
+        workerName: worker.name,
+        type: "increase",
+        amount: 0,
+        reason: `調整總薪資：目標 ${targetTotalSalary} 元，時薪 ${oldHourlyWage}→${newHourlyWage} 元（${reason}）`,
+        operatorId: operatorInfo.operatorId,
+        operatorUsername: operatorInfo.operatorUsername,
+        operatorName: operatorInfo.operatorName,
+        date: new Date().toISOString(),
+      });
+      salaryAdjustments.push(auditRecord);
+      await saveSalaryAdjustments();
+
+      logActivity(
+        "total-salary-set", "worker", workerId, worker.name,
+        `總薪資設定為 ${targetTotalSalary} 元（時薪更新為 ${newHourlyWage} 元），原因：${reason}`,
+        operatorInfo.operatorId,
+      );
+
+      res.json({
+        success: true,
+        data: { workerId, targetTotalSalary, totalHoursWorked: totalAdditionalHours, newHourlyWage },
+        message: `總薪資設定成功，時薪已更新為 ${newHourlyWage} 元`,
+      });
+    } else {
+      // 無工時：直接設定 totalSalary，不改時薪
+      workers[workerIndex].totalSalary = Math.round(targetTotalSalary);
+      await saveWorkers();
+
+      const auditRecord = decorateSalaryAdjustmentRecord({
+        id: uuidv4(),
+        workerId,
+        workerName: worker.name,
+        type: "increase",
+        amount: 0,
+        reason: `直接設定總薪資：${targetTotalSalary} 元（${reason}）`,
+        operatorId: operatorInfo.operatorId,
+        operatorUsername: operatorInfo.operatorUsername,
+        operatorName: operatorInfo.operatorName,
+        date: new Date().toISOString(),
+      });
+      salaryAdjustments.push(auditRecord);
+      await saveSalaryAdjustments();
+
+      logActivity(
+        "total-salary-set", "worker", workerId, worker.name,
+        `總薪資直接設定為 ${targetTotalSalary} 元，原因：${reason}`,
+        operatorInfo.operatorId,
+      );
+
+      res.json({
+        success: true,
+        data: { workerId, targetTotalSalary, totalHoursWorked: 0, newHourlyWage: oldHourlyWage },
+        message: `總薪資設定成功`,
+      });
+    }
   } catch (error) {
     console.error("總薪資設定失敗:", error);
     res.status(500).json({

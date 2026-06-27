@@ -815,6 +815,14 @@ async function recalcWorkerSalary(workerId) {
   await saveWorkers();
 }
 
+// 累加或扣減工讀生的 totalSalary（增量模式，不重算）
+async function addToWorkerSalary(workerId, delta) {
+  const idx = workers.findIndex((w) => w.id === workerId);
+  if (idx === -1) return;
+  workers[idx].totalSalary = Math.round((workers[idx].totalSalary || 0) + delta);
+  await saveWorkers();
+}
+
 async function saveActivityLogs() {
   _touch("activityLogs");
   if (isGoogleSheetsConfigured()) {
@@ -3302,7 +3310,7 @@ app.post("/api/time-records/clock-out", asyncHandler(async (req, res) => {
   timeRecords[recordIndex].totalHours = parseFloat(totalHours.toFixed(2));
 
   await saveTimeRecords(); // 持久化數據
-  await recalcWorkerSalary(timeRecords[recordIndex].workerId);
+  // 打卡時間不影響薪資，不更新 totalSalary
 
   res.json({
     success: true,
@@ -3469,7 +3477,8 @@ app.post(
     }
 
     await saveTimeRecords(); // 持久化數據
-    await recalcWorkerSalary(workerId);
+    // 累加計薪工時對應薪資到 totalSalary
+    await addToWorkerSalary(workerId, actualHours * (worker.baseHourlyWage || 0));
 
     // 記錄活動日誌（包含操作者資訊）
     const actionType = actualHours >= 0 ? "新增" : "扣除";
@@ -3656,7 +3665,7 @@ app.post("/api/time-records/edit-time", asyncHandler(async (req, res) => {
     worker.name,
     `打卡時間編輯 - ${details.join("，")}`,
   );
-  await recalcWorkerSalary(workerId);
+  // 打卡時間編輯不影響薪資，不更新 totalSalary
 
   res.json({
     success: true,
@@ -3755,7 +3764,8 @@ app.post("/api/salary-adjustments", authenticateToken, asyncHandler(async (req, 
 
   salaryAdjustments.push(newAdjustment);
   await saveSalaryAdjustments(); // 持久化數據
-  await recalcWorkerSalary(workerId);
+  // 累加或扣減薪資調整金額到 totalSalary
+  await addToWorkerSalary(workerId, type === "increase" ? parseFloat(amount) : -parseFloat(amount));
 
   // 記錄活動日誌
   const actionText = type === "increase" ? "加薪" : "減薪";
@@ -3829,7 +3839,12 @@ app.post("/api/salary-adjustments/batch", authenticateToken, asyncHandler(async 
   }
 
   await saveSalaryAdjustments();
-  await Promise.all(created.map((a) => recalcWorkerSalary(a.workerId)));
+  // 批次累加/扣減 totalSalary
+  await Promise.all(
+    created.map((a) =>
+      addToWorkerSalary(a.workerId, a.type === "increase" ? a.amount : -a.amount)
+    )
+  );
 
   res.status(201).json({
     success: true,
@@ -3895,6 +3910,7 @@ app.post("/api/salary-adjustments/total", authenticateToken, asyncHandler(async 
     const newHourlyWage = targetTotalSalary / totalHoursWorked;
 
     workers[workerIndex].baseHourlyWage = newHourlyWage;
+    workers[workerIndex].totalSalary = Math.round(targetTotalSalary);
     await saveWorkers();
 
     // 僅新增稽核記錄（amount=0），不新增金額調整以避免雙重計算

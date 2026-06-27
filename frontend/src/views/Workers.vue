@@ -982,10 +982,7 @@ const clearCurrentEditingWorker = () => {
 
 // 計算薪資總額（打卡工時 + 手動增減工時）× 時薪 + 薪資調整金額
 const calculateTotalSalary = (worker) => {
-  const salaryHours = worker.additionalHours || 0;
-  const base = salaryHours * (worker.hourlyWage || 0);
-  const adjustment = worker.adjustmentAmount || 0;
-  return Math.round(base + adjustment).toLocaleString();
+  return (worker.totalSalary || 0).toLocaleString();
 };
 
 // 關閉工讀生對話框

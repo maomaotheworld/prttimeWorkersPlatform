@@ -255,8 +255,6 @@
             <el-tag
               :type="row.fireTraining ? 'success' : 'danger'"
               size="small"
-              style="cursor:pointer"
-              @click="toggleFireTraining(row)"
             >
               {{ row.fireTraining ? "O" : "X" }}
             </el-tag>

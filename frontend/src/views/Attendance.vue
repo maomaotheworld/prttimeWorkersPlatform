@@ -123,6 +123,14 @@
             </template>
           </el-table-column>
 
+          <el-table-column label="消防" width="70" align="center">
+            <template #default="{ row }">
+              <span :style="{ color: row.fireTraining ? '#67C23A' : '#F56C6C', fontWeight: 'bold', fontSize: '16px' }">
+                {{ row.fireTraining ? 'O' : 'X' }}
+              </span>
+            </template>
+          </el-table-column>
+
           <el-table-column label="打卡狀態" min-width="230">
             <template #default="{ row }">
               <div class="attendance-status">

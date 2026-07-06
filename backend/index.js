@@ -4086,7 +4086,7 @@ app.post("/api/salary-adjustments/total", authenticateToken, asyncHandler(async 
     refreshTimeRecordsFromPrimaryStore(),
     refreshSalaryAdjustmentsFromPrimaryStore(),
   ]);
-  const { workerId, targetTotalSalary, reason } = req.body;
+  const { workerId, targetTotalSalary, reason, adjustmentAmount } = req.body;
 
   if (!workerId || !targetTotalSalary || targetTotalSalary <= 0 || !reason) {
     return res.status(400).json({
@@ -4130,13 +4130,14 @@ app.post("/api/salary-adjustments/total", authenticateToken, asyncHandler(async 
       workers[workerIndex].totalSalary = Math.round(targetTotalSalary);
       await saveWorkers();
 
+      const diff = adjustmentAmount !== undefined ? adjustmentAmount : 0;
       const auditRecord = decorateSalaryAdjustmentRecord({
         id: uuidv4(),
         workerId,
         workerName: worker.name,
-        type: "increase",
-        amount: 0,
-        reason: `調整總薪資：目標 ${targetTotalSalary} 元，時薪 ${oldHourlyWage}→${newHourlyWage} 元（${reason}）`,
+        type: diff >= 0 ? "increase" : "decrease",
+        amount: Math.abs(Math.round(diff)),
+        reason: `調整總薪資 共增減${diff >= 0 ? "+" : ""}${Math.round(diff)}元（${reason}）`,
         operatorId: operatorInfo.operatorId,
         operatorUsername: operatorInfo.operatorUsername,
         operatorName: operatorInfo.operatorName,
@@ -4161,13 +4162,14 @@ app.post("/api/salary-adjustments/total", authenticateToken, asyncHandler(async 
       workers[workerIndex].totalSalary = Math.round(targetTotalSalary);
       await saveWorkers();
 
+      const diff2 = adjustmentAmount !== undefined ? adjustmentAmount : 0;
       const auditRecord = decorateSalaryAdjustmentRecord({
         id: uuidv4(),
         workerId,
         workerName: worker.name,
-        type: "increase",
-        amount: 0,
-        reason: `直接設定總薪資：${targetTotalSalary} 元（${reason}）`,
+        type: diff2 >= 0 ? "increase" : "decrease",
+        amount: Math.abs(Math.round(diff2)),
+        reason: `調整總薪資 共增減${diff2 >= 0 ? "+" : ""}${Math.round(diff2)}元（${reason}）`,
         operatorId: operatorInfo.operatorId,
         operatorUsername: operatorInfo.operatorUsername,
         operatorName: operatorInfo.operatorName,

@@ -812,6 +812,7 @@ const handleTotalSalaryAdjust = async () => {
         workerId: totalSalaryForm.value.workerId,
         targetTotalSalary: totalSalaryForm.value.targetTotalSalary,
         reason: totalSalaryForm.value.reason,
+        adjustmentAmount: salaryAdjustment.value,
       }),
     });
 

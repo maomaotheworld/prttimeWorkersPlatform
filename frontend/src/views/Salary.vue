@@ -30,7 +30,7 @@
       </template>
 
       <el-row :gutter="16">
-        <el-col :xs="24" :sm="8">
+        <el-col :xs="24" :sm="12">
           <el-form-item label="選擇工讀生">
             <el-select
               v-model="selectedWorker"
@@ -47,7 +47,7 @@
             </el-select>
           </el-form-item>
         </el-col>
-        <el-col :xs="24" :sm="8">
+        <el-col :xs="24" :sm="12">
           <el-form-item label="計算期間">
             <el-date-picker
               v-model="dateRange"
@@ -60,23 +60,6 @@
               @change="handleDateChange"
             />
           </el-form-item>
-        </el-col>
-        <el-col :xs="24" :sm="8">
-          <el-button
-            type="primary"
-            @click="calculateSalary"
-            :loading="calculating"
-            :disabled="!selectedWorker"
-          >
-            計算薪資
-          </el-button>
-          <el-button
-            @click="refreshData"
-            :loading="calculating"
-            style="margin-left: 10px"
-          >
-            重新載入
-          </el-button>
         </el-col>
       </el-row>
     </el-card>
@@ -95,7 +78,7 @@
       </template>
 
       <el-row :gutter="16" class="salary-overview">
-        <el-col :xs="24" :sm="6">
+        <el-col :xs="12" :sm="6">
           <div class="salary-item total">
             <div class="salary-label">累計應付薪資</div>
             <div class="salary-value" style="color: #f56c6c">
@@ -103,7 +86,7 @@
             </div>
           </div>
         </el-col>
-        <el-col :xs="24" :sm="6">
+        <el-col :xs="12" :sm="6">
           <div class="salary-item">
             <div class="salary-label">基本時薪</div>
             <div class="salary-value">
@@ -111,19 +94,19 @@
             </div>
           </div>
         </el-col>
-        <el-col :xs="24" :sm="6">
-          <div class="salary-item">
-            <div class="salary-label">工作天數</div>
-            <div class="salary-value">
-              {{ salaryData.workTime.workingDays }} 天
-            </div>
-          </div>
-        </el-col>
-        <el-col :xs="24" :sm="6">
+        <el-col :xs="12" :sm="6">
           <div class="salary-item">
             <div class="salary-label">本期計薪工時</div>
             <div class="salary-value">
               {{ salaryData.workTime.totalSalaryHours }} 小時
+            </div>
+          </div>
+        </el-col>
+        <el-col :xs="12" :sm="6">
+          <div class="salary-item">
+            <div class="salary-label">是否參加消防</div>
+            <div class="salary-value" :style="{ color: salaryData.worker.fireTraining ? '#67c23a' : '#f56c6c' }">
+              {{ salaryData.worker.fireTraining ? 'O' : 'X' }}
             </div>
           </div>
         </el-col>
@@ -133,72 +116,53 @@
 
       <el-row :gutter="16">
         <el-col :xs="24" :sm="12">
-          <h3>工時明細</h3>
-          <el-descriptions :column="1" border>
-            <el-descriptions-item label="打卡記錄工時（純參考）">
-              <strong style="color: #909399"
-                >{{ salaryData.workTime.totalRegularHours }} 小時</strong
-              >
-              <el-text type="info" size="small">
-                ({{ salaryData.workTime.workingDays }} 天打卡記錄，不計入薪資)
-              </el-text>
-            </el-descriptions-item>
-            <el-descriptions-item label="計薪工時（手動輸入）">
-              <strong style="color: #409eff"
-                >{{ salaryData.workTime.totalAdditionalHours }} 小時</strong
-              >
-            </el-descriptions-item>
-            <el-descriptions-item label="薪資計算工時">
-              <strong style="color: #409eff"
-                >{{ salaryData.workTime.totalSalaryHours }} 小時</strong
-              >
-              <el-text type="primary" size="small">
-                (依手動輸入計薪工時計算)
-              </el-text>
-            </el-descriptions-item>
-          </el-descriptions>
+          <h3>打卡記錄</h3>
+          <div v-if="timeRecords.length === 0" style="color:#909399;padding:12px 0">此期間無打卡記錄</div>
+          <div v-else class="clock-records">
+            <div
+              v-for="record in timeRecords"
+              :key="record.id"
+              class="clock-record-row"
+            >
+              <span class="clock-date">{{ formatClockDate(record.date) }}</span>
+              <span class="clock-time">
+                上班 <b>{{ formatTime(record.clockIn) }}</b>
+                　下班 <b>{{ formatTime(record.clockOut) }}</b>
+              </span>
+            </div>
+          </div>
         </el-col>
 
         <el-col :xs="24" :sm="12">
           <h3>薪資計算</h3>
           <el-descriptions :column="1" border>
             <el-descriptions-item label="基本薪資">
-              <div>
-                <strong style="font-size: 16px; color: #67c23a"
-                  >{{ salaryData.salary.baseSalary }} 元</strong
-                >
-              </div>
-              <div style="font-size: 14px; color: #409eff; margin-top: 4px">
-                {{ salaryData.worker.baseHourlyWageDisplay ?? Math.round(salaryData.worker.baseHourlyWage) }} 元/時 ×
-                {{ salaryData.workTime.totalSalaryHours }} 小時（計薪工時）=
-                {{ salaryData.salary.baseSalary }} 元
+              <strong style="font-size:16px;color:#67c23a">{{ salaryData.salary.baseSalary }} 元</strong>
+              <div style="font-size:12px;color:#909399;margin-top:4px">
+                {{ Math.round(salaryData.worker.baseHourlyWage) }} 元/時 × {{ salaryData.workTime.totalSalaryHours }} 小時
               </div>
             </el-descriptions-item>
-            <el-descriptions-item
-              label="額外薪資"
-              v-if="salaryData.salary.extraSalary !== 0"
-            >
-              <span
-                :class="
-                  salaryData.salary.extraSalary >= 0
-                    ? 'success-text'
-                    : 'error-text'
-                "
-              >
-                {{ salaryData.salary.extraSalary >= 0 ? "+" : ""
-                }}{{ salaryData.salary.extraSalary }} 元
-              </span>
+            <el-descriptions-item label="額外薪資">
+              <strong style="font-size:16px;color:#409eff">+{{ extraSalary }} 元</strong>
+              <div style="font-size:12px;color:#909399;margin-top:4px" v-if="increaseAdjustments.length">
+                <span v-for="adj in increaseAdjustments" :key="adj.id" style="display:block">
+                  +{{ adj.amount }} 元（{{ adj.reason || '加薪' }}）
+                </span>
+              </div>
+            </el-descriptions-item>
+            <el-descriptions-item label="扣除額">
+              <strong style="font-size:16px;color:#e6a23c">-{{ deductionSalary }} 元</strong>
+              <div style="font-size:12px;color:#909399;margin-top:4px" v-if="decreaseAdjustments.length">
+                <span v-for="adj in decreaseAdjustments" :key="adj.id" style="display:block">
+                  -{{ adj.amount }} 元（{{ adj.reason || '扣薪' }}）
+                </span>
+              </div>
             </el-descriptions-item>
             <el-descriptions-item label="總薪資">
-              <strong style="font-size: 18px; color: #f56c6c">
-                {{ salaryData.salary.totalSalary }} 元
-              </strong>
-              <div style="font-size: 12px; color: #666; margin-top: 4px">
-                基本薪資 {{ salaryData.salary.baseSalary }} 元{{
-                  salaryData.salary.extraSalary !== 0
-                    ? ` + 額外薪資 ${salaryData.salary.extraSalary} 元`
-                    : ""
-                }}
+              <strong style="font-size:20px;color:#f56c6c">{{ displayTotalSalary }} 元</strong>
+              <el-tag v-if="manualTotalSalary !== null" type="warning" size="small" style="margin-left:8px">已手動調整</el-tag>
+              <div style="font-size:12px;color:#666;margin-top:4px" v-if="manualTotalSalary === null">
+                {{ salaryData.salary.baseSalary }} + {{ extraSalary }} - {{ deductionSalary }} = {{ computedTotalSalary }} 元
               </div>
             </el-descriptions-item>
           </el-descriptions>
@@ -504,10 +468,33 @@ const dateRange = ref([moment().format("YYYY-MM"), moment().format("YYYY-MM")]);
 
 const salaryData = ref(null);
 const adjustments = ref([]);
+const timeRecords = ref([]);
 const calculating = ref(false);
 const loadingAdjustments = ref(false);
 const submitting = ref(false);
 const cleanupSubmitting = ref(false);
+const manualTotalSalary = ref(null); // null = 未手動調整，number = 已調整
+
+// 從 adjustments 計算額外薪資、扣除額
+const increaseAdjustments = computed(() =>
+  adjustments.value.filter((a) => a.type === "increase")
+);
+const decreaseAdjustments = computed(() =>
+  adjustments.value.filter((a) => a.type === "decrease")
+);
+const extraSalary = computed(() =>
+  increaseAdjustments.value.reduce((sum, a) => sum + (Number(a.amount) || 0), 0)
+);
+const deductionSalary = computed(() =>
+  decreaseAdjustments.value.reduce((sum, a) => sum + (Number(a.amount) || 0), 0)
+);
+const computedTotalSalary = computed(() => {
+  if (!salaryData.value) return 0;
+  return (salaryData.value.salary.baseSalary || 0) + extraSalary.value - deductionSalary.value;
+});
+const displayTotalSalary = computed(() =>
+  manualTotalSalary.value !== null ? manualTotalSalary.value : computedTotalSalary.value
+);
 
 // 薪資調整對話框
 const adjustmentDialogVisible = ref(false);
@@ -597,6 +584,19 @@ const salaryAdjustment = computed(() => {
 // 工具函數
 const formatDate = (date) => moment(date).format("YYYY/MM/DD");
 
+const formatClockDate = (date) => {
+  const m = moment(date);
+  return `${m.year()}年${m.month() + 1}月${m.date()}日`;
+};
+
+const formatTime = (timeStr) => {
+  if (!timeStr) return "--:--";
+  // 可能是 ISO 字串或 HH:mm 格式
+  const m = moment(timeStr);
+  if (m.isValid()) return m.format("HH:mm");
+  return timeStr;
+};
+
 const getAuthHeaders = () => {
   const token = localStorage.getItem("auth_token");
   return {
@@ -653,6 +653,27 @@ const refreshData = async () => {
   }
 };
 
+// 載入打卡記錄
+const fetchTimeRecords = async () => {
+  if (!selectedWorker.value) return;
+  try {
+    const startDate = moment(dateRange.value[0]).startOf("month").format("YYYY-MM-DD");
+    const endDate = moment(dateRange.value[1]).endOf("month").format("YYYY-MM-DD");
+    const response = await fetch(
+      `/api/time-records?workerId=${selectedWorker.value}&startDate=${startDate}&endDate=${endDate}`,
+      { headers: getAuthHeaders() }
+    );
+    const result = await response.json();
+    if (result.success) {
+      timeRecords.value = (result.data || []).filter(
+        (r) => r.clockIn || r.clockOut
+      );
+    }
+  } catch (e) {
+    console.warn("載入打卡記錄失敗:", e);
+  }
+};
+
 // 載入薪資調整記錄
 const fetchAdjustments = async () => {
   try {
@@ -683,14 +704,19 @@ const fetchAdjustments = async () => {
 // 事件處理
 const handleWorkerChange = () => {
   salaryData.value = null;
+  manualTotalSalary.value = null;
+  timeRecords.value = [];
   if (selectedWorker.value) {
+    calculateSalary();
     fetchAdjustments();
+    fetchTimeRecords();
   }
 };
 
 const handleDateChange = () => {
   if (selectedWorker.value && dateRange.value) {
     calculateSalary();
+    fetchTimeRecords();
   }
 };
 
@@ -783,6 +809,7 @@ const handleTotalSalaryAdjust = async () => {
       `總薪資設定成功！時薪已更新為 ${Math.round(result.data.newHourlyWage)} 元`,
     );
 
+    manualTotalSalary.value = totalSalaryForm.value.targetTotalSalary;
     totalSalaryDialogVisible.value = false;
 
     // 直接更新 store 內的時薪，不重新 fetch（避免 Sheets 同步延遲導致拿到舊資料）
@@ -992,6 +1019,32 @@ onMounted(() => {
   text-align: center;
   padding: 60px 20px;
   color: #909399;
+}
+
+.clock-records {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.clock-record-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.clock-date {
+  color: #606266;
+  min-width: 100px;
+}
+
+.clock-time {
+  color: #303133;
 }
 
 @media (max-width: 768px) {

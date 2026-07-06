@@ -36,10 +36,12 @@
               v-model="selectedWorker"
               placeholder="請選擇工讀生"
               style="width: 100%"
+              filterable
+              :filter-method="filterWorkers"
               @change="handleWorkerChange"
             >
               <el-option
-                v-for="worker in workers"
+                v-for="worker in filteredWorkerOptions"
                 :key="worker.id"
                 :label="`${worker.number} - ${worker.name}`"
                 :value="worker.id"
@@ -462,6 +464,20 @@ const isMobile = computed(() => windowWidth.value <= 768);
 const isEvelyn = computed(() => authStore.isEvelyn);
 
 const workers = computed(() => workersStore.workers);
+
+const workerSearchQuery = ref("");
+const filteredWorkerOptions = computed(() => {
+  const q = workerSearchQuery.value.trim().toLowerCase();
+  if (!q) return workers.value;
+  return workers.value.filter(
+    (w) =>
+      (w.name || "").toLowerCase().includes(q) ||
+      String(w.number || "").toLowerCase().includes(q)
+  );
+});
+const filterWorkers = (query) => {
+  workerSearchQuery.value = query;
+};
 
 const selectedWorker = ref("");
 const dateRange = ref([moment().format("YYYY-MM"), moment().format("YYYY-MM")]);

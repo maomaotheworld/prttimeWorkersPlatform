@@ -3162,7 +3162,7 @@ app.put("/api/workers/batch-update-wage", asyncHandler(async (req, res) => {
 // 獲取所有組別
 // === Teams 管理（僅 Evelyn）===
 // 獲取所有 Teams
-app.get("/api/teams", asyncHandler(async (req, res) => {
+app.get("/api/teams", authenticateToken, asyncHandler(async (req, res) => {
   await refreshTeamsFromPrimaryStore();
   res.json({ success: true, data: teams, message: "Teams 列表獲取成功" });
 }));

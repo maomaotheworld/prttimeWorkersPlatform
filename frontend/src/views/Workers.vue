@@ -91,72 +91,82 @@
     <!-- 篩選器 -->
     <el-card style="margin-bottom: 10px">
       <div class="filter-container">
-        <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
-          <el-input
-            v-model="searchName"
-            placeholder="搜尋姓名或編號"
-            clearable
-            @input="applyFilter"
-            style="flex: 1; min-width: 140px"
-          >
-            <template #prefix><el-icon><Search /></el-icon></template>
-          </el-input>
-          <el-select
-            v-model="filterType"
-            placeholder="篩選方式"
-            @change="applyFilter"
-            style="min-width: 130px; flex: 1"
-          >
-            <el-option label="全選" value="all" />
-            <el-option label="依組別篩選" value="group" />
-            <el-option label="依樓層篩選" value="floor" />
-            <el-option label="依團隊篩選" value="team" />
-          </el-select>
-          <el-select
-            v-if="filterType === 'group'"
-            v-model="selectedGroup"
-            placeholder="選擇組別"
-            @change="applyFilter"
-            style="min-width: 130px; flex: 1"
-          >
-            <el-option
-              v-for="group in allGroups"
-              :key="group.id"
-              :label="group.name"
-              :value="group.name"
-            />
-          </el-select>
-          <el-select
-            v-if="filterType === 'floor'"
-            v-model="selectedFloor"
-            placeholder="選擇樓層"
-            @change="applyFilter"
-            style="min-width: 130px; flex: 1"
-          >
-            <el-option
-              v-for="floor in allFloors"
-              :key="floor"
-              :label="floor"
-              :value="floor"
-            />
-          </el-select>
-          <el-select
-            v-if="filterType === 'team'"
-            v-model="selectedTeam"
-            placeholder="選擇團隊"
-            @change="applyFilter"
-            style="min-width: 130px; flex: 1"
-          >
-            <el-option label="未分配" value="__none__" />
-            <el-option
-              v-for="t in teams"
-              :key="t.id"
-              :label="t.name"
-              :value="t.id"
-            />
-          </el-select>
-          <el-button @click="resetFilter" style="white-space: nowrap">重置篩選</el-button>
-        </div>
+        <el-row :gutter="16" align="middle">
+          <el-col :span="6">
+            <el-input
+              v-model="searchName"
+              placeholder="搜尋姓名或編號"
+              clearable
+              @input="applyFilter"
+            >
+              <template #prefix><el-icon><Search /></el-icon></template>
+            </el-input>
+          </el-col>
+          <el-col :span="5">
+            <el-select
+              v-model="filterType"
+              placeholder="篩選方式"
+              @change="applyFilter"
+              style="width: 100%"
+            >
+              <el-option label="全選" value="all" />
+              <!-- <el-option label="依組別篩選" value="group" /> 暫時隱藏（管理員專用） -->
+              <el-option label="依樓層篩選" value="floor" />
+              <el-option label="依團隊篩選" value="team" />
+            </el-select>
+          </el-col>
+          <!-- 組別篩選暫時隱藏（管理員專用）
+          <el-col :span="5" v-if="filterType === 'group'">
+            <el-select
+              v-model="selectedGroup"
+              placeholder="選擇組別"
+              @change="applyFilter"
+              style="width: 100%"
+            >
+              <el-option
+                v-for="group in allGroups"
+                :key="group.id"
+                :label="group.name"
+                :value="group.name"
+              />
+            </el-select>
+          </el-col>
+          -->
+          <el-col :span="5" v-if="filterType === 'floor'">
+            <el-select
+              v-model="selectedFloor"
+              placeholder="選擇樓層"
+              @change="applyFilter"
+              style="width: 100%"
+            >
+              <el-option
+                v-for="floor in allFloors"
+                :key="floor"
+                :label="floor"
+                :value="floor"
+              />
+            </el-select>
+          </el-col>
+          <el-col :span="5" v-if="filterType === 'team'">
+            <el-select
+              v-model="selectedTeam"
+              placeholder="選擇團隊"
+              @change="applyFilter"
+              style="width: 100%"
+            >
+              <el-option label="未分配" value="__none__" />
+              <el-option
+                v-for="t in teams"
+                :key="t.id"
+                :label="t.name"
+                :value="t.id"
+              />
+            </el-select>
+          </el-col>
+          <el-col :span="3">
+            <el-button @click="resetFilter">重置篩選</el-button>
+          </el-col>
+        </el-row>
       </div>
     </el-card>
 
@@ -226,6 +236,7 @@
           :fixed="isMobile ? 'left' : false"
           :width="isMobile ? '62' : '120'"
         />
+        <!-- 組別欄暫時隱藏（管理員專用）
         <el-table-column label="組別" :width="isMobile ? '60' : '100'">
           <template #default="{ row }">
             <el-tag :style="getGroupTagStyle(row.group)" effect="light">
@@ -233,6 +244,7 @@
             </el-tag>
           </template>
         </el-table-column>
+        -->
         <el-table-column
           prop="floor"
           label="樓層"
@@ -414,6 +426,7 @@
             </span>
           </template>
         </el-table-column>
+        <!-- 組別欄暫時隱藏（管理員專用）
         <el-table-column prop="group" label="組別" width="80">
           <template #default="{ row }">
             <span :style="{ color: row.group ? 'inherit' : 'red' }">
@@ -421,6 +434,7 @@
             </span>
           </template>
         </el-table-column>
+        -->
         <el-table-column prop="floor" label="樓層" width="80">
           <template #default="{ row }">
             <span :style="{ color: row.floor ? 'inherit' : 'red' }">

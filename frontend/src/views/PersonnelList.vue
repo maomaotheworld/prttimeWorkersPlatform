@@ -13,7 +13,7 @@
             <div class="search-box">
               <el-input
                 v-model="searchName"
-                placeholder="搜尋姓名、編號或組別"
+                placeholder="搜尋姓名或編號"
                 @input="handleSearch"
                 clearable
                 style="width: 300px"
@@ -44,6 +44,7 @@
               </el-select>
             </div>
 
+            <!-- 組別篩選暫時隱藏（管理員專用）
             <div class="filter-item">
               <label>組別篩選：</label>
               <el-select
@@ -61,6 +62,7 @@
                 />
               </el-select>
             </div>
+            -->
           </div>
         </div>
 
@@ -78,6 +80,7 @@
 
             <el-table-column prop="name" label="姓名" min-width="120" sortable />
 
+            <!-- 組別欄暫時隱藏（管理員專用）
             <el-table-column prop="groupId" label="組別" min-width="150" sortable>
               <template #default="scope">
                 <el-tag
@@ -90,6 +93,7 @@
                 <el-tag v-else size="small" type="info"> 未分組 </el-tag>
               </template>
             </el-table-column>
+            -->
 
             <el-table-column prop="floor" label="樓層" min-width="100" sortable>
               <template #default="scope">

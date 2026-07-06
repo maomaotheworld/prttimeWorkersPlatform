@@ -132,8 +132,7 @@ const routes = [
     meta: {
       title: "所屬團隊管理",
       requiresAuth: true,
-      allowedRoles: ["admin"],
-      evelynOnly: true,
+      allowedRoles: ["admin", "leader"],
     },
   },
 ];

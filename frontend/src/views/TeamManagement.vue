@@ -42,10 +42,16 @@
               <div v-if="!unassignedWorkers.length" class="board-empty">目前無未認領組員</div>
               <div v-for="w in unassignedWorkers" :key="w.id" class="worker-row">
                 <div class="worker-info">
-                  <span class="worker-name">{{ w.name }}</span>
-                  <span class="worker-num">{{ w.number }}</span>
-                  <span v-if="w.floor" class="worker-tag floor-tag">{{ w.floor }}</span>
-                  <span v-if="w.job" class="worker-tag job-tag">{{ w.job }}</span>
+                  <div class="worker-main">
+                    <div class="worker-meta">
+                      <span class="worker-name">{{ w.name }}</span>
+                      <span class="worker-num">{{ w.number }}</span>
+                      <span v-if="w.floor" class="worker-tag floor-tag">{{ w.floor }}</span>
+                    </div>
+                    <el-tooltip v-if="w.job" :content="w.job" placement="top" :show-after="200">
+                      <div class="worker-job">{{ w.job }}</div>
+                    </el-tooltip>
+                  </div>
                 </div>
                 <el-button type="primary" size="small" plain :loading="w.assigning"
                   @click="assignWorker(w.id, selectedTeamId)">認領</el-button>
@@ -154,10 +160,16 @@
               <div v-if="!unassignedWorkers.length" class="board-empty">目前無未認領組員</div>
               <div v-for="w in unassignedWorkers" :key="w.id" class="worker-row">
                 <div class="worker-info">
-                  <span class="worker-name">{{ w.name }}</span>
-                  <span class="worker-num">{{ w.number }}</span>
-                  <span v-if="w.floor" class="worker-tag floor-tag">{{ w.floor }}</span>
-                  <span v-if="w.job" class="worker-tag job-tag">{{ w.job }}</span>
+                  <div class="worker-main">
+                    <div class="worker-meta">
+                      <span class="worker-name">{{ w.name }}</span>
+                      <span class="worker-num">{{ w.number }}</span>
+                      <span v-if="w.floor" class="worker-tag floor-tag">{{ w.floor }}</span>
+                    </div>
+                    <el-tooltip v-if="w.job" :content="w.job" placement="top" :show-after="200">
+                      <div class="worker-job">{{ w.job }}</div>
+                    </el-tooltip>
+                  </div>
                 </div>
                 <el-button type="primary" size="small" plain :loading="w.assigning"
                   @click="assignWorker(w.id, myTeam.id)">認領</el-button>
@@ -388,12 +400,24 @@ onMounted(loadAll);
 .assigned-header { color: #3a8a4a; }
 .worker-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 4px; border-bottom: 1px solid #f0f2f5; }
 .worker-row:last-child { border-bottom: none; }
-.worker-info { display: flex; align-items: center; gap: 6px; flex: 1; flex-wrap: wrap; }
+.worker-info { display: flex; align-items: flex-start; flex: 1; min-width: 0; }
+.worker-main { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+.worker-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .worker-name { font-weight: 500; font-size: 14px; }
 .worker-num { font-size: 12px; color: #999; }
 .worker-tag { font-size: 11px; padding: 1px 6px; border-radius: 10px; white-space: nowrap; }
 .floor-tag { background: #ecf5ff; color: #409eff; }
-.job-tag { background: #fdf6ec; color: #b8741a; }
+.worker-job {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  cursor: default;
+  word-break: break-all;
+}
 .board-empty { color: #bbb; text-align: center; padding: 30px 0; font-size: 13px; }
 
 /* 團隊設定 */

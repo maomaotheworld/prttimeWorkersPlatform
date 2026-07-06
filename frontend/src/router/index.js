@@ -130,7 +130,7 @@ const routes = [
     name: "TeamManagement",
     component: () => lazyLoad(() => import("../views/TeamManagement.vue")),
     meta: {
-      title: "Team 管理",
+      title: "所屬團隊管理",
       requiresAuth: true,
       allowedRoles: ["admin"],
       evelynOnly: true,

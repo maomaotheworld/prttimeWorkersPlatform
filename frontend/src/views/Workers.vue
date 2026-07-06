@@ -110,6 +110,7 @@
             <el-option label="全選" value="all" />
             <el-option label="依組別篩選" value="group" />
             <el-option label="依樓層篩選" value="floor" />
+            <el-option label="依團隊篩選" value="team" />
           </el-select>
           <el-select
             v-if="filterType === 'group'"
@@ -137,6 +138,21 @@
               :key="floor"
               :label="floor"
               :value="floor"
+            />
+          </el-select>
+          <el-select
+            v-if="filterType === 'team'"
+            v-model="selectedTeam"
+            placeholder="選擇團隊"
+            @change="applyFilter"
+            style="min-width: 130px; flex: 1"
+          >
+            <el-option label="未分配" value="__none__" />
+            <el-option
+              v-for="t in teams"
+              :key="t.id"
+              :label="t.name"
+              :value="t.id"
             />
           </el-select>
           <el-button @click="resetFilter" style="white-space: nowrap">重置篩選</el-button>
@@ -790,9 +806,10 @@ const teams = ref<{ id: string; name: string }[]>([]);
 const WORKERS_FILTER_STORAGE_KEY = "workers-page-filters";
 
 // 篩選相關
-const filterType = ref("all"); // 'all', 'group', 'floor'
+const filterType = ref("all"); // 'all', 'group', 'floor', 'team'
 const selectedGroup = ref("");
 const selectedFloor = ref("");
+const selectedTeam = ref("");
 const restoreWorkersFilters = () => {
   try {
     const savedFilters = localStorage.getItem(WORKERS_FILTER_STORAGE_KEY);
@@ -802,6 +819,7 @@ const restoreWorkersFilters = () => {
     filterType.value = parsedFilters.filterType || "all";
     selectedGroup.value = parsedFilters.selectedGroup || "";
     selectedFloor.value = parsedFilters.selectedFloor || "";
+    selectedTeam.value = parsedFilters.selectedTeam || "";
   } catch (error) {
     console.warn("恢復工讀生篩選條件失敗:", error);
   }
@@ -814,6 +832,7 @@ const persistWorkersFilters = () => {
       filterType: filterType.value,
       selectedGroup: selectedGroup.value,
       selectedFloor: selectedFloor.value,
+      selectedTeam: selectedTeam.value,
     }),
   );
 };
@@ -858,11 +877,17 @@ const filteredWorkers = computed(() => {
 
   let list = workers.value;
 
-  // 組別/樓層篩選
+  // 組別/樓層/團隊篩選
   if (filterType.value === "group" && selectedGroup.value) {
     list = list.filter((w) => w.group === selectedGroup.value);
   } else if (filterType.value === "floor" && selectedFloor.value) {
     list = list.filter((w) => w.floor === selectedFloor.value);
+  } else if (filterType.value === "team" && selectedTeam.value) {
+    if (selectedTeam.value === "__none__") {
+      list = list.filter((w) => !w.teamId);
+    } else {
+      list = list.filter((w) => w.teamId === selectedTeam.value);
+    }
   }
 
   // 姓名/編號搜尋
@@ -1022,6 +1047,7 @@ const resetFilter = () => {
   filterType.value = "all";
   selectedGroup.value = "";
   selectedFloor.value = "";
+  selectedTeam.value = "";
   searchName.value = "";
   currentPage.value = 1;
   persistWorkersFilters();
@@ -1884,7 +1910,7 @@ onMounted(async () => {
   } catch (e) { /* teams 非關鍵，失敗不影響頁面 */ }
 });
 
-watch([filterType, selectedGroup, selectedFloor], () => {
+watch([filterType, selectedGroup, selectedFloor, selectedTeam], () => {
   persistWorkersFilters();
 });
 

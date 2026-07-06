@@ -54,6 +54,7 @@ const salaryAdjustmentsFilePath = path.join(
   "salaryAdjustments.json",
 );
 const activityLogsFilePath = path.join(dataDir, "activityLogs.json");
+const teamsFilePath = path.join(dataDir, "teams.json");
 
 const DEFAULT_GROUPS = [
   { id: "group-1", name: "前台組", description: "負責前台接待工作" },
@@ -467,6 +468,7 @@ function normalizeUserRecord(user = {}) {
     name: String(user.name || "").trim(),
     email: String(user.email || "").trim(),
     isActive: parseSheetBoolean(user.isActive, true),
+    teamId: user.teamId || null,
     permissions:
       user.permissions && typeof user.permissions === "object"
         ? user.permissions
@@ -700,6 +702,12 @@ async function initializeAppData() {
     DEFAULT_GROUPS,
   );
   groups = await loadGroupsFromPrimaryStore(groups);
+  teams = await loadPersistedCollection(
+    "teams",
+    teamsFilePath,
+    [],
+    (list) => list.map(normalizeTeamRecord),
+  );
   timeRecords = await loadPersistedCollection(
     "timeRecords",
     timeRecordsFilePath,
@@ -759,6 +767,11 @@ async function saveGroups() {
     await syncGroupsToGoogleSheets(groups);
   }
   await persistCollection("groups", groupsFilePath, groups);
+}
+
+async function saveTeams() {
+  _touch("teams");
+  await persistCollection("teams", teamsFilePath, teams.map(normalizeTeamRecord));
 }
 
 async function saveTimeRecords() {
@@ -837,6 +850,7 @@ async function saveActivityLogs() {
 
 let workers = [];
 let groups = [];
+let teams = [];
 let timeRecords = [];
 let salaryAdjustments = [];
 let activityLogs = [];
@@ -851,6 +865,7 @@ let activityLogSyncChain = Promise.resolve();
 const CACHE_TTL = {
   workers: 5_000,
   groups: 5_000,
+  teams: 5_000,
   timeRecords: 5_000,
   salaryAdjustments: 5_000,
   users: 5_000,
@@ -858,7 +873,7 @@ const CACHE_TTL = {
   activityLogs: 5_000,
 };
 const _cacheTs = {
-  workers: 0, groups: 0, timeRecords: 0,
+  workers: 0, groups: 0, teams: 0, timeRecords: 0,
   salaryAdjustments: 0, users: 0, permissions: 0, activityLogs: 0,
 };
 function _isFresh(key) {
@@ -875,6 +890,15 @@ function normalizeGroupRecord(group) {
     name: String(group.name || "").trim(),
     description: String(group.description || "").trim(),
     createdAt: group.createdAt || new Date().toISOString(),
+  };
+}
+
+function normalizeTeamRecord(team) {
+  return {
+    id: String(team.id || uuidv4()),
+    name: String(team.name || "").trim(),
+    description: String(team.description || "").trim(),
+    createdAt: team.createdAt || new Date().toISOString(),
   };
 }
 
@@ -1070,6 +1094,12 @@ async function refreshGroupsFromPrimaryStore() {
   groups = await loadGroupsFromPrimaryStore(groups);
   _touch("groups");
   return groups;
+}
+
+async function refreshTeamsFromPrimaryStore() {
+  if (_isFresh("teams")) return teams;
+  _touch("teams");
+  return teams;
 }
 
 async function syncGroupsToGoogleSheets(groupList) {
@@ -2053,6 +2083,7 @@ app.get(
       role: user.role,
       email: user.email,
       isActive: user.isActive,
+      teamId: user.teamId || null,
       createdAt: user.createdAt,
     }));
 
@@ -3033,6 +3064,103 @@ app.put("/api/workers/batch-update-wage", asyncHandler(async (req, res) => {
 
 // === 組別管理 ===
 // 獲取所有組別
+// === Teams 管理（僅 Evelyn）===
+// 獲取所有 Teams
+app.get("/api/teams", authenticateToken, asyncHandler(async (req, res) => {
+  await refreshTeamsFromPrimaryStore();
+  res.json({ success: true, data: teams, message: "Teams 列表獲取成功" });
+}));
+
+// 新增 Team
+app.post("/api/teams", authenticateToken, requireEvelyn, asyncHandler(async (req, res) => {
+  await refreshTeamsFromPrimaryStore();
+  const { name, description } = req.body;
+  if (!name || !name.trim()) {
+    return res.status(400).json({ success: false, message: "Team 名稱不能為空" });
+  }
+  if (teams.find((t) => t.name === name.trim())) {
+    return res.status(400).json({ success: false, message: "Team 名稱已存在" });
+  }
+  const newTeam = normalizeTeamRecord({ id: uuidv4(), name: name.trim(), description: description || "" });
+  const previousTeams = cloneData(teams);
+  try {
+    teams.push(newTeam);
+    await saveTeams();
+  } catch (error) {
+    teams = previousTeams;
+    throw error;
+  }
+  res.status(201).json({ success: true, data: newTeam, message: "Team 新增成功" });
+}));
+
+// 更新 Team
+app.put("/api/teams/:id", authenticateToken, requireEvelyn, asyncHandler(async (req, res) => {
+  await refreshTeamsFromPrimaryStore();
+  const { name, description } = req.body;
+  const teamIndex = teams.findIndex((t) => t.id === req.params.id);
+  if (teamIndex === -1) {
+    return res.status(404).json({ success: false, message: "Team 不存在" });
+  }
+  if (name && teams.find((t) => t.name === name.trim() && t.id !== req.params.id)) {
+    return res.status(400).json({ success: false, message: "Team 名稱已存在" });
+  }
+  const previousTeams = cloneData(teams);
+  try {
+    teams[teamIndex] = {
+      ...teams[teamIndex],
+      name: name ? name.trim() : teams[teamIndex].name,
+      description: description !== undefined ? description : teams[teamIndex].description,
+    };
+    await saveTeams();
+  } catch (error) {
+    teams = previousTeams;
+    throw error;
+  }
+  res.json({ success: true, data: teams[teamIndex], message: "Team 更新成功" });
+}));
+
+// 刪除 Team
+app.delete("/api/teams/:id", authenticateToken, requireEvelyn, asyncHandler(async (req, res) => {
+  await refreshTeamsFromPrimaryStore();
+  const teamIndex = teams.findIndex((t) => t.id === req.params.id);
+  if (teamIndex === -1) {
+    return res.status(404).json({ success: false, message: "Team 不存在" });
+  }
+  const usersInTeam = usersData.users.filter((u) => u.teamId === req.params.id);
+  if (usersInTeam.length > 0) {
+    return res.status(400).json({
+      success: false,
+      message: `無法刪除，目前有 ${usersInTeam.length} 位用戶屬於此 Team，請先解除指派`,
+    });
+  }
+  const previousTeams = cloneData(teams);
+  try {
+    teams.splice(teamIndex, 1);
+    await saveTeams();
+  } catch (error) {
+    teams = previousTeams;
+    throw error;
+  }
+  res.json({ success: true, message: "Team 刪除成功" });
+}));
+
+// 指派/解除用戶的 Team
+app.patch("/api/teams/assign-user", authenticateToken, requireEvelyn, asyncHandler(async (req, res) => {
+  await refreshUsersDataFromPrimaryStore();
+  await refreshTeamsFromPrimaryStore();
+  const { userId, teamId } = req.body;
+  const userIndex = usersData.users.findIndex((u) => u.id === userId);
+  if (userIndex === -1) {
+    return res.status(404).json({ success: false, message: "用戶不存在" });
+  }
+  if (teamId && !teams.find((t) => t.id === teamId)) {
+    return res.status(404).json({ success: false, message: "Team 不存在" });
+  }
+  usersData.users[userIndex].teamId = teamId || null;
+  await saveUsers();
+  res.json({ success: true, data: { userId, teamId: teamId || null }, message: "Team 指派成功" });
+}));
+
 app.get("/api/groups", asyncHandler(async (req, res) => {
   await refreshGroupsFromPrimaryStore();
 

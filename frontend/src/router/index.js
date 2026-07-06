@@ -125,6 +125,17 @@ const routes = [
       evelynOnly: true,
     },
   },
+  {
+    path: "/teams",
+    name: "TeamManagement",
+    component: () => lazyLoad(() => import("../views/TeamManagement.vue")),
+    meta: {
+      title: "Team 管理",
+      requiresAuth: true,
+      allowedRoles: ["admin"],
+      evelynOnly: true,
+    },
+  },
 ];
 
 const router = createRouter({

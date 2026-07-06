@@ -1,1 +1,37 @@
-[]
+[
+  {
+    "id": "team-01cc",
+    "name": "頒獎",
+    "description": ""
+  },
+  {
+    "id": "team-08min",
+    "name": "點錄",
+    "description": ""
+  },
+  {
+    "id": "team-16zoe",
+    "name": "秘書",
+    "description": ""
+  },
+  {
+    "id": "team-47amy",
+    "name": "B1",
+    "description": ""
+  },
+  {
+    "id": "team-48lo",
+    "name": "1F左",
+    "description": ""
+  },
+  {
+    "id": "team-49piu",
+    "name": "1F右",
+    "description": ""
+  },
+  {
+    "id": "team-50puff",
+    "name": "2Fu.4u10",
+    "description": ""
+  }
+]

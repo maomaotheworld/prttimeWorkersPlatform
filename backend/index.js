@@ -83,6 +83,7 @@ const WORKER_SHEET_HEADERS = [
   "totalSalary",
   "createdAt",
   "updatedAt",
+  "teamId",
 ];
 const TIME_RECORD_SHEET_NAME = "time_records";
 const TIME_RECORD_SHEET_HEADERS = [
@@ -1159,9 +1160,10 @@ async function loadWorkersFromGoogleSheets() {
     return [];
   }
 
-  const hasHeaderRow = WORKER_SHEET_HEADERS.every(
+  const actualColCount = (rows[0] || []).length;
+  const hasHeaderRow = WORKER_SHEET_HEADERS.slice(0, actualColCount).every(
     (header, index) => (rows[0][index] || "").trim() === header,
-  );
+  ) && actualColCount >= 5; // 至少有前 5 個欄位才算 header row
   const dataRows = hasHeaderRow ? rows.slice(1) : rows;
 
   return mapSheetRowsToObjects(dataRows, WORKER_SHEET_HEADERS)

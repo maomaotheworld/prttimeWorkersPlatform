@@ -211,11 +211,14 @@
               </div>
               <div class="column-body readonly">
                 <div v-if="!getWorkersByTeam(team.id).length" class="column-empty">無組員</div>
-                <div v-for="worker in getWorkersByTeam(team.id)" :key="worker.id" class="worker-card readonly-card">
+                <div v-for="worker in getWorkersByTeam(team.id)" :key="worker.id" class="worker-card readonly-card locked-card">
                   <div class="worker-info">
                     <span class="worker-name">{{ worker.name }}</span>
                     <span class="worker-num">{{ worker.number }}</span>
                   </div>
+                  <el-tooltip :content="`此組員已屬於「${team.name}」，請由該隊組長先解除後才可移入`" placement="top">
+                    <el-icon class="lock-icon"><Lock /></el-icon>
+                  </el-tooltip>
                 </div>
               </div>
             </div>
@@ -245,7 +248,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Flag, Plus, Edit, Delete, Refresh, User, UserFilled, RemoveFilled, CirclePlusFilled, Rank } from "@element-plus/icons-vue";
+import { Flag, Plus, Edit, Delete, Refresh, User, UserFilled, RemoveFilled, CirclePlusFilled, Rank, Lock } from "@element-plus/icons-vue";
 import { useAuthStore } from "../stores/auth";
 import { getApiUrl } from "@/config/api";
 
@@ -493,6 +496,9 @@ onMounted(loadAll);
 .unassigned-header { background: #f0f2f5; color: #606266; }
 .my-team-header { background: #d4efde; color: #3a8a4a; }
 .other-team-header { background: #fdf6ec; color: #b8741a; }
+.locked-card { opacity: 0.7; cursor: not-allowed; background: #f9f9f9; }
+.locked-card:hover { box-shadow: none; transform: none; }
+.lock-icon { color: #c0c4cc; font-size: 15px; flex-shrink: 0; }
 .column-body { flex: 1; padding: 8px; overflow-y: auto; max-height: 60vh; }
 .column-body.readonly { pointer-events: none; }
 .column-empty { color: #bbb; text-align: center; padding: 40px 0; font-size: 13px; }

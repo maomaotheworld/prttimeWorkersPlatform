@@ -76,6 +76,35 @@
           </template>
         </el-table-column>
 
+        <el-table-column label="所屬團隊" min-width="150">
+          <template #default="{ row }">
+            <!-- Evelyn 可編輯小組長的 team；管理員/訪客無法指派 -->
+            <template v-if="isEvelyn && row.role === 'leader'">
+              <el-select
+                :model-value="row.teamId || ''"
+                size="small"
+                placeholder="未指派"
+                style="width:130px"
+                @change="(val) => handleAssignTeam(row, val || null)"
+                clearable
+              >
+                <el-option
+                  v-for="team in teams"
+                  :key="team.id"
+                  :label="team.name"
+                  :value="team.id"
+                />
+              </el-select>
+            </template>
+            <template v-else>
+              <el-tag v-if="row.teamId" type="primary" size="small" effect="plain">
+                {{ getTeamName(row.teamId) }}
+              </el-tag>
+              <span v-else style="color:#bbb;font-size:12px">—</span>
+            </template>
+          </template>
+        </el-table-column>
+
         <el-table-column prop="createdAt" label="建立時間" width="150">
           <template #default="{ row }">
             <span class="date">{{ formatDate(row.createdAt) }}</span>
@@ -237,6 +266,7 @@ import { ref, reactive, computed, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Setting, User, Plus, Delete, Refresh } from "@element-plus/icons-vue";
 import { useAuthStore } from "../stores/auth";
+import { getApiUrl } from "@/config/api";
 import moment from "moment";
 
 const authStore = useAuthStore();
@@ -248,6 +278,7 @@ const creatingAdmin = ref(false);
 const showCreateDialog = ref(false);
 const showCreateAdminDialog = ref(false);
 const users = ref([]);
+const teams = ref([]);
 
 // 表單數據
 const createForm = reactive({
@@ -335,6 +366,46 @@ const loadUsers = async () => {
     ElMessage.error("載入用戶列表失敗");
   } finally {
     loading.value = false;
+  }
+};
+
+// 載入團隊列表
+const loadTeams = async () => {
+  try {
+    const token = localStorage.getItem("auth_token");
+    const res = await fetch(getApiUrl("/api/teams"), {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (data.success) teams.value = data.data;
+  } catch (e) {
+    console.error("載入團隊失敗", e);
+  }
+};
+
+// 取得團隊名稱
+const getTeamName = (teamId) => {
+  return teams.value.find((t) => t.id === teamId)?.name || teamId;
+};
+
+// 指派小組長所屬 Team（Evelyn only）
+const handleAssignTeam = async (user, teamId) => {
+  try {
+    const token = localStorage.getItem("auth_token");
+    const res = await fetch(getApiUrl("/api/teams/assign-user"), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ userId: user.id, teamId }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      user.teamId = teamId;
+      ElMessage.success(teamId ? `已指派到「${getTeamName(teamId)}」` : "已解除團隊指派");
+    } else {
+      ElMessage.error(data.message || "指派失敗");
+    }
+  } catch (e) {
+    ElMessage.error("指派失敗");
   }
 };
 
@@ -480,6 +551,7 @@ const handleCloseAdminDialog = () => {
 // 組件掛載
 onMounted(() => {
   loadUsers();
+  loadTeams();
 });
 </script>
 

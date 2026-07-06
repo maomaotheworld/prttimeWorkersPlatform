@@ -1186,7 +1186,10 @@ async function loadWorkersFromGoogleSheets() {
 
   return mapSheetRowsToObjects(dataRows, WORKER_SHEET_HEADERS)
     .map(normalizeWorkerRecord)
-    .filter((worker) => worker.number && worker.name);
+    .filter((worker) =>
+      worker.number && worker.name &&
+      worker.id !== "id" && worker.number !== "number" && worker.name !== "name"
+    );
 }
 
 async function loadWorkersFromPrimaryStore(fallbackWorkers) {

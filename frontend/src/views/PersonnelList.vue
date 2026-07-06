@@ -13,7 +13,7 @@
             <div class="search-box">
               <el-input
                 v-model="searchName"
-                placeholder="搜尋員工姓名"
+                placeholder="搜尋姓名、編號或組別"
                 @input="handleSearch"
                 clearable
                 style="width: 300px"
@@ -277,12 +277,13 @@ export default defineComponent({
 
       console.log("PersonnelList: 映射後的工讀生:", result);
 
-      // 姓名搜尋
+      // 姓名、編號、組別搜尋
       if (searchName.value.trim()) {
+        const q = searchName.value.trim().toLowerCase();
         result = result.filter((worker) =>
-          worker.name
-            .toLowerCase()
-            .includes(searchName.value.trim().toLowerCase()),
+          (worker.name || "").toLowerCase().includes(q) ||
+          String(worker.number || "").toLowerCase().includes(q) ||
+          (worker.groupName || "").toLowerCase().includes(q)
         );
       }
 

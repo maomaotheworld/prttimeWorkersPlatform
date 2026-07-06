@@ -1124,6 +1124,7 @@ function normalizeWorkerRecord(worker) {
     gender: String(normalizedWorker.gender || "").trim(),
     level: Number(normalizedWorker.level) || 1,
     groupId: normalizedWorker.groupId || "",
+    teamId: normalizedWorker.teamId || null,
     floor: String(normalizedWorker.floor || "").trim(),
     job: String(normalizedWorker.job || "").trim(),
     baseHourlyWage: Number(normalizedWorker.baseHourlyWage) || 0,
@@ -1883,6 +1884,7 @@ app.post("/api/auth/login", asyncHandler(async (req, res) => {
           username: user.username,
           name: user.name,
           role: user.role,
+          teamId: user.teamId || null,
           permissions: user.permissions,
         },
       },
@@ -2502,6 +2504,46 @@ app.get("/api/workers", asyncHandler(async (req, res) => {
       : workers,
     message: "工讀生列表獲取成功",
   });
+}));
+
+// 指派工讀生到 Team
+app.patch("/api/workers/:id/assign-team", authenticateToken, asyncHandler(async (req, res) => {
+  await refreshWorkersFromPrimaryStore();
+  await refreshTeamsFromPrimaryStore();
+  const { teamId } = req.body;
+  const workerIndex = workers.findIndex((w) => w.id === req.params.id);
+
+  if (workerIndex === -1) {
+    return res.status(404).json({ success: false, message: "工讀生不存在" });
+  }
+
+  // 非 Evelyn/admin：只能指派到自己的 team 或從自己 team 移除
+  if (!isEvelynUser(req.user) && req.user.role !== "admin") {
+    const callerUser = usersData.users.find((u) => u.id === req.user.id);
+    const callerTeamId = callerUser?.teamId || null;
+
+    if (!callerTeamId) {
+      return res.status(403).json({ success: false, message: "您尚未被指派到任何 Team，請聯絡管理員" });
+    }
+
+    const currentTeamId = workers[workerIndex].teamId;
+    // 只能移入自己的 team，或從自己的 team 移除
+    if (teamId !== null && teamId !== callerTeamId) {
+      return res.status(403).json({ success: false, message: "只能將組員分配到您自己的 Team" });
+    }
+    if (teamId === null && currentTeamId !== callerTeamId) {
+      return res.status(403).json({ success: false, message: "只能從您自己的 Team 移除組員" });
+    }
+  }
+
+  if (teamId && !teams.find((t) => t.id === teamId)) {
+    return res.status(404).json({ success: false, message: "Team 不存在" });
+  }
+
+  workers[workerIndex].teamId = teamId || null;
+  await saveWorkers();
+
+  res.json({ success: true, data: workers[workerIndex], message: "組員 Team 指派成功" });
 }));
 
 // 獲取單個工讀生

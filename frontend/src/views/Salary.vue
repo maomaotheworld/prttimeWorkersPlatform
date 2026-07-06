@@ -92,7 +92,7 @@
           <div class="salary-item">
             <div class="salary-label">基本時薪</div>
             <div class="salary-value">
-              {{ salaryData.worker.baseHourlyWageDisplay ?? Math.round(salaryData.worker.baseHourlyWage) }} 元
+              {{ Math.round(salaryData.worker.baseHourlyWage) }} 元
             </div>
           </div>
         </el-col>

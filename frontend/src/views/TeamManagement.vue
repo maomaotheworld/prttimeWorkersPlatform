@@ -38,6 +38,15 @@
                   <span>未認領工讀生</span>
                   <el-tag type="info" size="small">{{ unassignedWorkers.length }}</el-tag>
                 </div>
+                <el-input
+                  v-model="unassignedWorkerSearch"
+                  placeholder="搜尋姓名、編號或樓層"
+                  clearable
+                  size="small"
+                  style="margin-top:8px"
+                >
+                  <template #prefix><el-icon><Search /></el-icon></template>
+                </el-input>
               </template>
               <div v-if="!unassignedWorkers.length" class="board-empty">目前無未認領組員</div>
               <div v-for="w in unassignedWorkers" :key="w.id" class="worker-row">
@@ -147,7 +156,6 @@
         <el-empty description="您尚未被指派到任何團隊，請聯絡 Evelyn" />
       </div>
       <template v-else>
-        <el-row :gutter="16" class="assign-board">
           <!-- 左：未認領 -->
           <el-col :xs="24" :sm="12">
             <el-card shadow="never" class="board-card">
@@ -156,6 +164,15 @@
                   <span>未認領工讀生</span>
                   <el-tag type="info" size="small">{{ unassignedWorkers.length }}</el-tag>
                 </div>
+                <el-input
+                  v-model="unassignedWorkerSearch"
+                  placeholder="搜尋姓名、編號或樓層"
+                  clearable
+                  size="small"
+                  style="margin-top:8px"
+                >
+                  <template #prefix><el-icon><Search /></el-icon></template>
+                </el-input>
               </template>
               <div v-if="!unassignedWorkers.length" class="board-empty">目前無未認領組員</div>
               <div v-for="w in unassignedWorkers" :key="w.id" class="worker-row">
@@ -222,7 +239,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Flag, Plus, Edit, Delete, Refresh, User, UserFilled, CircleClose } from "@element-plus/icons-vue";
+import { Flag, Plus, Edit, Delete, Refresh, User, UserFilled, CircleClose, Search } from "@element-plus/icons-vue";
 import { useAuthStore } from "../stores/auth";
 import { getApiUrl } from "@/config/api";
 
@@ -250,7 +267,18 @@ const myTeam = computed(() => {
   return teams.value.find((t) => t.id === teamId) || null;
 });
 
-const unassignedWorkers = computed(() => workers.value.filter((w) => !w.teamId));
+const unassignedWorkerSearch = ref("");
+const unassignedWorkers = computed(() => {
+  const list = workers.value.filter((w) => !w.teamId);
+  const q = unassignedWorkerSearch.value.trim().toLowerCase();
+  if (!q) return list;
+  return list.filter(
+    (w) =>
+      (w.name || "").toLowerCase().includes(q) ||
+      String(w.number || "").toLowerCase().includes(q) ||
+      (w.floor || "").toLowerCase().includes(q)
+  );
+});
 const myTeamWorkers = computed(() => workers.value.filter((w) => w.teamId === myTeam.value?.id));
 const unassignedUsers = computed(() => allUsers.value.filter((u) => !u.teamId && u.role === "leader"));
 

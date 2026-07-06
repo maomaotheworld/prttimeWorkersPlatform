@@ -55,6 +55,7 @@ const salaryAdjustmentsFilePath = path.join(
 );
 const activityLogsFilePath = path.join(dataDir, "activityLogs.json");
 const teamsFilePath = path.join(dataDir, "teams.json");
+const workerTeamsFilePath = path.join(dataDir, "workerTeams.json");
 
 const DEFAULT_GROUPS = [
   { id: "group-1", name: "前台組", description: "負責前台接待工作" },
@@ -721,6 +722,11 @@ async function initializeAppData() {
     [],
     (list) => list.map(normalizeTeamRecord),
   );
+  workerTeams = await loadPersistedCollection(
+    "workerTeams",
+    workerTeamsFilePath,
+    {},
+  );
   timeRecords = await loadPersistedCollection(
     "timeRecords",
     timeRecordsFilePath,
@@ -785,6 +791,10 @@ async function saveGroups() {
 async function saveTeams() {
   _touch("teams");
   await persistCollection("teams", teamsFilePath, teams.map(normalizeTeamRecord));
+}
+
+async function saveWorkerTeams() {
+  await persistCollection("workerTeams", workerTeamsFilePath, workerTeams);
 }
 
 async function saveTimeRecords() {
@@ -864,6 +874,7 @@ async function saveActivityLogs() {
 let workers = [];
 let groups = [];
 let teams = [];
+let workerTeams = {}; // { [workerId]: teamId | null }
 let timeRecords = [];
 let salaryAdjustments = [];
 let activityLogs = [];
@@ -1172,37 +1183,43 @@ async function loadWorkersFromGoogleSheets() {
 }
 
 async function loadWorkersFromPrimaryStore(fallbackWorkers) {
+  let loadedWorkers;
   if (!isGoogleSheetsConfigured()) {
-    return normalizeWorkers(fallbackWorkers);
+    loadedWorkers = normalizeWorkers(fallbackWorkers);
+  } else {
+    try {
+      const sheetWorkers = await loadWorkersFromGoogleSheets();
+
+      if (sheetWorkers.length > 0) {
+        console.log(
+          `📄 workers 已從 Google Sheets 載入 ${sheetWorkers.length} 筆`,
+        );
+        loadedWorkers = normalizeWorkers(sheetWorkers);
+      } else {
+        if (fallbackWorkers.length > 0) {
+          await syncWorkersToGoogleSheets(fallbackWorkers);
+          console.log(
+            `📄 workers 工作表為空，已自動同步既有 ${fallbackWorkers.length} 筆資料到 Google Sheets`,
+          );
+        } else {
+          console.log("ℹ️ workers 工作表目前為空，且系統尚無既有資料");
+        }
+        loadedWorkers = normalizeWorkers(fallbackWorkers);
+      }
+    } catch (error) {
+      console.warn(
+        "⚠️ 載入 Google Sheets workers 失敗，改用既有資料:",
+        error.message,
+      );
+      loadedWorkers = normalizeWorkers(fallbackWorkers);
+    }
   }
 
-  try {
-    const sheetWorkers = await loadWorkersFromGoogleSheets();
-
-    if (sheetWorkers.length > 0) {
-      console.log(
-        `📄 workers 已從 Google Sheets 載入 ${sheetWorkers.length} 筆`,
-      );
-      return normalizeWorkers(sheetWorkers);
-    }
-
-    if (fallbackWorkers.length > 0) {
-      await syncWorkersToGoogleSheets(fallbackWorkers);
-      console.log(
-        `📄 workers 工作表為空，已自動同步既有 ${fallbackWorkers.length} 筆資料到 Google Sheets`,
-      );
-    } else {
-      console.log("ℹ️ workers 工作表目前為空，且系統尚無既有資料");
-    }
-
-    return normalizeWorkers(fallbackWorkers);
-  } catch (error) {
-    console.warn(
-      "⚠️ 載入 Google Sheets workers 失敗，改用既有資料:",
-      error.message,
-    );
-    return normalizeWorkers(fallbackWorkers);
-  }
+  // 合併獨立儲存的 team 指派（不依賴 Google Sheets 欄位）
+  return loadedWorkers.map((w) => ({
+    ...w,
+    teamId: workerTeams[w.id] !== undefined ? workerTeams[w.id] : (w.teamId || null),
+  }));
 }
 
 async function refreshWorkersFromPrimaryStore() {
@@ -2556,6 +2573,8 @@ app.patch("/api/workers/:id/assign-team", authenticateToken, asyncHandler(async 
   }
 
   workers[workerIndex].teamId = teamId || null;
+  workerTeams[workers[workerIndex].id] = teamId || null;
+  await saveWorkerTeams();
   await saveWorkers();
 
   res.json({ success: true, data: workers[workerIndex], message: "組員 Team 指派成功" });

@@ -775,7 +775,14 @@ async function saveUsers() {
 async function saveWorkers() {
   _touch("workers");
   if (isGoogleSheetsConfigured()) {
-    await syncWorkersToGoogleSheets(workers);
+    try {
+      await syncWorkersToGoogleSheets(workers);
+      console.log("✅ syncWorkersToGoogleSheets 寫入成功");
+    } catch (err) {
+      console.error("❌ syncWorkersToGoogleSheets 寫入失敗:", err.message);
+    }
+  } else {
+    console.warn("⚠️ Google Sheets 未設定，跳過 syncWorkersToGoogleSheets");
   }
   await persistCollection("workers", workersFilePath, normalizeWorkers(workers));
 }

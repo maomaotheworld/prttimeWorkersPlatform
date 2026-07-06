@@ -2044,5 +2044,53 @@ const getTeamName = (teamId: string | null | undefined) =>
     width: 100%;
     justify-content: flex-end;
   }
+
+  /* 手機版 Dialog 優化 */
+  :deep(.el-dialog) {
+    width: 95vw !important;
+    margin: 5vh auto !important;
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 12px 16px;
+  }
+
+  :deep(.el-dialog__header) {
+    padding: 14px 16px 10px;
+  }
+
+  :deep(.el-form-item) {
+    margin-bottom: 14px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  :deep(.el-form-item__label) {
+    font-size: 14px;
+    font-weight: 600;
+    padding-bottom: 4px;
+    width: auto !important;
+    text-align: left;
+  }
+
+  :deep(.el-form-item__content) {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+
+  :deep(.el-input__inner),
+  :deep(.el-textarea__inner) {
+    font-size: 15px;
+  }
+
+  :deep(.el-dialog__footer) {
+    padding: 10px 16px 14px;
+  }
+
+  :deep(.el-dialog__footer .el-button) {
+    font-size: 15px;
+    padding: 10px 20px;
+    height: 40px;
+  }
 }
 </style>

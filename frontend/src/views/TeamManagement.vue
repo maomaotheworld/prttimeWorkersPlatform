@@ -101,7 +101,7 @@
         <div class="header-content">
           <h1 class="page-title"><el-icon><Flag /></el-icon> 所屬團隊管理</h1>
           <p class="page-description" v-if="myTeam">
-            我的團隊：<strong>{{ myTeam.name }}</strong>　可將未分配的組員拖曳或選取加入
+            我的團隊：<strong>{{ myTeam.name }}</strong>　已認領 <strong>{{ myTeamWorkers.length }}</strong> 位組員
           </p>
           <p class="page-description" v-else style="color:#f56c6c">
             您尚未被指派到任何團隊，請聯絡 Evelyn
@@ -115,115 +115,64 @@
       </div>
 
       <template v-else>
-        <el-card class="toolbar-card" v-if="selectedWorkerIds.length">
-          <div class="toolbar-row">
-            <span>已選取 <strong>{{ selectedWorkerIds.length }}</strong> 位組員</span>
-            <div>
-              <el-button type="primary" size="small" @click="handleBatchAssign(myTeam.id)" :loading="assigning">加入我的團隊</el-button>
-              <el-button size="small" @click="selectedWorkerIds = []">取消</el-button>
-            </div>
-          </div>
+        <!-- 篩選 Tab -->
+        <el-card class="filter-card">
+          <el-radio-group v-model="workerFilter" size="small">
+            <el-radio-button value="all">全部工讀生（{{ workers.length }}）</el-radio-button>
+            <el-radio-button value="unassigned">未認領（{{ unassignedWorkers.length }}）</el-radio-button>
+            <el-radio-button value="mine">我的團隊（{{ myTeamWorkers.length }}）</el-radio-button>
+          </el-radio-group>
         </el-card>
 
-        <el-row :gutter="16" class="teams-board">
-          <!-- 未分配組員 -->
-          <el-col :xs="24" :sm="12" :md="8">
-            <div
-              class="team-column"
-              @dragover.prevent
-              @dragenter.prevent="dragOverZone = 'unassigned'"
-              @dragleave="dragOverZone = null"
-              @drop.prevent="handleDrop(null)"
-              :class="{ 'drag-over': dragOverZone === 'unassigned' }"
-            >
-              <div class="column-header unassigned-header">
-                <span>未分配組員</span>
-                <el-tag type="info" size="small">{{ unassignedWorkers.length }}</el-tag>
-              </div>
-              <div class="column-body">
-                <div v-if="!unassignedWorkers.length" class="column-empty">目前無未分配組員</div>
-                <div
-                  v-for="worker in unassignedWorkers"
-                  :key="worker.id"
-                  class="worker-card"
-                  draggable="true"
-                  @dragstart="handleDragStart(worker)"
-                  @dragend="draggedWorker = null"
-                  :class="{ 'selected': selectedWorkerIds.includes(worker.id) }"
-                  @click="toggleSelect(worker.id)"
-                >
-                  <el-checkbox
-                    :model-value="selectedWorkerIds.includes(worker.id)"
-                    @change="toggleSelect(worker.id)"
-                    @click.stop
-                    size="small"
-                  />
-                  <div class="worker-info">
-                    <span class="worker-name">{{ worker.name }}</span>
-                    <span class="worker-num">{{ worker.number }}</span>
-                  </div>
-                  <el-icon class="drag-handle"><Rank /></el-icon>
-                </div>
-              </div>
-            </div>
-          </el-col>
-
-          <!-- 我的 Team -->
-          <el-col :xs="24" :sm="12" :md="8">
-            <div
-              class="team-column my-team"
-              @dragover.prevent
-              @dragenter.prevent="dragOverZone = myTeam.id"
-              @dragleave="dragOverZone = null"
-              @drop.prevent="handleDrop(myTeam.id)"
-              :class="{ 'drag-over': dragOverZone === myTeam.id }"
-            >
-              <div class="column-header my-team-header">
-                <span>🏠 {{ myTeam.name }}（我的）</span>
-                <el-tag type="success" size="small">{{ getWorkersByTeam(myTeam.id).length }}</el-tag>
-              </div>
-              <div class="column-body">
-                <div v-if="!getWorkersByTeam(myTeam.id).length" class="column-empty drag-hint">拖曳組員到此處加入</div>
-                <div
-                  v-for="worker in getWorkersByTeam(myTeam.id)"
-                  :key="worker.id"
-                  class="worker-card in-team"
-                  draggable="true"
-                  @dragstart="handleDragStart(worker)"
-                  @dragend="draggedWorker = null"
-                >
-                  <div class="worker-info">
-                    <span class="worker-name">{{ worker.name }}</span>
-                    <span class="worker-num">{{ worker.number }}</span>
-                  </div>
-                  <el-button text type="danger" size="small" :icon="RemoveFilled" @click="assignWorker(worker.id, null)" :loading="worker.assigning" title="移出團隊" />
-                </div>
-              </div>
-            </div>
-          </el-col>
-
-          <!-- 其他 Teams（唯讀） -->
-          <el-col :xs="24" :sm="24" :md="8">
-            <div v-for="team in otherTeams" :key="team.id" class="team-column other-team" style="margin-bottom:16px">
-              <div class="column-header other-team-header">
-                <span>{{ team.name }}</span>
-                <el-tag type="warning" size="small">{{ getWorkersByTeam(team.id).length }}</el-tag>
-              </div>
-              <div class="column-body readonly">
-                <div v-if="!getWorkersByTeam(team.id).length" class="column-empty">無組員</div>
-                <div v-for="worker in getWorkersByTeam(team.id)" :key="worker.id" class="worker-card readonly-card locked-card">
-                  <div class="worker-info">
-                    <span class="worker-name">{{ worker.name }}</span>
-                    <span class="worker-num">{{ worker.number }}</span>
-                  </div>
-                  <el-tooltip :content="`此組員已屬於「${team.name}」，請由該隊組長先解除後才可移入`" placement="top">
-                    <el-icon class="lock-icon"><Lock /></el-icon>
-                  </el-tooltip>
-                </div>
-              </div>
-            </div>
-          </el-col>
-        </el-row>
+        <!-- 工讀生總表 -->
+        <el-card>
+          <el-table :data="filteredWorkers" v-loading="loading" stripe size="small" empty-text="無資料">
+            <el-table-column prop="name" label="姓名" width="100" />
+            <el-table-column prop="number" label="工號" width="80" />
+            <el-table-column prop="group" label="組別" width="100">
+              <template #default="{ row }">
+                <span>{{ row.group || '—' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="狀態" width="140">
+              <template #default="{ row }">
+                <el-tag
+                  v-if="row.teamId === myTeam.id"
+                  type="success" size="small"
+                >🏠 我的團隊</el-tag>
+                <el-tag
+                  v-else-if="row.teamId"
+                  type="warning" size="small"
+                >🔒 {{ getTeamName(row.teamId) }}</el-tag>
+                <el-tag v-else type="info" size="small">未認領</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="120" align="center" fixed="right">
+              <template #default="{ row }">
+                <!-- 未認領 → 加入 -->
+                <el-button
+                  v-if="!row.teamId"
+                  type="primary" size="small" plain
+                  :loading="row.assigning"
+                  @click="assignWorker(row.id, myTeam.id)"
+                >認領</el-button>
+                <!-- 我的組員 → 移出 -->
+                <el-button
+                  v-else-if="row.teamId === myTeam.id"
+                  type="danger" size="small" plain
+                  :loading="row.assigning"
+                  @click="assignWorker(row.id, null)"
+                >移出</el-button>
+                <!-- 其他組 → 鎖定 -->
+                <el-tooltip v-else :content="`已屬於「${getTeamName(row.teamId)}」`" placement="top">
+                  <el-button size="small" disabled>
+                    <el-icon><Lock /></el-icon>
+                  </el-button>
+                </el-tooltip>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
       </template>
     </template>
 
@@ -248,7 +197,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Flag, Plus, Edit, Delete, Refresh, User, UserFilled, RemoveFilled, CirclePlusFilled, Rank, Lock } from "@element-plus/icons-vue";
+import { Flag, Plus, Edit, Delete, Refresh, User, UserFilled, RemoveFilled, CirclePlusFilled, Lock } from "@element-plus/icons-vue";
 import { useAuthStore } from "../stores/auth";
 import { getApiUrl } from "@/config/api";
 
@@ -262,9 +211,7 @@ const teams = ref([]);
 const allUsers = ref([]);
 const workers = ref([]);
 const selectedTeam = ref(null);
-const selectedWorkerIds = ref([]);
-const draggedWorker = ref(null);
-const dragOverZone = ref(null);
+const workerFilter = ref("all");
 
 const dialogVisible = ref(false);
 const isEditing = ref(false);
@@ -278,10 +225,6 @@ const myTeam = computed(() => {
   return teams.value.find((t) => t.id === teamId) || null;
 });
 
-const otherTeams = computed(() =>
-  teams.value.filter((t) => t.id !== myTeam.value?.id)
-);
-
 const unassignedUsers = computed(() =>
   allUsers.value.filter((u) => !u.teamId)
 );
@@ -290,8 +233,18 @@ const unassignedWorkers = computed(() =>
   workers.value.filter((w) => !w.teamId)
 );
 
+const myTeamWorkers = computed(() =>
+  workers.value.filter((w) => w.teamId === myTeam.value?.id)
+);
+
+const filteredWorkers = computed(() => {
+  if (workerFilter.value === "unassigned") return unassignedWorkers.value;
+  if (workerFilter.value === "mine") return myTeamWorkers.value;
+  return workers.value;
+});
+
 const getUsersByTeam = (teamId) => allUsers.value.filter((u) => u.teamId === teamId);
-const getWorkersByTeam = (teamId) => workers.value.filter((w) => w.teamId === teamId);
+const getTeamName = (teamId) => teams.value.find((t) => t.id === teamId)?.name || teamId;
 
 // ── API helpers ───────────────────────────────────────
 const headers = () => ({
@@ -324,28 +277,7 @@ const loadAll = async () => {
   }
 };
 
-// ── 工讀生指派（拖曳 / 選取）───────────────────────────
-const handleDragStart = (worker) => {
-  draggedWorker.value = worker;
-};
-
-const handleDrop = async (targetTeamId) => {
-  dragOverZone.value = null;
-  if (!draggedWorker.value) return;
-  const worker = draggedWorker.value;
-  draggedWorker.value = null;
-
-  if (targetTeamId === null && worker.teamId !== myTeam.value?.id) {
-    return ElMessage.warning("只能移出您自己 Team 的組員");
-  }
-  if (targetTeamId !== null && targetTeamId !== myTeam.value?.id) {
-    return ElMessage.warning("只能將組員拖入您自己的 Team");
-  }
-  if (worker.teamId === targetTeamId) return;
-
-  await assignWorker(worker.id, targetTeamId);
-};
-
+// ── 工讀生指派 ────────────────────────────────────────
 const assignWorker = async (workerId, teamId) => {
   const worker = workers.value.find((w) => w.id === workerId);
   if (worker) worker.assigning = true;
@@ -358,7 +290,6 @@ const assignWorker = async (workerId, teamId) => {
     const data = await res.json();
     if (data.success) {
       if (worker) worker.teamId = teamId;
-      selectedWorkerIds.value = selectedWorkerIds.value.filter((id) => id !== workerId);
     } else {
       ElMessage.error(data.message || "指派失敗");
     }
@@ -367,20 +298,6 @@ const assignWorker = async (workerId, teamId) => {
   } finally {
     if (worker) worker.assigning = false;
   }
-};
-
-const toggleSelect = (workerId) => {
-  const idx = selectedWorkerIds.value.indexOf(workerId);
-  if (idx === -1) selectedWorkerIds.value.push(workerId);
-  else selectedWorkerIds.value.splice(idx, 1);
-};
-
-const handleBatchAssign = async (teamId) => {
-  assigning.value = true;
-  const ids = [...selectedWorkerIds.value];
-  for (const id of ids) await assignWorker(id, teamId);
-  assigning.value = false;
-  ElMessage.success(`已將 ${ids.length} 位組員加入團隊`);
 };
 
 // ── 小組長指派（Evelyn）────────────────────────────────
@@ -468,7 +385,7 @@ onMounted(loadAll);
 </script>
 
 <style scoped>
-.team-management { padding: 20px; max-width: 1400px; margin: 0 auto; }
+.team-management { padding: 20px; max-width: 1200px; margin: 0 auto; }
 .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
 .page-title { font-size: 22px; font-weight: 600; display: flex; align-items: center; gap: 8px; margin: 0 0 4px; }
 .page-description { color: #666; font-size: 14px; margin: 0; }
@@ -484,36 +401,7 @@ onMounted(loadAll);
 .team-actions { flex-shrink: 0; }
 .section-title { font-size: 14px; font-weight: 600; color: #555; display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
 .select-hint, .empty-hint { display: flex; justify-content: center; min-height: 200px; align-items: center; }
-.toolbar-card { margin-bottom: 16px; }
-.toolbar-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.teams-board { margin-top: 0; }
-.team-column { border: 2px dashed #dcdfe6; border-radius: 12px; min-height: 400px; transition: all 0.2s; background: #fafafa; display: flex; flex-direction: column; }
-.team-column.drag-over { border-color: #409eff; background: #ecf5ff; box-shadow: 0 0 0 3px rgba(64,158,255,0.15); }
-.team-column.my-team { border-color: #67c23a; background: #f0f9eb; }
-.team-column.my-team.drag-over { background: #d4efde; box-shadow: 0 0 0 3px rgba(103,194,58,0.2); }
-.team-column.other-team { border-style: solid; border-color: #e4e7ed; opacity: 0.85; }
-.column-header { padding: 12px 14px; font-weight: 600; font-size: 14px; border-radius: 10px 10px 0 0; display: flex; justify-content: space-between; align-items: center; }
-.unassigned-header { background: #f0f2f5; color: #606266; }
-.my-team-header { background: #d4efde; color: #3a8a4a; }
-.other-team-header { background: #fdf6ec; color: #b8741a; }
-.locked-card { opacity: 0.7; cursor: not-allowed; background: #f9f9f9; }
-.locked-card:hover { box-shadow: none; transform: none; }
-.lock-icon { color: #c0c4cc; font-size: 15px; flex-shrink: 0; }
-.column-body { flex: 1; padding: 8px; overflow-y: auto; max-height: 60vh; }
-.column-body.readonly { pointer-events: none; }
-.column-empty { color: #bbb; text-align: center; padding: 40px 0; font-size: 13px; }
-.column-empty.drag-hint { color: #a0cfff; }
-.worker-card { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #fff; border-radius: 8px; border: 1px solid #e4e7ed; margin-bottom: 6px; cursor: grab; transition: all 0.15s; user-select: none; }
-.worker-card:active { cursor: grabbing; }
-.worker-card:hover { border-color: #409eff; box-shadow: 0 2px 8px rgba(64,158,255,0.15); }
-.worker-card.selected { border-color: #409eff; background: #ecf5ff; }
-.worker-card.in-team { border-color: #b3e19d; }
-.worker-card.readonly-card { cursor: default; }
-.worker-card.readonly-card:hover { border-color: #e4e7ed; box-shadow: none; }
-.worker-info { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; }
-.worker-name { font-weight: 500; font-size: 14px; }
-.worker-num { font-size: 12px; color: #999; }
-.drag-handle { color: #bbb; font-size: 16px; flex-shrink: 0; }
+.filter-card { margin-bottom: 16px; }
 .no-team-hint { display: flex; justify-content: center; padding: 60px 0; }
-@media (max-width: 768px) { .team-management { padding: 12px; } .page-header { flex-direction: column; } .column-body { max-height: 300px; } }
+@media (max-width: 768px) { .team-management { padding: 12px; } .page-header { flex-direction: column; } }
 </style>

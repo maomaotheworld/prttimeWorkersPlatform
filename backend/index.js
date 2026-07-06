@@ -255,6 +255,16 @@ const DEFAULT_FEATURE_PERMISSIONS = [
     permissions: ["canManageUsers"],
     description: "管理系統用戶，創建和刪除帳號",
   },
+  {
+    key: "/teams",
+    feature: "團隊管理",
+    path: "/teams",
+    admin: true,
+    leader: true,
+    reader: false,
+    permissions: [],
+    description: "管理工讀生所屬團隊，小組長認領組員",
+  },
 ];
 const DEFAULT_DETAILED_PERMISSIONS = [
   {

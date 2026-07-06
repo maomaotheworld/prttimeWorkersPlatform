@@ -81,8 +81,8 @@ const WORKER_SHEET_HEADERS = [
   "phone",
   "startDate",
   "status",
-  "totalSalary",
   "createdAt",
+  "totalSalary",
   "updatedAt",
   "teamId",
 ];

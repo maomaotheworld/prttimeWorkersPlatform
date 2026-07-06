@@ -107,10 +107,11 @@
               style="width: 100%"
             >
               <el-option label="全選" value="all" />
-              <el-option label="依組別篩選" value="group" />
+              <!-- <el-option label="依組別篩選" value="group" /> 暫時隱藏（管理員專用） -->
               <el-option label="依樓層篩選" value="floor" />
             </el-select>
           </el-col>
+          <!-- 組別篩選暫時隱藏（管理員專用）
           <el-col :span="5" v-if="filterType === 'group'">
             <el-select
               v-model="selectedGroup"
@@ -126,6 +127,7 @@
               />
             </el-select>
           </el-col>
+          -->
           <el-col :span="5" v-if="filterType === 'floor'">
             <el-select
               v-model="selectedFloor"
@@ -194,6 +196,7 @@
           label="姓名"
           :width="isMobile ? '80' : '120'"
         />
+        <!-- 組別欄暫時隱藏（管理員專用）
         <el-table-column label="組別" :width="isMobile ? '60' : '100'">
           <template #default="{ row }">
             <el-tag :style="getGroupTagStyle(row.group)" effect="light">
@@ -201,6 +204,7 @@
             </el-tag>
           </template>
         </el-table-column>
+        -->
         <el-table-column
           prop="floor"
           label="樓層"
@@ -378,6 +382,7 @@
             </span>
           </template>
         </el-table-column>
+        <!-- 組別欄暫時隱藏（管理員專用）
         <el-table-column prop="group" label="組別" width="80">
           <template #default="{ row }">
             <span :style="{ color: row.group ? 'inherit' : 'red' }">
@@ -385,6 +390,7 @@
             </span>
           </template>
         </el-table-column>
+        -->
         <el-table-column prop="floor" label="樓層" width="80">
           <template #default="{ row }">
             <span :style="{ color: row.floor ? 'inherit' : 'red' }">

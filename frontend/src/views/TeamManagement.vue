@@ -4,7 +4,7 @@
       <div class="header-content">
         <h1 class="page-title"><el-icon><Flag /></el-icon> 所屬團隊管理</h1>
         <p class="page-description" v-if="!isEvelyn && myTeam">
-          我的團隊：<strong>{{ myTeam.name }}</strong>　已認領 <strong>{{ myTeamWorkers.length }}</strong> 位組員
+          我的團隊：<strong>{{ myTeam.name }}</strong>
         </p>
         <p class="page-description" v-if="!isEvelyn && !myTeam" style="color:#f56c6c">
           您尚未被指派到任何團隊，請聯絡 Evelyn
@@ -13,155 +13,175 @@
       <el-button :icon="Refresh" @click="loadAll" :loading="loading">重新整理</el-button>
     </div>
 
-    <!-- Evelyn 有兩個 Tab；組長只看工讀生認領 -->
+    <!-- ===== Evelyn：兩個 Tab ===== -->
     <el-tabs v-if="isEvelyn" v-model="activeTab" type="border-card">
-      <!-- Tab 1: 工讀生認領（Evelyn 全權） -->
-      <el-tab-pane label="工讀生認領" name="workers">
-        <el-card class="filter-card" shadow="never" style="margin-bottom:12px">
-          <el-radio-group v-model="workerFilter" size="small">
-            <el-radio-button label="all">全部工讀生（{{ workers.length }}）</el-radio-button>
-            <el-radio-button label="unassigned">未認領（{{ unassignedWorkers.length }}）</el-radio-button>
-          </el-radio-group>
-        </el-card>
-        <el-table :data="filteredWorkers" v-loading="loading" stripe size="small" empty-text="無資料">
-          <el-table-column prop="name" label="姓名" width="100" />
-          <el-table-column prop="number" label="工號" width="80" />
-          <el-table-column prop="group" label="組別" width="100">
-            <template #default="{ row }">{{ row.group || '—' }}</template>
-          </el-table-column>
-          <el-table-column label="所屬團隊" min-width="150">
-            <template #default="{ row }">
-              <el-select
-                :model-value="row.teamId || ''"
-                size="small"
-                placeholder="未認領"
-                style="width:130px"
-                clearable
-                @change="(val) => assignWorker(row.id, val || null)"
-              >
-                <el-option v-for="team in teams" :key="team.id" :label="team.name" :value="team.id" />
-              </el-select>
-            </template>
-          </el-table-column>
-        </el-table>
-      </el-tab-pane>
 
-      <!-- Tab 2: 團隊設定（Evelyn only） -->
-      <el-tab-pane label="⚙️ 團隊設定" name="settings">
-        <div style="display:flex; justify-content:flex-end; margin-bottom:12px">
-          <el-button type="primary" :icon="Plus" @click="openCreateDialog">新增團隊</el-button>
+      <!-- Tab 1：工讀生認領 -->
+      <el-tab-pane label="工讀生認領" name="workers">
+        <!-- 選擇要管理哪個 team -->
+        <div class="team-selector">
+          <span class="selector-label">選擇團隊：</span>
+          <el-select v-model="selectedTeamId" placeholder="選擇要管理的團隊" style="width:200px" clearable>
+            <el-option v-for="t in teams" :key="t.id" :label="t.name" :value="t.id" />
+          </el-select>
+          <el-tag v-if="selectedTeamId" type="success" size="large" style="margin-left:12px">
+            已認領：{{ getWorkersByTeam(selectedTeamId).length }} 人
+          </el-tag>
         </div>
-        <el-row :gutter="20">
-          <el-col :xs="24" :sm="10" :md="8">
-            <el-card>
+
+        <el-row :gutter="16" class="assign-board" v-if="selectedTeamId">
+          <!-- 左：未認領 -->
+          <el-col :xs="24" :sm="12">
+            <el-card shadow="never" class="board-card">
               <template #header>
-                <div class="card-header">
-                  <span>團隊列表（{{ teams.length }}）</span>
-                  <el-button :icon="Refresh" circle size="small" @click="loadAll" :loading="loading" />
+                <div class="board-header unassigned-header">
+                  <span>未認領工讀生</span>
+                  <el-tag type="info" size="small">{{ unassignedWorkers.length }}</el-tag>
                 </div>
               </template>
-              <div v-if="!teams.length" class="empty-hint">
-                <el-empty description="尚無團隊，請新增" :image-size="80" />
-              </div>
-              <div
-                v-for="team in teams" :key="team.id"
-                :class="['team-item', { active: selectedTeam?.id === team.id }]"
-                @click="selectTeam(team)"
-              >
-                <div class="team-item-main">
-                  <el-icon class="team-icon"><Flag /></el-icon>
-                  <div class="team-info">
-                    <div class="team-name">{{ team.name }}</div>
-                    <div class="team-desc" v-if="team.description">{{ team.description }}</div>
-                    <div class="team-count">{{ getUsersByTeam(team.id).length }} 位小組長</div>
-                  </div>
+              <div v-if="!unassignedWorkers.length" class="board-empty">目前無未認領組員</div>
+              <div v-for="w in unassignedWorkers" :key="w.id" class="worker-row">
+                <div class="worker-info">
+                  <span class="worker-name">{{ w.name }}</span>
+                  <span class="worker-num">{{ w.number }}</span>
                 </div>
-                <div class="team-actions" @click.stop>
-                  <el-button text :icon="Edit" size="small" @click="openEditDialog(team)" />
-                  <el-button text :icon="Delete" size="small" type="danger" @click="handleDeleteTeam(team)" />
-                </div>
+                <el-button type="primary" size="small" plain :loading="w.assigning"
+                  @click="assignWorker(w.id, selectedTeamId)">認領</el-button>
               </div>
             </el-card>
           </el-col>
-          <el-col :xs="24" :sm="14" :md="16">
-            <el-card>
+
+          <!-- 右：已認領 -->
+          <el-col :xs="24" :sm="12">
+            <el-card shadow="never" class="board-card">
               <template #header>
-                <span v-if="selectedTeam">「{{ selectedTeam.name }}」的小組長管理</span>
-                <span v-else>點選左側團隊以管理所屬小組長</span>
+                <div class="board-header assigned-header">
+                  <span>已認領組員</span>
+                  <el-tag type="success" size="small">{{ getWorkersByTeam(selectedTeamId).length }}</el-tag>
+                </div>
               </template>
-              <div v-if="!selectedTeam" class="select-hint">
-                <el-empty description="選擇左側團隊" :image-size="80" />
+              <div v-if="!getWorkersByTeam(selectedTeamId).length" class="board-empty">尚未認領任何組員</div>
+              <div v-for="w in getWorkersByTeam(selectedTeamId)" :key="w.id" class="worker-row">
+                <div class="worker-info">
+                  <span class="worker-name">{{ w.name }}</span>
+                  <span class="worker-num">{{ w.number }}</span>
+                </div>
+                <el-button type="danger" size="small" plain :icon="CircleClose" :loading="w.assigning"
+                  @click="assignWorker(w.id, null)" title="取消認領" />
               </div>
-              <template v-else>
-                <div class="section-title"><el-icon><User /></el-icon> 目前小組長（{{ getUsersByTeam(selectedTeam.id).length }} 人）</div>
-                <el-table :data="getUsersByTeam(selectedTeam.id)" size="small" empty-text="此團隊尚無小組長">
-                  <el-table-column prop="username" label="帳號" width="110" />
-                  <el-table-column prop="name" label="姓名" />
-                  <el-table-column label="操作" width="90" align="center">
-                    <template #default="{ row }">
-                      <el-button text type="danger" size="small" :icon="RemoveFilled" @click="handleUnassignUser({ user: row })" :loading="row.assigning">移除</el-button>
-                    </template>
-                  </el-table-column>
-                </el-table>
-                <el-divider />
-                <div class="section-title"><el-icon><UserFilled /></el-icon> 未指派的小組長（{{ unassignedUsers.length }} 人）</div>
-                <el-table :data="unassignedUsers" size="small" empty-text="所有小組長均已指派">
-                  <el-table-column prop="username" label="帳號" width="110" />
-                  <el-table-column prop="name" label="姓名" />
-                  <el-table-column label="操作" width="90" align="center">
-                    <template #default="{ row }">
-                      <el-button text type="success" size="small" :icon="CirclePlusFilled" @click="handleAssignUser({ user: row, teamId: selectedTeam.id })" :loading="row.assigning">加入</el-button>
-                    </template>
-                  </el-table-column>
-                </el-table>
-              </template>
             </el-card>
           </el-col>
         </el-row>
+
+        <div v-else class="board-empty" style="padding:60px 0">
+          <el-empty description="請先選擇要管理的團隊" :image-size="80" />
+        </div>
+      </el-tab-pane>
+
+      <!-- Tab 2：團隊設定 -->
+      <el-tab-pane label="⚙️ 團隊設定" name="settings">
+        <div class="settings-toolbar">
+          <el-button type="primary" :icon="Plus" @click="openCreateDialog">新增團隊</el-button>
+        </div>
+
+        <div v-if="!teams.length" class="board-empty">
+          <el-empty description="尚無團隊，請新增" :image-size="80" />
+        </div>
+
+        <el-card
+          v-for="team in teams" :key="team.id"
+          class="team-setting-card" shadow="never"
+        >
+          <div class="team-setting-header">
+            <div class="team-setting-title">
+              <el-icon class="team-icon"><Flag /></el-icon>
+              <span class="team-name-text">{{ team.name }}</span>
+              <span class="team-desc-text" v-if="team.description">{{ team.description }}</span>
+            </div>
+            <div class="team-setting-actions">
+              <el-button size="small" :icon="Edit" @click="openEditDialog(team)">編輯</el-button>
+              <el-button size="small" :icon="Delete" type="danger" plain @click="handleDeleteTeam(team)">刪除</el-button>
+            </div>
+          </div>
+
+          <!-- 此 team 的小組長 -->
+          <div class="team-leaders">
+            <div class="leaders-label">小組長：</div>
+            <div class="leaders-list">
+              <el-tag
+                v-for="u in getUsersByTeam(team.id)" :key="u.id"
+                closable size="small" type="warning"
+                @close="handleUnassignUser({ user: u })"
+                style="margin:2px"
+              >{{ u.name || u.username }}</el-tag>
+              <span v-if="!getUsersByTeam(team.id).length" style="color:#bbb;font-size:12px">尚無小組長</span>
+
+              <!-- 加入未指派的小組長 -->
+              <el-select
+                v-if="unassignedUsers.length"
+                placeholder="+ 加入小組長"
+                size="small"
+                style="width:130px;margin-left:6px"
+                @change="(uid) => handleAssignUser({ userId: uid, teamId: team.id })"
+                :model-value="null"
+              >
+                <el-option v-for="u in unassignedUsers" :key="u.id" :label="u.name || u.username" :value="u.id" />
+              </el-select>
+            </div>
+          </div>
+        </el-card>
       </el-tab-pane>
     </el-tabs>
 
-    <!-- 組長視角：直接顯示認領表 -->
+    <!-- ===== 組長：直接工讀生認領 ===== -->
     <template v-else>
       <div v-if="!myTeam" class="no-team-hint">
         <el-empty description="您尚未被指派到任何團隊，請聯絡 Evelyn" />
       </div>
       <template v-else>
-        <!-- 篩選 -->
-        <el-card class="filter-card">
-          <el-radio-group v-model="workerFilter" size="small">
-            <el-radio-button label="all">全部工讀生（{{ workers.length }}）</el-radio-button>
-            <el-radio-button label="unassigned">未認領（{{ unassignedWorkers.length }}）</el-radio-button>
-            <el-radio-button label="mine">我的團隊（{{ myTeamWorkers.length }}）</el-radio-button>
-          </el-radio-group>
-        </el-card>
+        <el-row :gutter="16" class="assign-board">
+          <!-- 左：未認領 -->
+          <el-col :xs="24" :sm="12">
+            <el-card shadow="never" class="board-card">
+              <template #header>
+                <div class="board-header unassigned-header">
+                  <span>未認領工讀生</span>
+                  <el-tag type="info" size="small">{{ unassignedWorkers.length }}</el-tag>
+                </div>
+              </template>
+              <div v-if="!unassignedWorkers.length" class="board-empty">目前無未認領組員</div>
+              <div v-for="w in unassignedWorkers" :key="w.id" class="worker-row">
+                <div class="worker-info">
+                  <span class="worker-name">{{ w.name }}</span>
+                  <span class="worker-num">{{ w.number }}</span>
+                </div>
+                <el-button type="primary" size="small" plain :loading="w.assigning"
+                  @click="assignWorker(w.id, myTeam.id)">認領</el-button>
+              </div>
+            </el-card>
+          </el-col>
 
-        <!-- 工讀生總表 -->
-        <el-card>
-          <el-table :data="filteredWorkers" v-loading="loading" stripe size="small" empty-text="無資料">
-            <el-table-column prop="name" label="姓名" width="100" />
-            <el-table-column prop="number" label="工號" width="80" />
-            <el-table-column prop="group" label="組別" width="100">
-              <template #default="{ row }">{{ row.group || '—' }}</template>
-            </el-table-column>
-            <el-table-column label="狀態" min-width="130">
-              <template #default="{ row }">
-                <el-tag v-if="row.teamId === myTeam.id" type="success" size="small">🏠 我的團隊</el-tag>
-                <el-tag v-else-if="row.teamId" type="warning" size="small">🔒 {{ getTeamName(row.teamId) }}</el-tag>
-                <el-tag v-else type="info" size="small">未認領</el-tag>
+          <!-- 右：我的團隊 -->
+          <el-col :xs="24" :sm="12">
+            <el-card shadow="never" class="board-card">
+              <template #header>
+                <div class="board-header assigned-header">
+                  <span>🏠 {{ myTeam.name }}（我的團隊）</span>
+                  <el-tag type="success" size="small">{{ myTeamWorkers.length }}</el-tag>
+                </div>
               </template>
-            </el-table-column>
-            <el-table-column label="操作" width="110" align="center" fixed="right">
-              <template #default="{ row }">
-                <el-button v-if="!row.teamId" type="primary" size="small" plain :loading="row.assigning" @click="assignWorker(row.id, myTeam.id)">認領</el-button>
-                <el-button v-else-if="row.teamId === myTeam.id" type="danger" size="small" plain :loading="row.assigning" @click="assignWorker(row.id, null)">移出</el-button>
-                <el-tooltip v-else :content="`已屬於「${getTeamName(row.teamId)}」，請由對方組長先移出`" placement="top">
-                  <el-button size="small" disabled><el-icon><Lock /></el-icon></el-button>
-                </el-tooltip>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
+              <div v-if="!myTeamWorkers.length" class="board-empty">尚未認領任何組員</div>
+              <div v-for="w in myTeamWorkers" :key="w.id" class="worker-row">
+                <div class="worker-info">
+                  <span class="worker-name">{{ w.name }}</span>
+                  <span class="worker-num">{{ w.number }}</span>
+                </div>
+                <el-button type="danger" size="small" plain :icon="CircleClose" :loading="w.assigning"
+                  @click="assignWorker(w.id, null)" title="取消認領" />
+              </div>
+            </el-card>
+          </el-col>
+        </el-row>
       </template>
     </template>
 
@@ -186,7 +206,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Flag, Plus, Edit, Delete, Refresh, User, UserFilled, RemoveFilled, CirclePlusFilled, Lock } from "@element-plus/icons-vue";
+import { Flag, Plus, Edit, Delete, Refresh, User, UserFilled, CircleClose } from "@element-plus/icons-vue";
 import { useAuthStore } from "../stores/auth";
 import { getApiUrl } from "@/config/api";
 
@@ -196,11 +216,11 @@ const isEvelyn = computed(() => authStore.isEvelyn);
 const loading = ref(false);
 const submitting = ref(false);
 const activeTab = ref("workers");
-const workerFilter = ref("all");
+const selectedTeamId = ref(null);
+
 const teams = ref([]);
 const allUsers = ref([]);
 const workers = ref([]);
-const selectedTeam = ref(null);
 
 const dialogVisible = ref(false);
 const isEditing = ref(false);
@@ -216,15 +236,10 @@ const myTeam = computed(() => {
 
 const unassignedWorkers = computed(() => workers.value.filter((w) => !w.teamId));
 const myTeamWorkers = computed(() => workers.value.filter((w) => w.teamId === myTeam.value?.id));
-const unassignedUsers = computed(() => allUsers.value.filter((u) => !u.teamId));
-
-const filteredWorkers = computed(() => {
-  if (workerFilter.value === "unassigned") return unassignedWorkers.value;
-  if (workerFilter.value === "mine") return myTeamWorkers.value;
-  return workers.value;
-});
+const unassignedUsers = computed(() => allUsers.value.filter((u) => !u.teamId && u.role === "leader"));
 
 const getUsersByTeam = (teamId) => allUsers.value.filter((u) => u.teamId === teamId);
+const getWorkersByTeam = (teamId) => workers.value.filter((w) => w.teamId === teamId);
 const getTeamName = (teamId) => teams.value.find((t) => t.id === teamId)?.name || teamId;
 
 // ── API helpers ───────────────────────────────────────
@@ -256,7 +271,7 @@ const loadAll = async () => {
   }
 };
 
-// ── 工讀生指派（組長 & Evelyn 共用）────────────────────
+// ── 工讀生指派 ────────────────────────────────────────
 const assignWorker = async (workerId, teamId) => {
   const worker = workers.value.find((w) => w.id === workerId);
   if (worker) worker.assigning = true;
@@ -279,16 +294,14 @@ const assignWorker = async (workerId, teamId) => {
 };
 
 // ── 小組長指派（Evelyn）────────────────────────────────
-const selectTeam = (team) => {
-  selectedTeam.value = selectedTeam.value?.id === team.id ? null : team;
-};
-
-const handleAssignUser = async ({ user, teamId }) => {
+const handleAssignUser = async ({ userId, teamId }) => {
+  const user = allUsers.value.find((u) => u.id === userId);
+  if (!user) return;
   user.assigning = true;
   try {
     const res = await fetch(getApiUrl("/api/teams/assign-user"), {
       method: "PATCH", headers: headers(),
-      body: JSON.stringify({ userId: user.id, teamId }),
+      body: JSON.stringify({ userId, teamId }),
     });
     const data = await res.json();
     if (data.success) { user.teamId = teamId; ElMessage.success("已指派"); }
@@ -305,7 +318,7 @@ const handleUnassignUser = async ({ user }) => {
       body: JSON.stringify({ userId: user.id, teamId: null }),
     });
     const data = await res.json();
-    if (data.success) { user.teamId = null; ElMessage.success("已移出"); }
+    if (data.success) { user.teamId = null; }
     else ElMessage.error(data.message || "移除失敗");
   } catch (e) { ElMessage.error("移除失敗"); }
   finally { user.assigning = false; }
@@ -347,13 +360,10 @@ const handleDeleteTeam = async (team) => {
     });
     const res = await fetch(getApiUrl(`/api/teams/${team.id}`), { method: "DELETE", headers: headers() });
     const data = await res.json();
-    if (data.success) { ElMessage.success("已刪除"); if (selectedTeam.value?.id === team.id) selectedTeam.value = null; await loadAll(); }
+    if (data.success) { ElMessage.success("已刪除"); await loadAll(); }
     else ElMessage.error(data.message || "刪除失敗");
   } catch (e) { if (e !== "cancel") ElMessage.error(e.message || "刪除失敗"); }
 };
-
-const getRoleText = (role) => ({ admin: "管理員", leader: "小組長", reader: "訪客" }[role] || role);
-const getRoleTagType = (role) => ({ admin: "danger", leader: "warning", reader: "info" }[role] || "");
 
 onMounted(loadAll);
 </script>
@@ -363,7 +373,35 @@ onMounted(loadAll);
 .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
 .page-title { font-size: 22px; font-weight: 600; display: flex; align-items: center; gap: 8px; margin: 0 0 4px; }
 .page-description { color: #666; font-size: 14px; margin: 0; }
-.filter-card { margin-bottom: 16px; }
+
+/* 工讀生認領 */
+.team-selector { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.selector-label { font-size: 14px; font-weight: 500; color: #555; white-space: nowrap; }
+.assign-board { margin-top: 0; }
+.board-card { height: 100%; }
+.board-header { display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 14px; }
+.unassigned-header { color: #606266; }
+.assigned-header { color: #3a8a4a; }
+.worker-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 4px; border-bottom: 1px solid #f0f2f5; }
+.worker-row:last-child { border-bottom: none; }
+.worker-info { display: flex; align-items: center; gap: 10px; flex: 1; }
+.worker-name { font-weight: 500; font-size: 14px; }
+.worker-num { font-size: 12px; color: #999; }
+.board-empty { color: #bbb; text-align: center; padding: 30px 0; font-size: 13px; }
+
+/* 團隊設定 */
+.settings-toolbar { margin-bottom: 16px; }
+.team-setting-card { margin-bottom: 12px; }
+.team-setting-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+.team-setting-title { display: flex; align-items: center; gap: 8px; }
+.team-icon { font-size: 18px; color: #409eff; }
+.team-name-text { font-weight: 600; font-size: 15px; }
+.team-desc-text { font-size: 12px; color: #999; }
+.team-setting-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.team-leaders { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.leaders-label { font-size: 13px; color: #555; white-space: nowrap; }
+.leaders-list { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+
 .no-team-hint { display: flex; justify-content: center; padding: 60px 0; }
-@media (max-width: 768px) { .team-management { padding: 12px; } .page-header { flex-direction: column; } }
+@media (max-width: 768px) { .team-management { padding: 12px; } .page-header { flex-direction: column; } .assign-board .el-col { margin-bottom: 16px; } }
 </style>

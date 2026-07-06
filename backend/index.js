@@ -2511,6 +2511,7 @@ app.get("/api/workers", asyncHandler(async (req, res) => {
     ? moment(req.query.date).format("YYYY-MM-DD")
     : moment().format("YYYY-MM-DD");
 
+  res.set("Cache-Control", "no-store");
   res.json({
     success: true,
     data: includeTodayAttendance

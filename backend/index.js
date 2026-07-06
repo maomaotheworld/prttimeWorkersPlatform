@@ -135,6 +135,7 @@ const USER_SHEET_HEADERS = [
   "isActive",
   "permissions",
   "createdAt",
+  "teamId",
 ];
 const ACTIVITY_LOG_SHEET_NAME = "activity_logs";
 const ACTIVITY_LOG_SHEET_HEADERS = [
@@ -646,24 +647,35 @@ async function loadPersistedCollection(
   fallbackValue,
   normalize = (value) => value,
 ) {
+  // 先嘗試 PostgreSQL
   try {
     const dbState = await getAppState(stateKey);
     if (dbState !== null) {
       return normalize(dbState);
     }
-
-    const fileState = normalize(readJsonFile(filePath, fallbackValue));
-    await saveAppState(stateKey, fileState);
-    return fileState;
   } catch (error) {
-    console.error(`載入 ${stateKey} 持久化資料失敗:`, error);
-    throw error;
+    console.warn(`讀取 PostgreSQL ${stateKey} 失敗，改用本機備份:`, error.message);
   }
+
+  // PostgreSQL 無資料或失敗 → fallback 到 JSON 檔
+  const fileState = normalize(readJsonFile(filePath, fallbackValue));
+  try {
+    await saveAppState(stateKey, fileState);
+  } catch (err) {
+    console.warn(`回寫 ${stateKey} 到 PostgreSQL 失敗:`, err.message);
+  }
+  return fileState;
 }
 
 async function persistCollection(stateKey, filePath, data) {
   const snapshot = cloneData(data);
-  await saveAppState(stateKey, snapshot);
+
+  // PostgreSQL 失敗不中斷，仍繼續寫 JSON
+  try {
+    await saveAppState(stateKey, snapshot);
+  } catch (err) {
+    console.warn(`同步 ${stateKey} 到 PostgreSQL 失敗，改用本機備份:`, err.message);
+  }
 
   try {
     fs.writeFileSync(filePath, JSON.stringify(snapshot, null, 2));

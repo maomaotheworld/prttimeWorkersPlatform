@@ -252,9 +252,7 @@
         </el-table-column>
         <el-table-column label="所屬團隊" :width="isMobile ? '70' : '100'">
           <template #default="{ row }">
-            <el-tag v-if="getTeamName(row.teamId)" type="primary" size="small" effect="plain">
-              {{ getTeamName(row.teamId) }}
-            </el-tag>
+            <span v-if="getTeamName(row.teamId)" style="font-size:13px;color:#409eff">{{ getTeamName(row.teamId) }}</span>
             <span v-else style="color:#bbb;font-size:12px">—</span>
           </template>
         </el-table-column>
@@ -1165,6 +1163,7 @@ const fetchWorkers = async () => {
         adjustmentAmount: salaryAdjMap[worker.id] || 0,
         fireTraining: worker.fireTraining === true,
         notes: worker.notes || "",
+        teamId: worker.teamId || null,
       };
     });
 

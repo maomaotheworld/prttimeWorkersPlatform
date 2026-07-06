@@ -110,9 +110,7 @@
 
             <el-table-column label="所屬團隊" min-width="100">
               <template #default="scope">
-                <el-tag v-if="getTeamName(scope.row.teamId)" type="primary" size="small" effect="plain">
-                  {{ getTeamName(scope.row.teamId) }}
-                </el-tag>
+                <span v-if="getTeamName(scope.row.teamId)" style="font-size:13px;color:#409eff">{{ getTeamName(scope.row.teamId) }}</span>
                 <span v-else style="color:#bbb;font-size:12px">—</span>
               </template>
             </el-table-column>

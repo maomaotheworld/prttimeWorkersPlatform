@@ -287,7 +287,7 @@ const desktopNavs = [
   { path: "/salary", name: "薪資管理", iconComponent: Money, permission: "canViewReports" },
   { path: "/activity-logs", name: "活動資料", iconComponent: Document, adminOnly: true },
   { path: "/user-management", name: "用戶管理", iconComponent: Setting, permission: "canManageUsers" },
-  { path: "/teams", name: "Team 管理", iconComponent: Flag, evelynOnly: true },
+  { path: "/teams", name: "所屬團隊管理", iconComponent: Flag, evelynOnly: true },
   { path: "/permissions-matrix", name: "權限矩陣", iconComponent: Setting, evelynOnly: true },
 ];
 
@@ -314,7 +314,7 @@ const mobileNavs = [
   { path: "/salary", name: "薪資", icon: "Money", permission: "canViewReports" },
   { path: "/activity-logs", name: "活動", icon: "Document", adminOnly: true },
   { path: "/user-management", name: "用戶", icon: "Setting", permission: "canManageUsers" },
-  { path: "/teams", name: "Team", icon: "Flag", evelynOnly: true },
+  { path: "/teams", name: "所屬團隊", icon: "Flag", evelynOnly: true },
   { path: "/permissions-matrix", name: "權限", icon: "Setting", evelynOnly: true },
   { path: "/groups", name: "組別", icon: "UserFilled", permission: "canManageGroups" },
 ];
@@ -544,10 +544,13 @@ onUnmounted(() => {
 
 .app-aside {
   background-color: #545c64;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .app-menu {
   border: none;
+  height: 100%;
 }
 
 .app-main {

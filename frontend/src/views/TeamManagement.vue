@@ -4,9 +4,9 @@
       <div class="header-content">
         <h1 class="page-title">
           <el-icon><Flag /></el-icon>
-          Team 管理
+          所屬團隊管理
         </h1>
-        <p class="page-description">管理組織 Team，並指派用戶所屬 Team</p>
+        <p class="page-description">管理組織所屬團隊，並指派用戶所屬團隊</p>
       </div>
       <div class="header-actions">
         <el-button type="primary" :icon="Plus" @click="openCreateDialog">

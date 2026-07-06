@@ -250,6 +250,14 @@
             </span>
           </template>
         </el-table-column>
+        <el-table-column label="所屬團隊" :width="isMobile ? '70' : '100'">
+          <template #default="{ row }">
+            <el-tag v-if="getTeamName(row.teamId)" type="primary" size="small" effect="plain">
+              {{ getTeamName(row.teamId) }}
+            </el-tag>
+            <span v-else style="color:#bbb;font-size:12px">—</span>
+          </template>
+        </el-table-column>
         <el-table-column label="消防" :width="isMobile ? '55' : '70'">
           <template #default="{ row }">
             <el-tag
@@ -780,6 +788,7 @@ const workersStore = useWorkersStore();
 const authStore = useAuthStore();
 const workers = ref<Worker[]>([]);
 const loading = ref(false);
+const teams = ref<{ id: string; name: string }[]>([]);
 const WORKERS_FILTER_STORAGE_KEY = "workers-page-filters";
 
 // 篩選相關
@@ -1865,11 +1874,23 @@ onMounted(async () => {
   await fetchWorkers();
   // 載入組別數據用於篩選
   await workersStore.fetchGroups();
+  // 載入團隊資料
+  try {
+    const token = authStore.token;
+    const res = await fetch(getApiUrl("/api/teams"), {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    const data = await res.json();
+    if (data.success) teams.value = data.data;
+  } catch (e) { /* teams 非關鍵，失敗不影響頁面 */ }
 });
 
 watch([filterType, selectedGroup, selectedFloor], () => {
   persistWorkersFilters();
 });
+
+const getTeamName = (teamId: string | null | undefined) =>
+  teams.value.find((t) => t.id === teamId)?.name || null;
 </script>
 
 <style scoped>

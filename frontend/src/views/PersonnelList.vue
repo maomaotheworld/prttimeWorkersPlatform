@@ -108,6 +108,15 @@
               </template>
             </el-table-column>
 
+            <el-table-column label="所屬團隊" min-width="100">
+              <template #default="scope">
+                <el-tag v-if="getTeamName(scope.row.teamId)" type="primary" size="small" effect="plain">
+                  {{ getTeamName(scope.row.teamId) }}
+                </el-tag>
+                <span v-else style="color:#bbb;font-size:12px">—</span>
+              </template>
+            </el-table-column>
+
             <el-table-column label="消防" min-width="70">
               <template #default="scope">
                 <el-tag
@@ -234,6 +243,7 @@ export default defineComponent({
     // PersonnelList 專用的響應式資料
     const workersData = ref([]);
     const groupsData = ref([]);
+    const teamsData = ref([]);
 
     // 計算屬性 - 使用本地的響應式資料
     const workers = computed(() => workersData.value);
@@ -442,6 +452,14 @@ export default defineComponent({
         const groupsResult = await loadGroupsForGuests();
         console.log("PersonnelList: 組別載入結果:", groupsResult?.length || 0);
 
+        // 載入團隊資料
+        try {
+          const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3005";
+          const res = await fetch(`${API_BASE_URL}/api/teams`);
+          const data = await res.json();
+          if (data.success) teamsData.value = data.data;
+        } catch (e) { /* 非關鍵，失敗不影響頁面 */ }
+
         console.log("PersonnelList: 所有數據載入完成");
         console.log(
           "PersonnelList: 最終工讀生數據:",
@@ -480,6 +498,9 @@ export default defineComponent({
       { bg: "#E0F2FE", text: "#0369A1" }, // 青藍色配深青
       { bg: "#F7FEE7", text: "#65A30D" }, // 淺綠黃配深綠
     ];
+
+    const getTeamName = (teamId) =>
+      teamsData.value.find((t) => t.id === teamId)?.name || null;
 
     const getGroupTagStyle = (groupName) => {
       if (!groupName)
@@ -626,6 +647,7 @@ export default defineComponent({
       loading,
       workersData,
       groupsData,
+      teamsData,
 
       // 計算屬性
       workers,
@@ -637,6 +659,7 @@ export default defineComponent({
       // 方法
       handleSearch,
       applyFilters,
+      getTeamName,
       getGroupTagStyle,
       getFireGroup,
       isFireLeader,

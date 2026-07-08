@@ -135,6 +135,16 @@ const routes = [
       allowedRoles: ["admin", "leader"],
     },
   },
+  {
+    path: "/seatmap",
+    name: "SeatMap",
+    component: () => lazyLoad(() => import("../views/SeatMap.vue")),
+    meta: {
+      title: "座位圖",
+      requiresAuth: true,
+      allowedRoles: ["admin", "leader"],
+    },
+  },
 ];
 
 const router = createRouter({

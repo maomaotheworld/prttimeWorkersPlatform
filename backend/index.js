@@ -56,6 +56,7 @@ const salaryAdjustmentsFilePath = path.join(
 const activityLogsFilePath = path.join(dataDir, "activityLogs.json");
 const teamsFilePath = path.join(dataDir, "teams.json");
 const workerTeamsFilePath = path.join(dataDir, "workerTeams.json");
+const soldSeatsFilePath = path.join(dataDir, "soldSeats.json");
 
 const DEFAULT_GROUPS = [
   { id: "group-1", name: "前台組", description: "負責前台接待工作" },
@@ -264,6 +265,16 @@ const DEFAULT_FEATURE_PERMISSIONS = [
     reader: false,
     permissions: [],
     description: "管理工讀生所屬團隊，小組長認領組員",
+  },
+  {
+    key: "/seatmap",
+    feature: "座位圖",
+    path: "/seatmap",
+    admin: true,
+    leader: true,
+    reader: false,
+    permissions: [],
+    description: "小巨蛋座位圖，標記已售出座位",
   },
 ];
 const DEFAULT_DETAILED_PERMISSIONS = [
@@ -737,6 +748,11 @@ async function initializeAppData() {
     workerTeamsFilePath,
     {},
   );
+  soldSeats = await loadPersistedCollection(
+    "soldSeats",
+    soldSeatsFilePath,
+    {},
+  );
   timeRecords = await loadPersistedCollection(
     "timeRecords",
     timeRecordsFilePath,
@@ -812,6 +828,10 @@ async function saveTeams() {
 
 async function saveWorkerTeams() {
   await persistCollection("workerTeams", workerTeamsFilePath, workerTeams);
+}
+
+async function saveSoldSeats() {
+  await persistCollection("soldSeats", soldSeatsFilePath, soldSeats);
 }
 
 async function saveTimeRecords() {
@@ -892,6 +912,7 @@ let workers = [];
 let groups = [];
 let teams = [];
 let workerTeams = {}; // { [workerId]: teamId | null }
+let soldSeats = {};   // { "sectionId:row:seat": true }
 let timeRecords = [];
 let salaryAdjustments = [];
 let activityLogs = [];
@@ -4480,6 +4501,33 @@ async function startServer() {
     process.exit(1);
   }
 }
+
+// ===== 座位圖 API =====
+
+// GET /api/seats - 取得所有已售出座位
+app.get("/api/seats", authenticateToken, asyncHandler(async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({ success: true, data: soldSeats });
+}));
+
+// POST /api/seats/toggle - 切換座位售出狀態 (admin / leader)
+app.post("/api/seats/toggle", authenticateToken, asyncHandler(async (req, res) => {
+  if (req.user.role !== "admin" && req.user.role !== "leader" && !isEvelynUser(req.user)) {
+    return res.status(403).json({ success: false, message: "權限不足，只有管理員或小組長可以操作" });
+  }
+  const { section, row, seat } = req.body;
+  if (!section || row === undefined || seat === undefined) {
+    return res.status(400).json({ success: false, message: "缺少 section、row 或 seat 參數" });
+  }
+  const key = `${section}:${row}:${seat}`;
+  if (soldSeats[key]) {
+    delete soldSeats[key];
+  } else {
+    soldSeats[key] = true;
+  }
+  await saveSoldSeats();
+  res.json({ success: true, data: soldSeats, sold: !!soldSeats[key] });
+}));
 
 // 啟動伺服器
 startServer();

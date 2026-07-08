@@ -16,68 +16,89 @@
       </div>
     </div>
 
-    <!-- 區塊總覽 -->
+    <!-- ===== 座位總覽（Arena Map）===== -->
     <template v-if="!selectedSection">
-      <!-- 舞台方向 -->
-      <div class="stage-banner">🎵 舞　台</div>
+      <!-- 舞台 -->
+      <div class="stage-banner">舞　台　STAGE</div>
 
-      <!-- Level Tabs -->
-      <el-tabs v-model="activeLevel" class="level-tabs">
-        <el-tab-pane label="搖滾區（地面）" name="floor" />
-        <el-tab-pane label="一樓看台" name="1F" />
-        <el-tab-pane label="二樓看台" name="2F" />
-      </el-tabs>
+      <!-- 主場地 Grid（7欄）-->
+      <div class="arena-grid">
+        <!-- Row B: 紫2B 紫1B 特A1 特A2 特A3 紅1B 紅2B -->
+        <ZoneCard v-for="id in ['紫2B','紫1B','特A1','特A2','特A3','紅1B','紅2B']" :key="id"
+          :section="SEAT_CONFIG[id]" :sold="getSoldCount(id)"
+          @click="selectSection(SEAT_CONFIG[id])" />
 
-      <!-- Arena layout hint -->
-      <div v-if="activeLevel !== 'floor'" class="layout-hint">
-        <span>近舞台 → 側邊 → 後方</span>
+        <!-- Row C: 紫2C 紫1C 特A4 特A5 特A6 紅1C 紅2C -->
+        <ZoneCard v-for="id in ['紫2C','紫1C','特A4','特A5','特A6','紅1C','紅2C']" :key="id"
+          :section="SEAT_CONFIG[id]" :sold="getSoldCount(id)"
+          @click="selectSection(SEAT_CONFIG[id])" />
+
+        <!-- Row D: 紫2D 紫1D 特B1 特B2 特B3 紅1D 紅2D -->
+        <ZoneCard v-for="id in ['紫2D','紫1D','特B1','特B2','特B3','紅1D','紅2D']" :key="id"
+          :section="SEAT_CONFIG[id]" :sold="getSoldCount(id)"
+          @click="selectSection(SEAT_CONFIG[id])" />
+
+        <!-- Row E: 紫2E 紫1E [空] [空] [空] 紅1E 紅2E -->
+        <ZoneCard v-for="id in ['紫2E','紫1E']" :key="id"
+          :section="SEAT_CONFIG[id]" :sold="getSoldCount(id)"
+          @click="selectSection(SEAT_CONFIG[id])" />
+        <div class="arena-empty" style="grid-column: span 3;" />
+        <ZoneCard v-for="id in ['紅1E','紅2E']" :key="id"
+          :section="SEAT_CONFIG[id]" :sold="getSoldCount(id)"
+          @click="selectSection(SEAT_CONFIG[id])" />
+
+        <!-- Row 黃2: 黃2E 黃2D [黃2C span3] 黃2B 黃2A -->
+        <ZoneCard v-for="id in ['黃2E','黃2D']" :key="id"
+          :section="SEAT_CONFIG[id]" :sold="getSoldCount(id)"
+          @click="selectSection(SEAT_CONFIG[id])" />
+        <ZoneCard id="黃2C" :section="SEAT_CONFIG['黃2C']" :sold="getSoldCount('黃2C')"
+          @click="selectSection(SEAT_CONFIG['黃2C'])" style="grid-column: span 3;" />
+        <ZoneCard v-for="id in ['黃2B','黃2A']" :key="id"
+          :section="SEAT_CONFIG[id]" :sold="getSoldCount(id)"
+          @click="selectSection(SEAT_CONFIG[id])" />
       </div>
 
-      <!-- Section Cards -->
-      <div class="sections-overview">
-        <div
-          v-for="section in currentLevelSections"
-          :key="section.id"
-          class="section-card"
-          :class="getSectionStatusClass(section.id, section)"
-          @click="selectSection(section)"
-        >
-          <div class="section-name">{{ section.label }}</div>
-          <div class="section-count">
-            <span class="sold-num">{{ getSoldCount(section.id) }}</span>
-            <span class="total-num"> / {{ getTotalSeats(section) }}</span>
-          </div>
-          <div class="progress-bar">
-            <div
-              class="progress-fill"
-              :style="{ width: getSoldPercent(section.id, section) + '%' }"
-            />
-          </div>
-        </div>
+      <!-- 黃3 弧形（10欄） -->
+      <div class="yellow3-grid">
+        <ZoneCard v-for="id in ['黃3J','黃3I','黃3H','黃3G','黃3F','黃3E','黃3D','黃3C','黃3B','黃3A']" :key="id"
+          :section="SEAT_CONFIG[id]" :sold="getSoldCount(id)"
+          @click="selectSection(SEAT_CONFIG[id])" />
+      </div>
+
+      <!-- 色碼說明 -->
+      <div class="color-legend">
+        <div class="cl-item floor">特區（地板）</div>
+        <div class="cl-item purple1">紫1（內側）</div>
+        <div class="cl-item purple2">紫2（外側）</div>
+        <div class="cl-item red1">紅1（內側）</div>
+        <div class="cl-item red2">紅2（外側）</div>
+        <div class="cl-item yellow2">黃2（2F後方）</div>
+        <div class="cl-item yellow3">黃3（3F後方）</div>
       </div>
     </template>
 
-    <!-- 座位詳細 -->
+    <!-- ===== 座位詳細 ===== -->
     <template v-else>
-      <div class="detail-header">
+      <div class="detail-header" :style="{ borderLeftColor: SEAT_CONFIG[selectedSection.id]?.borderColor }">
         <h3>{{ selectedSection.label }}</h3>
         <div class="detail-stats">
           已售出 <strong>{{ getSoldCount(selectedSection.id) }}</strong> /
           共 <strong>{{ getTotalSeats(selectedSection) }}</strong> 座位
+          <el-tag :color="selectedSection.bg" size="small" style="margin-left:8px; color: inherit;">
+            {{ selectedSection.label }}
+          </el-tag>
         </div>
         <el-tag v-if="!canEdit" type="warning" size="small">唯讀模式</el-tag>
       </div>
 
       <div class="stage-hint-small">⬆️ 舞台方向（越前面排數越小）</div>
 
-      <!-- Legend -->
       <div class="legend">
         <div class="legend-item"><div class="seat-demo available" /> 可售</div>
         <div class="legend-item"><div class="seat-demo sold" /> 已售出</div>
-        <div v-if="canEdit" class="legend-item tip">點選座位可切換狀態</div>
+        <div v-if="canEdit" class="legend-item tip">點選座位切換狀態</div>
       </div>
 
-      <!-- Seat Grid -->
       <div class="seat-grid-wrapper">
         <div v-for="row in getRows(selectedSection)" :key="row" class="seat-row">
           <div class="row-label">{{ row }}</div>
@@ -102,7 +123,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, defineComponent, h } from "vue";
 import { ArrowLeft, Refresh } from "@element-plus/icons-vue";
 import { useAuthStore } from "@/stores/auth";
 import { ElMessage } from "element-plus";
@@ -114,67 +135,103 @@ const canEdit = computed(() =>
   authStore.isAdminOrEvelyn || authStore.isLeader
 );
 
-// ===== 座位設定 =====
-// 台北小巨蛋 (Taipei Arena) 近似座位配置
-// 搖滾區: A-E 五區；一樓: 101-112；二樓: 201-212
+// ===== 座位設定（台北小巨蛋真實分區）=====
+// 排數為研究資料估算值，座位數為合理近似值
 const SEAT_CONFIG = {
-  "floor-a": { id: "floor-a", label: "搖滾A區", level: "floor", rowType: "number", rowCount: 8, seatsPerRow: 20 },
-  "floor-b": { id: "floor-b", label: "搖滾B區", level: "floor", rowType: "number", rowCount: 8, seatsPerRow: 22 },
-  "floor-c": { id: "floor-c", label: "搖滾C區", level: "floor", rowType: "number", rowCount: 8, seatsPerRow: 24 },
-  "floor-d": { id: "floor-d", label: "搖滾D區", level: "floor", rowType: "number", rowCount: 8, seatsPerRow: 22 },
-  "floor-e": { id: "floor-e", label: "搖滾E區", level: "floor", rowType: "number", rowCount: 7, seatsPerRow: 20 },
+  // ─── 地板特區（綠色）───
+  "特A1": { id:"特A1", label:"特A1", type:"floor", bg:"#4ade80", borderColor:"#16a34a", rowType:"number", rowCount:15, seatsPerRow:15 },
+  "特A2": { id:"特A2", label:"特A2", type:"floor", bg:"#4ade80", borderColor:"#16a34a", rowType:"number", rowCount:15, seatsPerRow:16 },
+  "特A3": { id:"特A3", label:"特A3", type:"floor", bg:"#4ade80", borderColor:"#16a34a", rowType:"number", rowCount:15, seatsPerRow:15 },
+  "特A4": { id:"特A4", label:"特A4", type:"floor", bg:"#4ade80", borderColor:"#16a34a", rowType:"number", rowCount:15, seatsPerRow:15 },
+  "特A5": { id:"特A5", label:"特A5", type:"floor", bg:"#4ade80", borderColor:"#16a34a", rowType:"number", rowCount:15, seatsPerRow:16 },
+  "特A6": { id:"特A6", label:"特A6", type:"floor", bg:"#4ade80", borderColor:"#16a34a", rowType:"number", rowCount:15, seatsPerRow:15 },
+  "特B1": { id:"特B1", label:"特B1", type:"floor", bg:"#86efac", borderColor:"#16a34a", rowType:"number", rowCount:12, seatsPerRow:20 },
+  "特B2": { id:"特B2", label:"特B2", type:"floor", bg:"#86efac", borderColor:"#16a34a", rowType:"number", rowCount:12, seatsPerRow:22 },
+  "特B3": { id:"特B3", label:"特B3", type:"floor", bg:"#86efac", borderColor:"#16a34a", rowType:"number", rowCount:12, seatsPerRow:20 },
 
-  "101": { id: "101", label: "101區", level: "1F", rowType: "letter", rowCount: 10, seatsPerRow: 18 },
-  "102": { id: "102", label: "102區", level: "1F", rowType: "letter", rowCount: 10, seatsPerRow: 20 },
-  "103": { id: "103", label: "103區", level: "1F", rowType: "letter", rowCount: 11, seatsPerRow: 20 },
-  "104": { id: "104", label: "104區", level: "1F", rowType: "letter", rowCount: 11, seatsPerRow: 22 },
-  "105": { id: "105", label: "105區", level: "1F", rowType: "letter", rowCount: 12, seatsPerRow: 22 },
-  "106": { id: "106", label: "106區", level: "1F", rowType: "letter", rowCount: 12, seatsPerRow: 24 },
-  "107": { id: "107", label: "107區", level: "1F", rowType: "letter", rowCount: 12, seatsPerRow: 24 },
-  "108": { id: "108", label: "108區", level: "1F", rowType: "letter", rowCount: 12, seatsPerRow: 22 },
-  "109": { id: "109", label: "109區", level: "1F", rowType: "letter", rowCount: 11, seatsPerRow: 22 },
-  "110": { id: "110", label: "110區", level: "1F", rowType: "letter", rowCount: 11, seatsPerRow: 20 },
-  "111": { id: "111", label: "111區", level: "1F", rowType: "letter", rowCount: 10, seatsPerRow: 20 },
-  "112": { id: "112", label: "112區", level: "1F", rowType: "letter", rowCount: 10, seatsPerRow: 18 },
+  // ─── 左側 紫色 內側（紫1）───
+  "紫1B": { id:"紫1B", label:"紫1B", type:"purple1", bg:"#c084fc", borderColor:"#9333ea", rowType:"letter", rowCount:8,  seatsPerRow:10 },
+  "紫1C": { id:"紫1C", label:"紫1C", type:"purple1", bg:"#c084fc", borderColor:"#9333ea", rowType:"letter", rowCount:10, seatsPerRow:12 },
+  "紫1D": { id:"紫1D", label:"紫1D", type:"purple1", bg:"#c084fc", borderColor:"#9333ea", rowType:"letter", rowCount:10, seatsPerRow:12 },
+  "紫1E": { id:"紫1E", label:"紫1E", type:"purple1", bg:"#c084fc", borderColor:"#9333ea", rowType:"letter", rowCount:8,  seatsPerRow:10 },
 
-  "201": { id: "201", label: "201區", level: "2F", rowType: "letter", rowCount: 10, seatsPerRow: 22 },
-  "202": { id: "202", label: "202區", level: "2F", rowType: "letter", rowCount: 10, seatsPerRow: 24 },
-  "203": { id: "203", label: "203區", level: "2F", rowType: "letter", rowCount: 10, seatsPerRow: 26 },
-  "204": { id: "204", label: "204區", level: "2F", rowType: "letter", rowCount: 10, seatsPerRow: 26 },
-  "205": { id: "205", label: "205區", level: "2F", rowType: "letter", rowCount: 10, seatsPerRow: 24 },
-  "206": { id: "206", label: "206區", level: "2F", rowType: "letter", rowCount: 10, seatsPerRow: 26 },
-  "207": { id: "207", label: "207區", level: "2F", rowType: "letter", rowCount: 10, seatsPerRow: 28 },
-  "208": { id: "208", label: "208區", level: "2F", rowType: "letter", rowCount: 10, seatsPerRow: 28 },
-  "209": { id: "209", label: "209區", level: "2F", rowType: "letter", rowCount: 10, seatsPerRow: 26 },
-  "210": { id: "210", label: "210區", level: "2F", rowType: "letter", rowCount: 10, seatsPerRow: 24 },
-  "211": { id: "211", label: "211區", level: "2F", rowType: "letter", rowCount: 10, seatsPerRow: 22 },
-  "212": { id: "212", label: "212區", level: "2F", rowType: "letter", rowCount: 10, seatsPerRow: 22 },
+  // ─── 左側 紫色 外側（紫2）───
+  "紫2B": { id:"紫2B", label:"紫2B", type:"purple2", bg:"#a855f7", borderColor:"#7e22ce", rowType:"letter", rowCount:12, seatsPerRow:18 },
+  "紫2C": { id:"紫2C", label:"紫2C", type:"purple2", bg:"#a855f7", borderColor:"#7e22ce", rowType:"letter", rowCount:13, seatsPerRow:22 },
+  "紫2D": { id:"紫2D", label:"紫2D", type:"purple2", bg:"#a855f7", borderColor:"#7e22ce", rowType:"letter", rowCount:13, seatsPerRow:22 },
+  "紫2E": { id:"紫2E", label:"紫2E", type:"purple2", bg:"#a855f7", borderColor:"#7e22ce", rowType:"letter", rowCount:13, seatsPerRow:15 },
+
+  // ─── 右側 紅色 內側（紅1）───
+  "紅1B": { id:"紅1B", label:"紅1B", type:"red1", bg:"#f87171", borderColor:"#dc2626", rowType:"letter", rowCount:8,  seatsPerRow:10 },
+  "紅1C": { id:"紅1C", label:"紅1C", type:"red1", bg:"#f87171", borderColor:"#dc2626", rowType:"letter", rowCount:10, seatsPerRow:12 },
+  "紅1D": { id:"紅1D", label:"紅1D", type:"red1", bg:"#f87171", borderColor:"#dc2626", rowType:"letter", rowCount:10, seatsPerRow:12 },
+  "紅1E": { id:"紅1E", label:"紅1E", type:"red1", bg:"#f87171", borderColor:"#dc2626", rowType:"letter", rowCount:8,  seatsPerRow:10 },
+
+  // ─── 右側 紅色 外側（紅2）───
+  "紅2B": { id:"紅2B", label:"紅2B", type:"red2", bg:"#ef4444", borderColor:"#991b1b", rowType:"letter", rowCount:12, seatsPerRow:18 },
+  "紅2C": { id:"紅2C", label:"紅2C", type:"red2", bg:"#ef4444", borderColor:"#991b1b", rowType:"letter", rowCount:13, seatsPerRow:22 },
+  "紅2D": { id:"紅2D", label:"紅2D", type:"red2", bg:"#ef4444", borderColor:"#991b1b", rowType:"letter", rowCount:13, seatsPerRow:22 },
+  "紅2E": { id:"紅2E", label:"紅2E", type:"red2", bg:"#ef4444", borderColor:"#991b1b", rowType:"letter", rowCount:13, seatsPerRow:15 },
+
+  // ─── 後方 黃2（2F，橘色）───
+  "黃2A": { id:"黃2A", label:"黃2A", type:"yellow2", bg:"#fb923c", borderColor:"#c2410c", rowType:"letter", rowCount:13, seatsPerRow:18 },
+  "黃2B": { id:"黃2B", label:"黃2B", type:"yellow2", bg:"#fb923c", borderColor:"#c2410c", rowType:"letter", rowCount:13, seatsPerRow:25 },
+  "黃2C": { id:"黃2C", label:"黃2C", type:"yellow2", bg:"#fb923c", borderColor:"#c2410c", rowType:"letter", rowCount:15, seatsPerRow:32 },
+  "黃2D": { id:"黃2D", label:"黃2D", type:"yellow2", bg:"#fb923c", borderColor:"#c2410c", rowType:"letter", rowCount:13, seatsPerRow:25 },
+  "黃2E": { id:"黃2E", label:"黃2E", type:"yellow2", bg:"#fb923c", borderColor:"#c2410c", rowType:"letter", rowCount:13, seatsPerRow:18 },
+
+  // ─── 後方 黃3（3F，黃色）───
+  "黃3A": { id:"黃3A", label:"黃3A", type:"yellow3", bg:"#fbbf24", borderColor:"#92400e", rowType:"letter", rowCount:20, seatsPerRow:15 },
+  "黃3B": { id:"黃3B", label:"黃3B", type:"yellow3", bg:"#fbbf24", borderColor:"#92400e", rowType:"letter", rowCount:20, seatsPerRow:18 },
+  "黃3C": { id:"黃3C", label:"黃3C", type:"yellow3", bg:"#fbbf24", borderColor:"#92400e", rowType:"letter", rowCount:20, seatsPerRow:22 },
+  "黃3D": { id:"黃3D", label:"黃3D", type:"yellow3", bg:"#fbbf24", borderColor:"#92400e", rowType:"letter", rowCount:20, seatsPerRow:26 },
+  "黃3E": { id:"黃3E", label:"黃3E", type:"yellow3", bg:"#fbbf24", borderColor:"#92400e", rowType:"letter", rowCount:20, seatsPerRow:30 },
+  "黃3F": { id:"黃3F", label:"黃3F", type:"yellow3", bg:"#fbbf24", borderColor:"#92400e", rowType:"letter", rowCount:20, seatsPerRow:30 },
+  "黃3G": { id:"黃3G", label:"黃3G", type:"yellow3", bg:"#fbbf24", borderColor:"#92400e", rowType:"letter", rowCount:20, seatsPerRow:26 },
+  "黃3H": { id:"黃3H", label:"黃3H", type:"yellow3", bg:"#fbbf24", borderColor:"#92400e", rowType:"letter", rowCount:20, seatsPerRow:22 },
+  "黃3I": { id:"黃3I", label:"黃3I", type:"yellow3", bg:"#fbbf24", borderColor:"#92400e", rowType:"letter", rowCount:20, seatsPerRow:18 },
+  "黃3J": { id:"黃3J", label:"黃3J", type:"yellow3", bg:"#fbbf24", borderColor:"#92400e", rowType:"letter", rowCount:20, seatsPerRow:15 },
 };
 
-// ===== State =====
-const soldSeats = ref({});
+// ─── ZoneCard 元件 ───
+const ZoneCard = defineComponent({
+  props: ["section", "sold"],
+  emits: ["click"],
+  setup(props, { emit }) {
+    return () => {
+      const s = props.section;
+      if (!s) return null;
+      const total = s.rowCount * s.seatsPerRow;
+      const pct = total ? Math.round((props.sold / total) * 100) : 0;
+      return h("div", {
+        class: "zone-card",
+        style: { background: s.bg, borderColor: s.borderColor },
+        onClick: () => emit("click"),
+      }, [
+        h("div", { class: "zc-name" }, s.label),
+        h("div", { class: "zc-count" }, `${props.sold}/${total}`),
+        h("div", { class: "zc-bar" }, [
+          h("div", { class: "zc-bar-fill", style: { width: pct + "%" } }),
+        ]),
+      ]);
+    };
+  },
+});
+
+// ─── State ───
+const soldSeats   = ref({});
 const selectedSection = ref(null);
-const activeLevel = ref("floor");
-const loading = ref(false);
+const loading     = ref(false);
 const togglingKey = ref(null);
 
-// ===== Computed =====
-const allSections = computed(() => Object.values(SEAT_CONFIG));
-
-const currentLevelSections = computed(() =>
-  allSections.value.filter((s) => s.level === activeLevel.value)
-);
-
+// ─── Computed ───
 const totalSeats = computed(() =>
-  allSections.value.reduce((sum, s) => sum + getTotalSeats(s), 0)
+  Object.values(SEAT_CONFIG).reduce((s, z) => s + z.rowCount * z.seatsPerRow, 0)
 );
-
 const totalSold = computed(() => Object.keys(soldSeats.value).length);
 
-// ===== Helpers =====
-function getTotalSeats(section) {
-  return section.rowCount * section.seatsPerRow;
-}
+// ─── Helpers ───
+function getTotalSeats(s) { return s.rowCount * s.seatsPerRow; }
 
 function getRows(section) {
   if (section.rowType === "number") {
@@ -194,26 +251,11 @@ function getSoldCount(sectionId) {
   return Object.keys(soldSeats.value).filter((k) => k.startsWith(prefix)).length;
 }
 
-function getSoldPercent(sectionId, section) {
-  const total = getTotalSeats(section);
-  if (!total) return 0;
-  return Math.min(100, Math.round((getSoldCount(sectionId) / total) * 100));
-}
-
-function getSectionStatusClass(sectionId, section) {
-  const pct = getSoldPercent(sectionId, section);
-  if (pct === 0) return "status-empty";
-  if (pct < 30) return "status-low";
-  if (pct < 70) return "status-mid";
-  if (pct < 100) return "status-high";
-  return "status-full";
-}
-
 function selectSection(section) {
   selectedSection.value = section;
 }
 
-// ===== API =====
+// ─── API ───
 async function fetchSeats() {
   loading.value = true;
   try {
@@ -238,18 +280,12 @@ async function toggleSeat(sectionId, row, seat) {
     const token = localStorage.getItem("auth_token");
     const res = await fetch(`${API_BASE}/api/seats/toggle`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ section: sectionId, row, seat }),
     });
     const data = await res.json();
-    if (data.success) {
-      soldSeats.value = data.data || {};
-    } else {
-      ElMessage.error(data.message || "操作失敗");
-    }
+    if (data.success) soldSeats.value = data.data || {};
+    else ElMessage.error(data.message || "操作失敗");
   } catch {
     ElMessage.error("網路錯誤，請稍後再試");
   } finally {
@@ -263,7 +299,7 @@ onMounted(fetchSeats);
 <style scoped>
 .seatmap-container {
   padding: 20px;
-  max-width: 1200px;
+  max-width: 900px;
   margin: 0 auto;
 }
 
@@ -272,263 +308,150 @@ onMounted(fetchSeats);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
 }
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-left h2 {
-  margin: 0;
-  font-size: 1.4rem;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.stat-badge {
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
+.header-left { display: flex; align-items: center; gap: 10px; }
+.header-left h2 { margin: 0; font-size: 1.3rem; }
+.header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.stat-badge { padding: 3px 10px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; }
 .sold-badge  { background: #fee2e2; color: #dc2626; }
 .avail-badge { background: #dcfce7; color: #16a34a; }
 .total-badge { background: #f1f5f9; color: #475569; }
 
-/* Stage banner */
+/* Stage */
 .stage-banner {
   text-align: center;
-  background: linear-gradient(90deg, #4f46e5, #7c3aed);
+  background: linear-gradient(135deg, #f97316, #ea580c);
   color: white;
   padding: 10px;
-  border-radius: 8px;
+  border-radius: 8px 8px 0 0;
   font-weight: 700;
   font-size: 1rem;
-  letter-spacing: 4px;
-  margin-bottom: 16px;
+  letter-spacing: 6px;
+  margin-bottom: 4px;
 }
 
-.stage-hint-small {
-  text-align: center;
-  color: #6b7280;
-  font-size: 0.82rem;
-  margin-bottom: 10px;
-}
-
-.layout-hint {
-  color: #94a3b8;
-  font-size: 0.8rem;
-  margin-bottom: 8px;
-  text-align: right;
-}
-
-/* Section Cards */
-.sections-overview {
+/* Arena Grid (7 columns) */
+.arena-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 12px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 4px;
 }
 
-.section-card {
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 14px 10px;
+/* Yellow 3F Grid (10 columns) */
+.yellow3-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+/* Zone Card */
+.zone-card {
+  border: 2px solid transparent;
+  border-radius: 6px;
+  padding: 8px 4px 6px;
   cursor: pointer;
-  transition: all 0.2s;
-  background: white;
   text-align: center;
-  user-select: none;
+  transition: transform 0.15s, box-shadow 0.15s;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
 }
-
-.section-card:hover {
-  border-color: #6366f1;
+.zone-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.18);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
 }
+.zc-name { font-size: 0.78rem; font-weight: 700; color: #1e293b; }
+.zc-count { font-size: 0.68rem; color: rgba(0,0,0,0.65); }
+.zc-bar { height: 3px; background: rgba(0,0,0,0.15); border-radius: 2px; margin: 0 4px; overflow: hidden; }
+.zc-bar-fill { height: 100%; background: rgba(0,0,0,0.5); border-radius: 2px; transition: width 0.3s; }
 
-.section-name {
-  font-size: 0.95rem;
-  font-weight: 700;
-  margin-bottom: 6px;
-  color: #1e293b;
+/* Empty cell */
+.arena-empty { min-height: 60px; background: transparent; }
+
+/* Color legend */
+.color-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: 8px;
 }
-
-.section-count {
-  font-size: 0.8rem;
-  margin-bottom: 6px;
+.cl-item {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
-
-.sold-num  { color: #dc2626; font-weight: 700; }
-.total-num { color: #94a3b8; }
-
-.progress-bar {
-  height: 4px;
-  background: #e2e8f0;
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: #ef4444;
-  border-radius: 2px;
-  transition: width 0.3s;
-}
-
-/* Status tints */
-.status-empty { border-color: #e2e8f0; }
-.status-low   { border-color: #fbbf24; background: #fffbeb; }
-.status-mid   { border-color: #f97316; background: #fff7ed; }
-.status-high  { border-color: #ef4444; background: #fef2f2; }
-.status-full  { border-color: #b91c1c; background: #fee2e2; }
+.cl-item.floor   { background: #4ade80; color: #166534; }
+.cl-item.purple1 { background: #c084fc; color: #581c87; }
+.cl-item.purple2 { background: #a855f7; color: white; }
+.cl-item.red1    { background: #f87171; color: #7f1d1d; }
+.cl-item.red2    { background: #ef4444; color: white; }
+.cl-item.yellow2 { background: #fb923c; color: #7c2d12; }
+.cl-item.yellow3 { background: #fbbf24; color: #78350f; }
 
 /* Seat Detail */
 .detail-header {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   margin-bottom: 10px;
   flex-wrap: wrap;
+  padding-left: 10px;
+  border-left: 5px solid #6366f1;
 }
+.detail-header h3 { margin: 0; font-size: 1.2rem; }
+.detail-stats { color: #64748b; font-size: 0.88rem; }
+.stage-hint-small { text-align: center; color: #6b7280; font-size: 0.8rem; margin-bottom: 10px; }
 
-.detail-header h3 {
-  margin: 0;
-  font-size: 1.25rem;
-}
-
-.detail-stats {
-  color: #64748b;
-  font-size: 0.9rem;
-}
-
-/* Legend */
-.legend {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 14px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.82rem;
-  color: #475569;
-}
-
-.legend-item.tip {
-  color: #94a3b8;
-  font-style: italic;
-}
-
-.seat-demo {
-  width: 18px;
-  height: 18px;
-  border-radius: 3px;
-  border: 1px solid #cbd5e1;
-  background: #f1f5f9;
-}
-
+.legend { display: flex; gap: 14px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.8rem; color: #475569; }
+.legend-item.tip { color: #94a3b8; font-style: italic; }
+.seat-demo { width: 16px; height: 16px; border-radius: 3px; border: 1px solid #cbd5e1; }
 .seat-demo.available { background: #dcfce7; border-color: #86efac; }
 .seat-demo.sold      { background: #fee2e2; border-color: #fca5a5; }
 
 /* Seat Grid */
-.seat-grid-wrapper {
-  overflow-x: auto;
-  padding-bottom: 20px;
-}
-
-.seat-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-bottom: 3px;
-}
-
-.row-label {
-  width: 26px;
-  min-width: 26px;
-  text-align: center;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #6b7280;
-}
-
-.row-seats {
-  display: flex;
-  gap: 2px;
-}
+.seat-grid-wrapper { overflow-x: auto; padding-bottom: 20px; }
+.seat-row { display: flex; align-items: center; gap: 3px; margin-bottom: 2px; }
+.row-label { width: 24px; min-width: 24px; text-align: center; font-size: 0.7rem; font-weight: 700; color: #6b7280; }
+.row-seats { display: flex; gap: 2px; }
 
 .seat-btn {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   border: 1px solid #86efac;
-  border-radius: 4px;
+  border-radius: 3px;
   background: #dcfce7;
   color: #166534;
-  font-size: 9px;
+  font-size: 8px;
   cursor: pointer;
   padding: 0;
-  transition: background 0.12s, transform 0.1s;
+  transition: background 0.1s, transform 0.1s;
   display: flex;
   align-items: center;
   justify-content: center;
-  line-height: 1;
 }
-
-.seat-btn:hover:not(.readonly) {
-  border-color: #6366f1;
-  transform: scale(1.15);
-  z-index: 1;
-}
-
-.seat-btn.sold {
-  background: #fee2e2;
-  color: #991b1b;
-  border-color: #fca5a5;
-}
-
-.seat-btn.toggling {
-  opacity: 0.4;
-  cursor: wait;
-}
-
-.seat-btn.readonly {
-  cursor: default;
-}
+.seat-btn:hover:not(.readonly) { border-color: #6366f1; transform: scale(1.15); }
+.seat-btn.sold { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+.seat-btn.toggling { opacity: 0.4; cursor: wait; }
+.seat-btn.readonly { cursor: default; }
 
 @media (max-width: 768px) {
-  .seatmap-container { padding: 12px; }
-
-  .seat-btn {
-    width: 22px;
-    height: 22px;
-    font-size: 7px;
-  }
-
-  .row-label {
-    width: 20px;
-    min-width: 20px;
-    font-size: 0.65rem;
-  }
-
-  .sections-overview {
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 8px;
-  }
+  .seatmap-container { padding: 10px; }
+  .zone-card { min-height: 50px; padding: 4px 2px; }
+  .zc-name { font-size: 0.65rem; }
+  .zc-count { font-size: 0.58rem; }
+  .seat-btn { width: 20px; height: 20px; font-size: 7px; }
+  .row-label { width: 20px; min-width: 20px; font-size: 0.62rem; }
 }
 </style>
